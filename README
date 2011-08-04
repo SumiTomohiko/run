@@ -1,0 +1,27 @@
+
+Script Language run
+*******************
+
+Objective
+=========
+
+An objective of run is replacing schell scripts.
+
+Features
+========
+
+* External command executing with easy syntax
+* Powerfull redirecting
+* Array
+* Hash
+* Repeating with ``for`` statement and ``while`` statement
+* Support of usual operators
+* UTF-8 (only) acceptable
+* Written with Standard ML
+
+Author
+======
+
+An author of run is Ranko Kadonote.
+
+.. vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=rst
