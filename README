@@ -12,12 +12,18 @@ Features
 
 * External command executing with easy syntax
 * Powerfull redirecting
-* Array
-* Hash
-* Repeating with ``for`` statement and ``while`` statement
-* Support of usual operators
+* Basic Types
+  * Array
+  * Float
+  * Hash
+  * Int
+  * String
+* Structured programming with ``for``, ``while`` and ``if`` statements
+* Arithmetic operations
+  * Basic operations such as ``+``, ``-``, etc
+  * Function call
 * UTF-8 (only) acceptable
-* Written with Standard ML
+* Written with Objective Caml
 
 Author
 ======
