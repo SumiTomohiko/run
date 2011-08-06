@@ -21,10 +21,9 @@ Features
   * String
 * Structured programming with ``for``, ``while`` and ``if`` statements
 * Arithmetic operations
-  * Basic operations such as ``+``, ``-``, etc
-  * Function call
+* Function
 * UTF-8 (only) acceptable
-* Written with Objective Caml
+* Written with Standard ML
 
 Author
 ======
