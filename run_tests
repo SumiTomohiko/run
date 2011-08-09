@@ -1,0 +1,8 @@
+#!/bin/sh
+
+find tests -name "test_*" -type f | while read t
+do
+  ./run_test "${f}"
+done
+
+# vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
