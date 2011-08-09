@@ -11,15 +11,20 @@ MOSMLYACC=mosmlyac
 # in the correct order, with an indication of the mode (-structure or -toplevel)
 # of each unit
 
-UNITS= -toplevel run
+UNITS= -toplevel run -toplevel run_test
 
-.SUFFIXES :
-.SUFFIXES : .sig .sml .ui .uo
+.SUFFIXES:
+.SUFFIXES: .sig .sml .ui .uo
 
-all: run
+all: run run_test
 
-run: run.uo
-	mosmlc -o run run.uo
+LINK = mosmlc -standalone -o
+
+run: run.uo Makefile
+	$(LINK) $@ run.uo
+
+run_test: run_test.uo Makefile
+	$(LINK) $@ run_test.uo
 
 clean:
 	rm -f *.ui
@@ -40,5 +45,7 @@ depend:
 	$(MOSMLTOOLS)/mosmldep $(UNITS) >> Makefile
 
 ### DO NOT DELETE THIS LINE
-run.uo: run.sml
-	$(MOSMLC) -toplevel run.sml
+run.uo: run.sml 
+	$(MOSMLC) -toplevel run.sml 
+run_test.uo: run_test.sml run.uo 
+	$(MOSMLC) -toplevel run.ui run_test.sml 
