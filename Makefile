@@ -19,4 +19,7 @@ run_test: run_test.uo Makefile
 clean:
 	rm -rf *.uo *.ui $(PKG)
 
+test:
+	@./run_tests
+
 # vim: tabstop=8 shiftwidth=8 noexpandtab
