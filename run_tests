@@ -2,7 +2,7 @@
 
 find tests -name "test_*" -type f | while read t
 do
-  ./run_test "${f}"
+  ./run_test "${t}"
 done
 
 # vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
