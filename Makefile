@@ -1,6 +1,6 @@
 
-COMPILE = mosmlc -c -o
-LINK = mosmlc -standalone -o
+COMPILE = mosmlc -orthodox -c -o
+LINK = mosmlc -g -standalone -o
 PKG = run run_test
 
 all: $(PKG)
