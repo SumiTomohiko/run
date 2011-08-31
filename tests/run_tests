@@ -2,8 +2,9 @@
 
 dir=`dirname $0`
 
-find tests -name "test_*" -type f | while read t
+find "${dir}" -name "test_*" -type f | while read t
 do
+  echo "${t}"
   "${dir}/run_test" "${t}"
 done
 

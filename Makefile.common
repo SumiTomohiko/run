@@ -1,0 +1,11 @@
+
+COMPILE = mosmlc -c -o
+LINK = mosmlc -g -standalone -o
+YACC = mosmlyac -v
+LEX = mosmllex
+RM = rm -rf
+
+clean-common:
+	$(RM) *.uo *.ui
+
+# vim: tabstop=8 shiftwidth=8 noexpandtab

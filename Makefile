@@ -1,25 +1,25 @@
 
-COMPILE = mosmlc -orthodox -c -o
-LINK = mosmlc -g -standalone -o
-PKG = run run_test
+PKG = run
+TEST_DIR = tests
 
-all: $(PKG)
+all:
+	make $(PKG)
+	cd $(TEST_DIR) && make
 
-run: run.uo Makefile
+$(PKG): run.uo Makefile
 	$(LINK) $@ run.uo
 
-run_test: run_test.uo Makefile
-	$(LINK) $@ run_test.uo
-
-.SUFFIXES: .sml .uo .sig .ui
-
-.sml.uo:
-	$(COMPILE) $@ $<
+run.uo: run.sml
+	$(COMPILE) $@ run.sml
 
 clean:
-	rm -rf *.uo *.ui $(PKG)
+	make clean-common
+	$(RM) $(PKG)
+	cd $(TEST_DIR) && make $@
 
 test:
-	@./run_tests
+	cd $(TEST_DIR) && ./run_tests
+
+include Makefile.common
 
 # vim: tabstop=8 shiftwidth=8 noexpandtab

@@ -1,0 +1,20 @@
+%token <string> CONTENT
+%token EOF OUT SRC
+%start Test
+%type <{ src: string, out: string option }> Test
+%type <string> Contents Src
+%type <string option> Out
+%%
+Test  : Src Out EOF { { src=$1, out=$2 } }
+;
+Src : SRC Contents { $2 }
+;
+Out : {  NONE }
+    | OUT Contents { SOME ($2) }
+;
+Contents  : { "" }
+          | Contents CONTENT { $1 ^ $2 }
+;
+/**
+ * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=sml
+ */

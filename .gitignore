@@ -4,3 +4,7 @@
 Makefile.bak
 run
 run_test
+tests/Lexer.sml
+tests/Parser.output
+tests/Parser.sig
+tests/Parser.sml
