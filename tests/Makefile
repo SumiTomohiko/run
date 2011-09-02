@@ -1,11 +1,13 @@
 
 PKG = run_test
 
+all: $(PKG)
+
 $(PKG): Main.uo Makefile
-	$(LINK) $@ Main.uo
+	$(LINK) $@ -I ../src Main.uo
 
 Main.uo: Main.sml Parser.ui Lexer.ui
-	$(COMPILE) $@ Parser.ui Lexer.ui Main.sml
+	$(COMPILE) $@ -I ../src Try.ui Parser.ui Lexer.ui Main.sml
 
 Lexer.ui Lexer.uo: Lexer.sml
 	$(COMPILE) Lexer.uo Lexer.sml

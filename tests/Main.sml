@@ -2,9 +2,10 @@
 fun main () =
 let
   val instream = TextIO.openIn (List.hd (CommandLine.arguments ()))
-  val buf = Lexing.createLexerString (TextIO.inputAll instream)
-  val _ = TextIO.closeIn instream
-  val test = Parser.Test Lexer.Token buf
+  fun body () = TextIO.inputAll instream
+  fun finally () = TextIO.closeIn instream
+  val lexbuf = Lexing.createLexerString (Try.try body finally)
+  val test = Parser.Test Lexer.Token lexbuf
 in
   print (#src test)
 end
