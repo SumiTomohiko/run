@@ -1,10 +1,12 @@
 
-fun try body finally =
-let
-  val ret = (body ()) handle e => (finally (); raise e)
-in
-  finally ();
-  ret
+structure Try = struct
+  fun try body finally =
+  let
+    val ret = (body ()) handle e => (finally (); raise e)
+  in
+    finally ();
+    ret
+  end
 end
 
 (*
