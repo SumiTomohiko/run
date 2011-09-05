@@ -30,13 +30,16 @@
 #
 
 ################################################
-# Build an OCaml program
+# Configuration.  You may want to modify any of these configuration
+# variables.
 #
 
-FILES[] = Test Parser Lexer Main
+################################################
+# Build an OCaml library
 #
-PROGRAM = run_test
-# OCAML_LIBS +=
-OCAML_OTHER_LIBS += ensure unix
+
+FILES[] = Ensure
 #
-.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
+LIB = ensure
+#
+.DEFAULT: $(OCamlLibrary $(LIB), $(FILES))

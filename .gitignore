@@ -1,6 +1,8 @@
+*.a
 *.annot
 *.cmi
 *.cmx
+*.cmxa
 *.o
 *.omc
 .ditz-config
