@@ -23,7 +23,7 @@ Features
 * Arithmetic operations
 * Function
 * UTF-8 (only) acceptable
-* Written with Standard ML
+* Written in Objective Caml
 
 Author
 ======
