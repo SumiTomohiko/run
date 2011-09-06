@@ -22,7 +22,7 @@
 # Phony targets are scoped, so you probably want to declare them first.
 #
 
-# .PHONY: all install clean
+.PHONY: test
 
 ########################################################################
 # Subdirectories.
@@ -36,3 +36,8 @@ LIB_DIR = $(dir lib)
 OCAMLOPTFLAGS += -dtypes -g -I $(LIB_DIR)
 OCAML_NATIVE_LINK_FLAGS = -I $(LIB_DIR)
 .SUBDIRS: lib src tests
+
+test:
+    cd tests && ./run_tests
+
+# vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
