@@ -36,7 +36,7 @@ and_expr  : shift_expr { $1 }
 ;
 shift_expr  : arith_expr { $1 }
 ;
-arith_expr  : arith_expr PLUS term { $1 }
+arith_expr  : arith_expr PLUS term { Node.Add { Node.left=$1; Node.right=$3 } }
             | term { $1 }
 ;
 term  : factor { $1 }

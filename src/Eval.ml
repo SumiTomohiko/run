@@ -32,7 +32,14 @@ let find_local env frame name =
 let eval_op env frame op =
   let stack = frame.stack in
   match op with
-    Operation.Call (nargs) ->
+    Operation.Add ->
+      let right = Stack.pop stack in
+      let left = Stack.pop stack in
+      (match left, right with
+        Value.Int (n1), Value.Int (n2) ->
+          Stack.push (Value.Int (Num.add_num n1 n2)) stack
+      | _ -> raise (Failure ""))
+  | Operation.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
   | Operation.Pop -> ignore (Stack.pop stack)

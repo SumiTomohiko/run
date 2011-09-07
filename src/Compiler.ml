@@ -1,6 +1,8 @@
 
 let rec compile_expr = function
-    Node.Assign { Node.left; Node.right } -> compile_expr right
+    Node.Add { Node.left; Node.right } ->
+      (compile_expr left) @ (compile_expr right) @ [Operation.Add]
+  | Node.Assign { Node.left; Node.right } -> compile_expr right
   | Node.Call { Node.callee; Node.args } ->
       let op = Operation.Call (List.length args) in
       (compile_expr callee) @ (compile_exprs args) @ [op]

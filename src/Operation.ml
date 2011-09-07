@@ -1,6 +1,7 @@
 
 type t =
-    Call of int
+    Add
+  | Call of int
   | Pop
   | PushConst of Value.t
   | PushLocal of string
