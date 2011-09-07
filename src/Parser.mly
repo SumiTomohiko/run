@@ -1,19 +1,20 @@
-%token EOF EQUAL FALSE NEWLINE PLUS TRUE
+%token COLON EOF EQUAL FALSE LPAR NEWLINE PLUS RPAR TRUE
 %token <Num.num> INT
+%token <string> NAME
 %start script
-%type <Node.t list> script
+%type <Node.stmt list> script
 %%
 script  : stmts EOF { $1 }
 ;
 stmts : stmts stmt NEWLINE { $1 @ [$2] }
       | stmt NEWLINE { [$1] }
 ;
-stmt  : expr { $1 }
+stmt  : expr { Node.Expr $1 }
 ;
 expr  : assign_expr { $1 }
 ;
 assign_expr : postfix_expr EQUAL conditional_expr {
-  Node.AssignExpr ({ Node.left=$1; Node.right=$3 })
+  Node.Assign ({ Node.left=$1; Node.right=$3 })
 }
             | conditional_expr { $1 }
 ;
@@ -45,10 +46,17 @@ factor  : power { $1 }
 power : postfix_expr { $1 }
 ;
 postfix_expr  : atom { $1 }
+              | postfix_expr LPAR exprs RPAR {
+  Node.Call { Node.callee=$1; Node.args=$3 }
+}
 ;
-atom  : TRUE { Node.Atom (Value.Bool (true)) }
-      | FALSE { Node.Atom (Value.Bool (false)) }
-      | INT { Node.Atom (Value.Int ($1)) }
+exprs : exprs COLON expr { $1 @ [$3] }
+      | expr { [$1] }
+;
+atom  : TRUE { Node.Const (Value.Bool (true)) }
+      | FALSE { Node.Const (Value.Bool (false)) }
+      | INT { Node.Const (Value.Int ($1)) }
+      | NAME { Node.Var ($1) }
 ;
 /**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=sml
