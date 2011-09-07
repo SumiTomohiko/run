@@ -1,0 +1,7 @@
+SRC:
+for s in foo bar
+  puts(s)
+end
+OUT:
+foo
+bar
