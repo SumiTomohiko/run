@@ -47,11 +47,6 @@ let rec eval_env env =
   eval_op env frame op;
   eval_env env
 
-let build_globals () =
-  let globals = Symboltbl.create () in
-  Symboltbl.add globals "print" (Value.Function Builtins.print);
-  globals
-
 let eval ops =
   let frame = {
     locals=Symboltbl.create ();
@@ -61,7 +56,7 @@ let eval ops =
     outer_frame=None } in
   let stack = Stack.create () in
   Stack.push frame stack;
-  eval_env { globals=build_globals (); frames=stack }
+  eval_env { globals=Builtins.create (); frames=stack }
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
