@@ -1,7 +1,6 @@
 SRC:
-for s in foo bar
+every foo as s
   puts(s)
 end
 OUT:
 foo
-bar
