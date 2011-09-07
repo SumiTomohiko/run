@@ -6,12 +6,16 @@ let string_of_value = function
   | Value.String (s) -> s
   | Value.Function (_) -> "Function"
 
-let print_value v = print_string (string_of_value v)
+let output args f =
+  List.fold_left (fun init v -> print_string (f v); init) Value.Nil args
 
-let print args =
-  List.fold_left (fun init v -> print_value v; init) Value.Nil args
+let print args = output args string_of_value
 
-let builtins = [("print", print)]
+let puts args = output args (fun v -> (string_of_value v) ^ "\n")
+
+let builtins = [
+  ("print", print);
+  ("puts", puts)]
 
 let create () =
   let tbl = Symboltbl.create () in
