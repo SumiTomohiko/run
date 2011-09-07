@@ -10,6 +10,7 @@
 .omakedb.lock
 src/Lexer.ml
 src/Parser.ml
+src/Parser.mli
 src/run
 src/run.opt
 tests/Lexer.ml

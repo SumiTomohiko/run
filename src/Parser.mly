@@ -1,4 +1,5 @@
 %token EOF EQUAL FALSE TRUE
+%token <Num.num> INT
 %start script
 %type <Node.t list> script
 %%
@@ -44,6 +45,8 @@ power : postfix_expr { $1 }
 postfix_expr  : atom { $1 }
 ;
 atom  : TRUE { Node.Atom (Value.Bool (true)) }
+      | FALSE { Node.Atom (Value.Bool (false)) }
+      | INT { Node.Atom (Value.Int ($1)) }
 ;
 /**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=sml
