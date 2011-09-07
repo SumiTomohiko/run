@@ -11,6 +11,7 @@ rule token = parse
   | '\n' { Parser.NEWLINE }
   | ' ' { token lexbuf }
   | '+' { Parser.PLUS }
+  | '-' { Parser.MINUS }
   | '(' { Parser.LPAR }
   | ')' { Parser.RPAR }
   | '.' { Parser.COLON }

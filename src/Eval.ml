@@ -38,13 +38,20 @@ let eval_op env frame op =
       (match left, right with
         Value.Int (n1), Value.Int (n2) ->
           Stack.push (Value.Int (Num.add_num n1 n2)) stack
-      | _ -> raise (Failure ""))
+      | _ -> raise (Failure "Unsupported operands for +"))
   | Operation.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
   | Operation.Pop -> ignore (Stack.pop stack)
   | Operation.PushConst (v) -> Stack.push v stack
   | Operation.PushLocal (name) -> Stack.push (find_local env frame name) stack
+  | Operation.Sub ->
+      let right = Stack.pop stack in
+      let left = Stack.pop stack in
+      (match left, right with
+        Value.Int (n1), Value.Int (n2) ->
+          Stack.push (Value.Int (Num.sub_num n1 n2)) stack
+      | _ -> raise (Failure "Unsupported operands for -"))
 
 let rec eval_env env =
   let frame = Stack.top env.frames in

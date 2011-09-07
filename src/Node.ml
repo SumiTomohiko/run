@@ -6,6 +6,7 @@ and expr =
   | Assign of binop
   | Const of Value.t
   | Call of call
+  | Sub of binop
   | Var of string
 and stmt = Expr of expr
 
