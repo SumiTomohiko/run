@@ -42,10 +42,13 @@ let eval_op env frame op =
 let rec eval_env env =
   let frame = Stack.top env.frames in
   let pc = !(frame.pc) in
-  let op = List.hd pc in
-  frame.pc := List.tl pc;
-  eval_op env frame op;
-  eval_env env
+  if List.length pc = 0 then
+    ()
+  else
+    let op = List.hd pc in
+    frame.pc := List.tl pc;
+    eval_op env frame op;
+    eval_env env
 
 let eval ops =
   let frame = {
