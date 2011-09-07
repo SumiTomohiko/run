@@ -36,7 +36,6 @@
 FILES[] = Value Parser Lexer Symboltbl Frame Main
 #
 PROGRAM = run
-# OCAML_LIBS +=
-OCAML_OTHER_LIBS += nums
+OCAML_OTHER_LIBS += nums ensure
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))

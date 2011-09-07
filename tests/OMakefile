@@ -36,7 +36,6 @@
 FILES[] = Test Parser Lexer Main
 #
 PROGRAM = run_test
-# OCAML_LIBS +=
-OCAML_OTHER_LIBS += ensure unix
+OCAML_OTHER_LIBS += unix ensure
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))

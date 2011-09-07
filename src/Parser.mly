@@ -1,12 +1,12 @@
-%token EOF EQUAL FALSE TRUE
+%token EOF EQUAL FALSE NEWLINE PLUS TRUE
 %token <Num.num> INT
 %start script
 %type <Node.t list> script
 %%
 script  : stmts EOF { $1 }
 ;
-stmts : stmts stmt { $1 @ [$2] }
-      | stmt { [$1] }
+stmts : stmts stmt NEWLINE { $1 @ [$2] }
+      | stmt NEWLINE { [$1] }
 ;
 stmt  : expr { $1 }
 ;
@@ -15,6 +15,7 @@ expr  : assign_expr { $1 }
 assign_expr : postfix_expr EQUAL conditional_expr {
   Node.AssignExpr ({ Node.left=$1; Node.right=$3 })
 }
+            | conditional_expr { $1 }
 ;
 conditional_expr  : logical_or_expr { $1 }
 ;
@@ -34,7 +35,8 @@ and_expr  : shift_expr { $1 }
 ;
 shift_expr  : arith_expr { $1 }
 ;
-arith_expr  : term { $1 }
+arith_expr  : arith_expr PLUS term { $1 }
+            | term { $1 }
 ;
 term  : factor { $1 }
 ;
