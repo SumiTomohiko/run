@@ -1,0 +1,68 @@
+
+type frame = {
+  locals: Symboltbl.t;
+  pc: Operation.t list ref;
+  stack: Value.t Stack.t;
+  prev_frame: frame option;
+  outer_frame: frame option
+}
+
+type env = {
+  globals: Symboltbl.t;
+  frames: frame Stack.t
+}
+
+let rec pop_args stack = function
+    0 -> []
+  | n -> (pop_args stack (n - 1)) @ [Stack.pop stack]
+
+let call env callee args =
+  match callee with
+    Value.Function (f) -> f args
+  | _ -> raise (Failure "Object is not callable")
+
+let find_global env = Symboltbl.find env.globals
+
+let find_local env frame name =
+  try
+    Symboltbl.find frame.locals name
+  with
+    Not_found -> find_global env name
+
+let eval_op env frame op =
+  let stack = frame.stack in
+  match op with
+    Operation.Call (nargs) ->
+      let args = pop_args frame.stack nargs in
+      Stack.push (call env (Stack.pop stack) args) stack
+  | Operation.Pop -> ignore (Stack.pop stack)
+  | Operation.PushConst (v) -> Stack.push v stack
+  | Operation.PushLocal (name) -> Stack.push (find_local env frame name) stack
+
+let rec eval_env env =
+  let frame = Stack.top env.frames in
+  let pc = !(frame.pc) in
+  let op = List.hd pc in
+  frame.pc := List.tl pc;
+  eval_op env frame op;
+  eval_env env
+
+let build_globals () =
+  let globals = Symboltbl.create () in
+  Symboltbl.add globals "print" (Value.Function Builtins.print);
+  globals
+
+let eval ops =
+  let frame = {
+    locals=Symboltbl.create ();
+    pc=ref ops;
+    stack=Stack.create ();
+    prev_frame=None;
+    outer_frame=None } in
+  let stack = Stack.create () in
+  Stack.push frame stack;
+  eval_env { globals=build_globals (); frames=stack }
+
+(*
+ * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
+ *)

@@ -33,7 +33,7 @@
 # Build an OCaml program
 #
 
-FILES[] = Value Parser Lexer Symboltbl Frame Main
+FILES[] = Value Parser Lexer Compiler Symboltbl Builtins Eval Main
 #
 PROGRAM = run
 OCAML_OTHER_LIBS += nums ensure
