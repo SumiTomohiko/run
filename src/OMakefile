@@ -33,10 +33,10 @@
 # Build an OCaml program
 #
 
-FILES[] = Main
+FILES[] = Value Parser Lexer Symboltbl Frame Main
 #
 PROGRAM = run
 # OCAML_LIBS +=
-# OCAML_OTHER_LIBS +=
+OCAML_OTHER_LIBS += nums
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
