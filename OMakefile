@@ -35,6 +35,7 @@ BYTE_ENABLED = false
 LIB_DIR = $(dir lib)
 OCAMLOPTFLAGS += -dtypes -g -I $(LIB_DIR)
 OCAML_NATIVE_LINK_FLAGS = -I $(LIB_DIR)
+OCAMLYACCFLAGS += -v
 .SUBDIRS: lib src tests
 
 test:

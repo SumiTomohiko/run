@@ -11,11 +11,13 @@
 src/Lexer.ml
 src/Parser.ml
 src/Parser.mli
+src/Parser.output
 src/run
 src/run.opt
 tests/Lexer.ml
 tests/Lexer.mli
 tests/Parser.ml
 tests/Parser.mli
+tests/Parser.output
 tests/run_test
 tests/run_test.opt
