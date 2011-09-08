@@ -33,9 +33,22 @@
 # Build an OCaml program
 #
 
-FILES[] = Value Node Parser Lexer Compiler Symboltbl Builtins Eval Main
+FILES[] =
+    Value
+    Node
+    Parser
+    Lexer
+    Op
+    OpList
+    Compiler
+    Symboltbl
+    Builtins
+    Eval
+    Main
 #
 PROGRAM = run
 OCAML_OTHER_LIBS += nums ensure
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
+
+# vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4

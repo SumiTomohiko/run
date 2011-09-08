@@ -1,31 +1,47 @@
 
-let rec compile_expr = function
-    Node.Add (operands) -> compile_binop operands Operation.Add
-  | Node.Assign { Node.left; Node.right } -> compile_expr right
+let rec compile_expr oplist = function
+    Node.Add (operands) -> compile_binop oplist operands Op.Add
+  | Node.Assign { Node.left; Node.right } -> compile_expr oplist right
   | Node.Call { Node.callee; Node.args } ->
-      let op = Operation.Call (List.length args) in
-      (compile_expr callee) @ (compile_exprs args) @ [op]
-  | Node.Const (v) -> [Operation.PushConst v]
-  | Node.Sub (operands) -> compile_binop operands Operation.Sub
-  | Node.Var (name) -> [Operation.PushLocal name]
-and compile_binop { Node.left; Node.right } op =
-  (compile_expr left) @ (compile_expr right) @ [op]
-and compile_exprs = function
-    expr :: exprs -> (compile_expr expr) @ (compile_exprs exprs)
-  | [] -> []
+      (compile_expr oplist callee;
+      compile_exprs oplist args;
+      OpList.add oplist (Op.Call (List.length args)))
+  | Node.Const (v) -> OpList.add oplist (Op.PushConst v)
+  | Node.Sub (operands) -> compile_binop oplist operands Op.Sub
+  | Node.Var (name) -> OpList.add oplist (Op.PushLocal name)
+and compile_binop oplist { Node.left; Node.right } op =
+  compile_expr oplist left;
+  compile_expr oplist right;
+  OpList.add oplist op
+and compile_exprs oplist = function
+    expr :: exprs -> (compile_expr oplist expr; compile_exprs oplist exprs)
+  | [] -> ()
 
-let rec compile_every { Node.patterns; Node.name; Node.stmts } =
-  let f pat init = init @ [Operation.PushConst (Value.String pat)] in
-  let ops1 = List.fold_right f patterns [] in
-  let g _ init = init @ [Operation.StoreLocal name] @ (compile stmts) in
-  let ops2 = List.fold_right g patterns [] in
-  ops1 @ ops2
-and compile_stmt = function
-    Node.Expr (expr) -> (compile_expr expr) @ [Operation.Pop]
-  | Node.Every (every) -> compile_every every
-and compile = function
-    stmt :: stmts -> (compile_stmt stmt) @ (compile stmts)
-  | [] -> []
+let rec compile_every oplist { Node.patterns; Node.name; Node.stmts } =
+  OpList.add oplist (Op.PushConst (Value.Bool false));
+  let f pattern _ =
+    OpList.add oplist (Op.PushConst (Value.String pattern));
+    OpList.add oplist Op.Expand in
+  List.fold_right f patterns ();
+  let last = Op.make_label () in
+  let top = Op.make_label () in
+  OpList.add_op oplist top;
+  OpList.add oplist (Op.JumpIfFalse last);
+  OpList.add oplist (Op.StoreLocal name);
+  compile_stmts oplist stmts;
+  OpList.add oplist (Op.Jump top);
+  OpList.add_op oplist last
+and compile_stmt oplist = function
+    Node.Expr (expr) -> (compile_expr oplist expr; OpList.add oplist Op.Pop)
+  | Node.Every (every) -> compile_every oplist every
+and compile_stmts oplist = function
+    hd :: tl -> (compile_stmt oplist hd; compile_stmts oplist tl)
+  | [] -> ()
+
+let compile stmts =
+  let oplist = OpList.make () in
+    compile_stmts oplist stmts;
+    OpList.top oplist
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

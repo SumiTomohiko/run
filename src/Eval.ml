@@ -1,7 +1,7 @@
 
 type frame = {
   locals: Symboltbl.t;
-  pc: Operation.t list ref;
+  mutable pc: Op.t option;
   stack: Value.t Stack.t;
   prev_frame: frame option;
   outer_frame: frame option
@@ -32,44 +32,50 @@ let find_local env frame name =
 let eval_op env frame op =
   let stack = frame.stack in
   match op with
-    Operation.Add ->
+    Op.Add ->
       let right = Stack.pop stack in
       let left = Stack.pop stack in
       (match left, right with
         Value.Int (n1), Value.Int (n2) ->
           Stack.push (Value.Int (Num.add_num n1 n2)) stack
       | _ -> raise (Failure "Unsupported operands for +"))
-  | Operation.Call (nargs) ->
+  | Op.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
-  | Operation.Pop -> ignore (Stack.pop stack)
-  | Operation.PushConst (v) -> Stack.push v stack
-  | Operation.PushLocal (name) -> Stack.push (find_local env frame name) stack
-  | Operation.StoreLocal (name) ->
+  | Op.Expand -> (* TODO *) ()
+  | Op.Jump (label) -> frame.pc <- Some label
+  | Op.JumpIfFalse (label) ->
+      (match Stack.top stack with
+        Value.Bool (false) -> ignore (Stack.pop stack); frame.pc <- Some label
+      | _ -> ())
+  | Op.Pop -> ignore (Stack.pop stack)
+  | Op.PushConst (v) -> Stack.push v stack
+  | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
+  | Op.StoreLocal (name) ->
       Symboltbl.add frame.locals name (Stack.pop stack)
-  | Operation.Sub ->
+  | Op.Sub ->
       let right = Stack.pop stack in
       let left = Stack.pop stack in
       (match left, right with
         Value.Int (n1), Value.Int (n2) ->
           Stack.push (Value.Int (Num.sub_num n1 n2)) stack
       | _ -> raise (Failure "Unsupported operands for -"))
+  | Op.Anchor -> ()
+  | Op.Label -> ()
 
 let rec eval_env env =
   let frame = Stack.top env.frames in
-  let pc = !(frame.pc) in
-  if List.length pc = 0 then
-    ()
-  else
-    let op = List.hd pc in
-    frame.pc := List.tl pc;
-    eval_op env frame op;
-    eval_env env
+  match frame.pc with
+    Some (op) ->
+      (frame.pc <- Op.next_of_op op;
+      eval_op env frame (Op.kind_of_op op);
+      eval_env env)
+  | None -> ()
 
 let eval ops =
   let frame = {
     locals=Symboltbl.create ();
-    pc=ref ops;
+    pc=Some ops;
     stack=Stack.create ();
     prev_frame=None;
     outer_frame=None } in

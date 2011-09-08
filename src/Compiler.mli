@@ -1,1 +1,1 @@
-val compile : Node.stmt list -> Operation.t list
+val compile : Node.stmt list -> Op.t

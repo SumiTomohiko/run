@@ -1,1 +1,1 @@
-val eval : Operation.t list -> unit
+val eval : Op.t -> unit
