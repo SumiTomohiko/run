@@ -16,6 +16,7 @@ and compile_exprs = function
 
 let compile_stmt = function
     Node.Expr (expr) -> (compile_expr expr) @ [Operation.Pop]
+  | Node.Every { Node.patterns; Node.name; Node.stmts } -> []
 
 let rec compile = function
     stmt :: stmts -> (compile_stmt stmt) @ (compile stmts)

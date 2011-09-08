@@ -1,6 +1,6 @@
-%token COLON EOF EQUAL FALSE LPAR MINUS NEWLINE PLUS RPAR TRUE
+%token AS COLON END EOF EQUAL EVERY FALSE LPAR MINUS NEWLINE PLUS RPAR TRUE
 %token <Num.num> INT
-%token <string> NAME
+%token <string> NAME PATTERN
 %start script
 %type <Node.stmt list> script
 %%
@@ -10,6 +10,14 @@ stmts : stmts stmt NEWLINE { $1 @ [$2] }
       | stmt NEWLINE { [$1] }
 ;
 stmt  : expr { Node.Expr $1 }
+      | EVERY patterns AS NAME NEWLINE stmts END {
+  Node.Every { Node.patterns=$2; Node.name=$4; Node.stmts=$6 }
+}
+;
+patterns  : patterns pattern { $1 @ [$2] }
+          | pattern { [$1] }
+;
+pattern : PATTERN { $1 }
 ;
 expr  : assign_expr { $1 }
 ;

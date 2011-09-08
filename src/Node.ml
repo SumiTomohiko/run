@@ -8,7 +8,10 @@ and expr =
   | Call of call
   | Sub of binop
   | Var of string
-and stmt = Expr of expr
+and every = { patterns: string list; name: string; stmts: stmt list }
+and stmt =
+    Every of every
+  | Expr of expr
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
