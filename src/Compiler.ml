@@ -14,11 +14,16 @@ and compile_exprs = function
     expr :: exprs -> (compile_expr expr) @ (compile_exprs exprs)
   | [] -> []
 
-let compile_stmt = function
+let rec compile_every { Node.patterns; Node.name; Node.stmts } =
+  let f pat init = init @ [Operation.PushConst (Value.String pat)] in
+  let ops1 = List.fold_right f patterns [] in
+  let g _ init = init @ [Operation.StoreLocal name] @ (compile stmts) in
+  let ops2 = List.fold_right g patterns [] in
+  ops1 @ ops2
+and compile_stmt = function
     Node.Expr (expr) -> (compile_expr expr) @ [Operation.Pop]
-  | Node.Every { Node.patterns; Node.name; Node.stmts } -> []
-
-let rec compile = function
+  | Node.Every (every) -> compile_every every
+and compile = function
     stmt :: stmts -> (compile_stmt stmt) @ (compile stmts)
   | [] -> []
 

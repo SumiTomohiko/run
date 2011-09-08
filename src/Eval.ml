@@ -45,6 +45,8 @@ let eval_op env frame op =
   | Operation.Pop -> ignore (Stack.pop stack)
   | Operation.PushConst (v) -> Stack.push v stack
   | Operation.PushLocal (name) -> Stack.push (find_local env frame name) stack
+  | Operation.StoreLocal (name) ->
+      Symboltbl.add frame.locals name (Stack.pop stack)
   | Operation.Sub ->
       let right = Stack.pop stack in
       let left = Stack.pop stack in

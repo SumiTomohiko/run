@@ -5,6 +5,7 @@ type t =
   | Pop
   | PushConst of Value.t
   | PushLocal of string
+  | StoreLocal of string
   | Sub
 
 (*
