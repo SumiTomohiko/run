@@ -5,7 +5,7 @@ dir=`dirname $0`
 find "${dir}" -name "test_*" -type f | while read t
 do
   echo "${t}"
-  "${dir}/run_test" "${t}"
+  "${dir}/run_test" "${t}" 2>&1
 done
 
 # vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
