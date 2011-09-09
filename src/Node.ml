@@ -10,7 +10,8 @@ and expr =
   | Var of string
 and every = { patterns: string list; name: string; stmts: stmt list }
 and stmt =
-    Every of every
+    Command of string list
+  | Every of every
   | Expr of expr
 
 (*

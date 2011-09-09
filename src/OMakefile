@@ -47,7 +47,7 @@ FILES[] =
     Main
 #
 PROGRAM = run
-OCAML_OTHER_LIBS += nums ensure
+OCAML_OTHER_LIBS += unix nums ensure
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
 

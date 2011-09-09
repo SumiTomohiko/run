@@ -1,4 +1,5 @@
-%token AS COLON END EOF EQUAL EVERY FALSE LPAR MINUS NEWLINE PLUS RPAR TRUE
+%token AS COLON COMMA END EOF EQUAL EVERY FALSE LPAR MINUS NEWLINE PLUS RPAR
+%token TRUE
 %token <Num.num> INT
 %token <string> NAME PATTERN
 %start script
@@ -13,6 +14,7 @@ stmt  : expr { Node.Expr $1 }
       | EVERY patterns AS NAME NEWLINE stmts END {
   Node.Every { Node.patterns=$2; Node.name=$4; Node.stmts=$6 }
 }
+       | patterns { Node.Command $1 }
 ;
 patterns  : patterns pattern { $1 @ [$2] }
           | pattern { [$1] }
@@ -59,7 +61,7 @@ postfix_expr  : atom { $1 }
   Node.Call { Node.callee=$1; Node.args=$3 }
 }
 ;
-exprs : exprs COLON expr { $1 @ [$3] }
+exprs : exprs COMMA expr { $1 @ [$3] }
       | expr { [$1] }
 ;
 atom  : TRUE { Node.Const (Value.Bool (true)) }

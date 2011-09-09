@@ -2,6 +2,7 @@
 type kind =
     Add
   | Call of int
+  | Exec of int
   | Expand
   | Jump of t
   | JumpIfFalse of t
@@ -23,6 +24,7 @@ let kind_of_op op = op.kind
 let name_of_op = function
     Add -> "Add"
   | Call (_) -> "Call"
+  | Exec (_) -> "Exec"
   | Expand -> "Expand"
   | Jump (_) -> "Jump"
   | JumpIfFalse (_) -> "JumpIfFalse"

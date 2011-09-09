@@ -14,7 +14,7 @@ type env = {
 
 let rec pop_args stack = function
     0 -> []
-  | n -> (pop_args stack (n - 1)) @ [Stack.pop stack]
+  | n -> let last = Stack.pop stack in (pop_args stack (n - 1)) @ [last]
 
 let call env callee args =
   match callee with
@@ -42,6 +42,18 @@ let eval_op env frame op =
   | Op.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
+  | Op.Exec (nargs) ->
+      let string_of_value = (function
+          Value.String (s) -> s
+        | _ -> raise (Failure "Unsupported command")) in
+      let args = List.map string_of_value (pop_args frame.stack nargs) in
+      let create_process = Unix.create_process in
+      let prog = List.hd args in
+      let stdin = Unix.stdin in
+      let stdout = Unix.stdout in
+      let stderr = Unix.stderr in
+      let pid = create_process prog (Array.of_list args) stdin stdout stderr in
+      ignore (Unix.waitpid [] pid)
   | Op.Expand -> (* TODO *) ()
   | Op.Jump (label) -> frame.pc <- Some label
   | Op.JumpIfFalse (label) ->

@@ -38,7 +38,11 @@ let rec compile_every oplist { Node.patterns; Node.name; Node.stmts } =
   OpList.add oplist (Op.Jump top);
   OpList.add_op oplist last
 and compile_stmt oplist = function
-    Node.Expr (expr) -> (compile_expr oplist expr; OpList.add oplist Op.Pop)
+    Node.Command (patterns) ->
+      let f _ pat = OpList.add oplist (Op.PushConst (Value.String pat)) in
+      (List.fold_left f () patterns;
+      OpList.add oplist (Op.Exec (List.length patterns)))
+  | Node.Expr (expr) -> (compile_expr oplist expr; OpList.add oplist Op.Pop)
   | Node.Every (every) -> compile_every oplist every
 and compile_stmts oplist = function
     hd :: tl -> (compile_stmt oplist hd; compile_stmts oplist tl)
