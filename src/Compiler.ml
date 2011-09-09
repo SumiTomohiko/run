@@ -1,7 +1,13 @@
 
 let rec compile_expr oplist = function
     Node.Add (operands) -> compile_binop oplist operands Op.Add
-  | Node.Assign { Node.left; Node.right } -> compile_expr oplist right
+  | Node.Assign { Node.left; Node.right } ->
+      (compile_expr oplist right;
+      match left with
+        Node.Var (name) ->
+          (OpList.add oplist (Op.StoreLocal name);
+          OpList.add oplist (Op.PushLocal name))
+      | _ -> raise (Failure "Unsupported assign expression"))
   | Node.Call { Node.callee; Node.args } ->
       (compile_expr oplist callee;
       compile_exprs oplist args;

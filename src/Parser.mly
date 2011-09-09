@@ -22,7 +22,7 @@ pattern : PATTERN { $1 }
 expr  : assign_expr { $1 }
 ;
 assign_expr : postfix_expr EQUAL conditional_expr {
-  Node.Assign ({ Node.left=$1; Node.right=$3 })
+  Node.Assign { Node.left=$1; Node.right=$3 }
 }
             | conditional_expr { $1 }
 ;

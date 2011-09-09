@@ -21,6 +21,7 @@ rule script_token = parse
   | '+' { Parser.PLUS }
   | '-' { Parser.MINUS }
   | '.' { Parser.COLON }
+  | '=' { Parser.EQUAL }
   | '\n' { Parser.NEWLINE }
   | alpha alnum* as s { Parser.NAME s }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
