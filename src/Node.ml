@@ -6,6 +6,7 @@ and expr =
   | Assign of binop
   | Call of call
   | Const of Value.t
+  | DivDiv of binop
   | Mul of binop
   | Sub of binop
   | Var of string

@@ -2,6 +2,7 @@
 type kind =
     Add
   | Call of int
+  | DivDiv
   | Exec of int
   | Expand
   | Jump of t
@@ -25,6 +26,7 @@ let kind_of_op op = op.kind
 let name_of_op = function
     Add -> "Add"
   | Call (_) -> "Call"
+  | DivDiv -> "DivDiv"
   | Exec (_) -> "Exec"
   | Expand -> "Expand"
   | Jump (_) -> "Jump"

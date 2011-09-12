@@ -50,6 +50,7 @@ let eval_op env frame op =
   | Op.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
+  | Op.DivDiv -> eval_binop stack (fun n m -> Num.floor_num (Num.div_num n m))
   | Op.Exec (nargs) ->
       let string_of_value = (function
           Value.String (s) -> s

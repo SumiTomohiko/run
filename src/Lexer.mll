@@ -16,6 +16,7 @@ let alnum = alpha | digit
 
 rule script_token = parse
     eof { Parser.EOF }
+  | "//" { Parser.DIV_DIV }
   | "as" { Parser.AS }
   | "end" { Parser.END }
   | "every" { switch_to_command (); Parser.EVERY }
