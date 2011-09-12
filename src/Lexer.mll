@@ -30,6 +30,7 @@ rule script_token = parse
   | ',' { Parser.COMMA }
   | '-' { Parser.MINUS }
   | '.' { Parser.COLON }
+  | '/' { Parser.DIV }
   | '=' { Parser.EQUAL }
   | '\n' { Parser.NEWLINE }
   | alpha alnum* as s {

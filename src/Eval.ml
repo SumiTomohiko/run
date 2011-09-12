@@ -33,21 +33,29 @@ let eval_binop stack intf floatf =
   let right = Stack.pop stack in
   let left = Stack.pop stack in
   let result = match left, right with
-      Value.Int (n), Value.Int (m) -> Value.Int (intf n m)
-    | Value.Float (x), Value.Float (y) -> Value.Float (floatf x y)
+      Value.Int (n), Value.Int (m) -> intf n m
+    | Value.Float (x), Value.Float (y) -> floatf x y
     | _ -> raise (Failure "Unsupported operands for -") in
   Stack.push result stack
 
 let eval_op env frame op =
   let stack = frame.stack in
   match op with
-    Op.Add -> eval_binop stack Num.add_num (+.)
+    Op.Add ->
+      let intf n m = Value.Int (Num.add_num n m) in
+      let floatf x y = Value.Float (x +. y) in
+      eval_binop stack intf floatf
   | Op.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
+  | Op.Div ->
+      let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
+      let floatf x y = Value.Float (x /. y) in
+      eval_binop stack intf floatf
   | Op.DivDiv ->
-      let intf n m = Num.floor_num (Num.div_num n m) in
-      eval_binop stack intf (/.)
+      let intf n m = Value.Int (Num.floor_num (Num.div_num n m)) in
+      let floatf x y = Value.Float (x /. y) in
+      eval_binop stack intf floatf
   | Op.Exec (nargs) ->
       let string_of_value = (function
           Value.String (s) -> s
@@ -66,13 +74,19 @@ let eval_op env frame op =
       (match Stack.top stack with
         Value.Bool (false) -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
-  | Op.Mul -> eval_binop stack Num.mult_num ( *. )
+  | Op.Mul ->
+      let intf n m = Value.Int (Num.mult_num n m) in
+      let floatf x y = Value.Float (x *. y) in
+      eval_binop stack intf floatf
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushConst (v) -> Stack.push v stack
   | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
   | Op.StoreLocal (name) ->
       Symboltbl.add frame.locals name (Stack.pop stack)
-  | Op.Sub -> eval_binop stack Num.sub_num (-.)
+  | Op.Sub ->
+      let intf n m = Value.Int (Num.sub_num n m) in
+      let floatf x y = Value.Float (x -. y) in
+      eval_binop stack intf floatf
   | Op.Anchor -> ()
   | Op.Label -> ()
 
