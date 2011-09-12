@@ -23,6 +23,7 @@ rule script_token = parse
   | "false" { Parser.FALSE }
   | "true" { Parser.TRUE }
   | ' '+ { script_token lexbuf }
+  | '"' { string_token "" lexbuf }
   | '(' { Parser.LPAR }
   | ')' { Parser.RPAR }
   | '*' { Parser.STAR }
@@ -52,6 +53,9 @@ and command_token = parse
   | ' ' { command_token lexbuf }
   | '\n' { switch_to_script (); Parser.NEWLINE }
   | [^' ' '\n']+ as s { Parser.PATTERN s }
+and string_token s = parse
+    '"' { Parser.STRING s }
+  | [^'"']* as t { string_token (s ^ t) lexbuf }
 
 {
 let token lexbuf =

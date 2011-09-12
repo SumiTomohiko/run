@@ -2,7 +2,7 @@
 %token PLUS RPAR STAR TRUE
 %token <Num.num> INT
 %token <float> FLOAT
-%token <string> NAME PATTERN
+%token <string> NAME PATTERN STRING
 %start script
 %type <Node.stmt list> script
 %%
@@ -72,6 +72,7 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | FALSE { Node.Const (Value.Bool false) }
       | INT { Node.Const (Value.Int $1) }
       | FLOAT { Node.Const (Value.Float $1) }
+      | STRING { Node.Const (Value.String $1) }
       | NAME { Node.Var ($1) }
 ;
 /**
