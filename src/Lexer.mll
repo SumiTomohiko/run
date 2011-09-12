@@ -43,6 +43,7 @@ rule script_token = parse
       | '=' -> Parser.NAME s
       | _ -> (switch_to_command (); Parser.PATTERN s)
   }
+  | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
   | digit+ alpha+ alnum* as s { switch_to_command (); Parser.PATTERN s }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token = parse

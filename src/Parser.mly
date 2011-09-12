@@ -1,6 +1,7 @@
 %token AS COLON COMMA DIV_DIV END EOF EQUAL EVERY FALSE LPAR MINUS NEWLINE PLUS
 %token RPAR STAR TRUE
 %token <Num.num> INT
+%token <float> FLOAT
 %token <string> NAME PATTERN
 %start script
 %type <Node.stmt list> script
@@ -66,9 +67,10 @@ postfix_expr  : atom { $1 }
 exprs : exprs COMMA expr { $1 @ [$3] }
       | expr { [$1] }
 ;
-atom  : TRUE { Node.Const (Value.Bool (true)) }
-      | FALSE { Node.Const (Value.Bool (false)) }
-      | INT { Node.Const (Value.Int ($1)) }
+atom  : TRUE { Node.Const (Value.Bool true) }
+      | FALSE { Node.Const (Value.Bool false) }
+      | INT { Node.Const (Value.Int $1) }
+      | FLOAT { Node.Const (Value.Float $1) }
       | NAME { Node.Var ($1) }
 ;
 /**

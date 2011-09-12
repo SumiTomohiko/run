@@ -29,28 +29,25 @@ let find_local env frame name =
   with
     Not_found -> find_global env name
 
-let eval_binop stack intf =
+let eval_binop stack intf floatf =
   let right = Stack.pop stack in
   let left = Stack.pop stack in
   let result = match left, right with
       Value.Int (n), Value.Int (m) -> Value.Int (intf n m)
+    | Value.Float (x), Value.Float (y) -> Value.Float (floatf x y)
     | _ -> raise (Failure "Unsupported operands for -") in
   Stack.push result stack
 
 let eval_op env frame op =
   let stack = frame.stack in
   match op with
-    Op.Add ->
-      let right = Stack.pop stack in
-      let left = Stack.pop stack in
-      (match left, right with
-        Value.Int (n1), Value.Int (n2) ->
-          Stack.push (Value.Int (Num.add_num n1 n2)) stack
-      | _ -> raise (Failure "Unsupported operands for +"))
+    Op.Add -> eval_binop stack Num.add_num (+.)
   | Op.Call (nargs) ->
       let args = pop_args frame.stack nargs in
       Stack.push (call env (Stack.pop stack) args) stack
-  | Op.DivDiv -> eval_binop stack (fun n m -> Num.floor_num (Num.div_num n m))
+  | Op.DivDiv ->
+      let intf n m = Num.floor_num (Num.div_num n m) in
+      eval_binop stack intf (/.)
   | Op.Exec (nargs) ->
       let string_of_value = (function
           Value.String (s) -> s
@@ -69,13 +66,13 @@ let eval_op env frame op =
       (match Stack.top stack with
         Value.Bool (false) -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
-  | Op.Mul -> eval_binop stack (fun n m -> Num.mult_num n m)
+  | Op.Mul -> eval_binop stack Num.mult_num ( *. )
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushConst (v) -> Stack.push v stack
   | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
   | Op.StoreLocal (name) ->
       Symboltbl.add frame.locals name (Stack.pop stack)
-  | Op.Sub -> eval_binop stack (fun n m -> Num.sub_num n m)
+  | Op.Sub -> eval_binop stack Num.sub_num (-.)
   | Op.Anchor -> ()
   | Op.Label -> ()
 

@@ -3,6 +3,7 @@ let string_of_value = function
     Value.Nil -> "nil"
   | Value.Bool (b) -> if b then "true" else "false"
   | Value.Int (n) -> Num.string_of_num n
+  | Value.Float (f) -> string_of_float f
   | Value.String (s) -> s
   | Value.Function (_) -> "Function"
 

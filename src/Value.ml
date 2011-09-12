@@ -3,6 +3,7 @@ type t =
     Nil
   | Bool of bool
   | Int of Num.num
+  | Float of float
   | String of string
   | Function of (t list -> t)
 
