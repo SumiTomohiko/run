@@ -1,0 +1,4 @@
+SRC:
+puts("foo" * 42)
+OUT:
+foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo
