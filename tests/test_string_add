@@ -1,0 +1,4 @@
+SRC:
+puts("foobar" + "bazquux")
+OUT:
+foobarbazquux
