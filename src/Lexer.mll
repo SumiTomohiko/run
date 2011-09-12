@@ -24,6 +24,7 @@ rule script_token = parse
   | ' '+ { script_token lexbuf }
   | '(' { Parser.LPAR }
   | ')' { Parser.RPAR }
+  | '*' { Parser.STAR }
   | '+' { Parser.PLUS }
   | ',' { Parser.COMMA }
   | '-' { Parser.MINUS }

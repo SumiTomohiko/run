@@ -4,8 +4,9 @@ and call = { callee: expr; args: expr list }
 and expr =
     Add of binop
   | Assign of binop
-  | Const of Value.t
   | Call of call
+  | Const of Value.t
+  | Mul of binop
   | Sub of binop
   | Var of string
 and every = { patterns: string list; name: string; stmts: stmt list }

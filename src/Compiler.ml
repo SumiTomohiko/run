@@ -13,6 +13,7 @@ let rec compile_expr oplist = function
       compile_exprs oplist args;
       OpList.add oplist (Op.Call (List.length args)))
   | Node.Const (v) -> OpList.add oplist (Op.PushConst v)
+  | Node.Mul (operands) -> compile_binop oplist operands Op.Mul
   | Node.Sub (operands) -> compile_binop oplist operands Op.Sub
   | Node.Var (name) -> OpList.add oplist (Op.PushLocal name)
 and compile_binop oplist { Node.left; Node.right } op =

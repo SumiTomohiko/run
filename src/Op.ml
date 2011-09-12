@@ -6,6 +6,7 @@ type kind =
   | Expand
   | Jump of t
   | JumpIfFalse of t
+  | Mul
   | Pop
   | PushConst of Value.t
   | PushLocal of string
@@ -28,11 +29,13 @@ let name_of_op = function
   | Expand -> "Expand"
   | Jump (_) -> "Jump"
   | JumpIfFalse (_) -> "JumpIfFalse"
+  | Mul -> "Mul"
   | Pop -> "Pop"
   | PushConst (_) -> "PushConst"
   | PushLocal (_) -> "PushLocal"
   | StoreLocal (_) -> "StoreLocal"
   | Sub -> "Sub"
+
   | Anchor -> "Anchor"
   | Label -> "Label"
 

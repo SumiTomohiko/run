@@ -1,5 +1,5 @@
 %token AS COLON COMMA END EOF EQUAL EVERY FALSE LPAR MINUS NEWLINE PLUS RPAR
-%token TRUE
+%token STAR TRUE
 %token <Num.num> INT
 %token <string> NAME PATTERN
 %start script
@@ -50,7 +50,8 @@ arith_expr  : arith_expr PLUS term { Node.Add { Node.left=$1; Node.right=$3 } }
             | arith_expr MINUS term { Node.Sub { Node.left=$1; Node.right=$3 } }
             | term { $1 }
 ;
-term  : factor { $1 }
+term  : term STAR factor { Node.Mul { Node.left=$1; Node.right=$3 }}
+      | factor { $1 }
 ;
 factor  : power { $1 }
 ;

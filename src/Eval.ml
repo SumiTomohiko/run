@@ -29,6 +29,14 @@ let find_local env frame name =
   with
     Not_found -> find_global env name
 
+let eval_binop stack intf =
+  let right = Stack.pop stack in
+  let left = Stack.pop stack in
+  let result = match left, right with
+      Value.Int (n), Value.Int (m) -> Value.Int (intf n m)
+    | _ -> raise (Failure "Unsupported operands for -") in
+  Stack.push result stack
+
 let eval_op env frame op =
   let stack = frame.stack in
   match op with
@@ -60,18 +68,13 @@ let eval_op env frame op =
       (match Stack.top stack with
         Value.Bool (false) -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
+  | Op.Mul -> eval_binop stack (fun n m -> Num.mult_num n m)
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushConst (v) -> Stack.push v stack
   | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
   | Op.StoreLocal (name) ->
       Symboltbl.add frame.locals name (Stack.pop stack)
-  | Op.Sub ->
-      let right = Stack.pop stack in
-      let left = Stack.pop stack in
-      (match left, right with
-        Value.Int (n1), Value.Int (n2) ->
-          Stack.push (Value.Int (Num.sub_num n1 n2)) stack
-      | _ -> raise (Failure "Unsupported operands for -"))
+  | Op.Sub -> eval_binop stack (fun n m -> Num.sub_num n m)
   | Op.Anchor -> ()
   | Op.Label -> ()
 
