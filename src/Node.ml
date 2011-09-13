@@ -9,9 +9,9 @@ and expr =
   | Assign of binop
   | Call of call
   | Const of Value.t
+  | Dict of pair list
   | Div of binop
   | DivDiv of binop
-  | Hash of pair list
   | Mul of binop
   | Sub of binop
   | Subscript of subscript

@@ -8,7 +8,7 @@ let rec string_of_value = function
   | Value.Array a ->
       let strings = Array.to_list (Array.map string_of_value a) in
       "[" ^ (String.concat ", " strings) ^ "]"
-  | Value.Hash h ->
+  | Value.Dict h ->
       let string_of_pair key value init =
         let pair = (string_of_value key) ^ ": " ^ (string_of_value value) in
         pair :: init in

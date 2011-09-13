@@ -16,7 +16,7 @@ Features
   * Array
   * Bool
   * Float
-  * Hash
+  * Dictionary (Hash)
   * Int
   * String
 * Structured programming with ``for``, ``while`` and ``if`` statements
