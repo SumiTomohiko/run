@@ -5,6 +5,7 @@ type t =
   | Int of Num.num
   | Float of float
   | String of string
+  | Array of t array
   | Function of (t list -> t)
 
 (*

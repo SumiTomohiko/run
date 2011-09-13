@@ -1,6 +1,9 @@
 
 let rec compile_expr oplist = function
     Node.Add (operands) -> compile_binop oplist operands Op.Add
+  | Node.Array exprs ->
+      (compile_exprs oplist exprs;
+      OpList.add oplist (Op.MakeArray (List.length exprs)))
   | Node.Assign { Node.left; Node.right } ->
       (compile_expr oplist right;
       match left with

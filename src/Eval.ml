@@ -68,7 +68,7 @@ let eval_op env frame op =
       let string_of_value = (function
           Value.String (s) -> s
         | _ -> raise (Failure "Unsupported command")) in
-      let args = List.map string_of_value (pop_args frame.stack nargs) in
+      let args = List.map string_of_value (pop_args stack nargs) in
       let create_process = Unix.create_process in
       let prog = List.hd args in
       let stdin = Unix.stdin in
@@ -82,6 +82,8 @@ let eval_op env frame op =
       (match Stack.top stack with
         Value.Bool (false) -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
+  | Op.MakeArray size ->
+      Stack.push (Value.Array (Array.of_list (pop_args stack size))) stack
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in

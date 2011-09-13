@@ -3,6 +3,7 @@ type binop = { left: expr; right: expr }
 and call = { callee: expr; args: expr list }
 and expr =
     Add of binop
+  | Array of expr list
   | Assign of binop
   | Call of call
   | Const of Value.t

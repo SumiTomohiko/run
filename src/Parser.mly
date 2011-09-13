@@ -1,5 +1,5 @@
-%token AS COLON COMMA DIV DIV_DIV END EOF EQUAL EVERY FALSE LPAR MINUS NEWLINE
-%token PLUS RPAR STAR TRUE
+%token AS COLON COMMA DIV DIV_DIV END EOF EQUAL EVERY FALSE LBRACKET LPAR MINUS
+%token NEWLINE PLUS RBRACKET RPAR STAR TRUE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -73,6 +73,8 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | INT { Node.Const (Value.Int $1) }
       | FLOAT { Node.Const (Value.Float $1) }
       | STRING { Node.Const (Value.String $1) }
+      | LBRACKET exprs RBRACKET { Node.Array $2 }
+      | LBRACKET RBRACKET { Node.Array [] }
       | NAME { Node.Var ($1) }
 ;
 /**

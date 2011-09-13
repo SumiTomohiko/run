@@ -8,6 +8,7 @@ type kind =
   | Expand
   | Jump of t
   | JumpIfFalse of t
+  | MakeArray of int
   | Mul
   | Pop
   | PushConst of Value.t
@@ -33,6 +34,7 @@ let name_of_op = function
   | Expand -> "Expand"
   | Jump (_) -> "Jump"
   | JumpIfFalse (_) -> "JumpIfFalse"
+  | MakeArray _ -> "MakeArray"
   | Mul -> "Mul"
   | Pop -> "Pop"
   | PushConst (_) -> "PushConst"

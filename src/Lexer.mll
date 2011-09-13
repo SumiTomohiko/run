@@ -33,7 +33,9 @@ rule script_token = parse
   | '.' { Parser.COLON }
   | '/' { Parser.DIV }
   | '=' { Parser.EQUAL }
+  | '[' { Parser.LBRACKET }
   | '\n' { Parser.NEWLINE }
+  | ']' { Parser.RBRACKET }
   | alpha alnum* as s {
     if not !top_of_line then
       Parser.NAME s

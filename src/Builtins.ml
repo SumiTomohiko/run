@@ -1,10 +1,13 @@
 
-let string_of_value = function
+let rec string_of_value = function
     Value.Nil -> "nil"
   | Value.Bool (b) -> if b then "true" else "false"
   | Value.Int (n) -> Num.string_of_num n
   | Value.Float (f) -> string_of_float f
   | Value.String (s) -> s
+  | Value.Array a ->
+      let strings = Array.to_list (Array.map string_of_value a) in
+      "[" ^ String.concat ", " strings ^ "]"
   | Value.Function (_) -> "Function"
 
 let output args f =
