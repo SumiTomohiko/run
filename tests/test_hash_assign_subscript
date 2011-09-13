@@ -1,0 +1,6 @@
+SRC:
+foo = {}
+foo[42] = 26
+puts(foo[42])
+OUT:
+26
