@@ -84,7 +84,7 @@ let eval_op env frame op =
       | _ -> ())
   | Op.MakeArray size ->
       Stack.push (Value.Array (Array.of_list (pop_args stack size))) stack
-  | Op.MakeHash size ->
+  | Op.MakeDict size ->
       let hash = Hashtbl.create 0 in
       let rec iter n =
         if n = 0 then
@@ -95,7 +95,7 @@ let eval_op env frame op =
           Hashtbl.replace hash key value;
           iter (n - 1) in
       iter size;
-      Stack.push (Value.Hash hash) stack
+      Stack.push (Value.Dict hash) stack
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in
@@ -116,7 +116,7 @@ let eval_op env frame op =
       let value = Stack.top stack in
       (match prefix, index with
         Value.Array (a), Value.Int (Num.Int (n)) -> Array.set a n value
-      | Value.Hash h, _ -> Hashtbl.replace h index value
+      | Value.Dict h, _ -> Hashtbl.replace h index value
       | _ -> raise (Failure "Invalid subscript operation"))
   | Op.Sub ->
       let intf n m = Value.Int (Num.sub_num n m) in
@@ -127,7 +127,7 @@ let eval_op env frame op =
       let prefix = Stack.pop stack in
       let value = match prefix, index with
         Value.Array (a), Value.Int (Num.Int (n)) -> Array.get a n
-      | Value.Hash h, _ -> Hashtbl.find h index
+      | Value.Dict h, _ -> Hashtbl.find h index
       | _ -> raise (Failure "Invalid subscript operation") in
       Stack.push value stack
 

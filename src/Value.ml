@@ -6,7 +6,7 @@ type t =
   | Float of float
   | String of string
   | Array of t array
-  | Hash of (t, t) Hashtbl.t
+  | Dict of (t, t) Hashtbl.t
   | Function of (t list -> t)
 
 (*

@@ -78,8 +78,8 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | STRING { Node.Const (Value.String $1) }
       | LBRACKET exprs RBRACKET { Node.Array $2 }
       | LBRACKET RBRACKET { Node.Array [] }
-      | LBRACE pairs RBRACE { Node.Hash $2 }
-      | LBRACE RBRACE { Node.Hash [] }
+      | LBRACE pairs RBRACE { Node.Dict $2 }
+      | LBRACE RBRACE { Node.Dict [] }
       | NAME { Node.Var ($1) }
 ;
 pairs : pair { [$1] }
