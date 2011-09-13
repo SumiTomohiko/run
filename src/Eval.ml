@@ -98,10 +98,25 @@ let eval_op env frame op =
   | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
   | Op.StoreLocal (name) ->
       Symboltbl.add frame.locals name (Stack.pop stack)
+  | Op.StoreSubscript ->
+      let index = Stack.pop stack in
+      let prefix = Stack.pop stack in
+      let value = Stack.top stack in
+      (match prefix, index with
+        Value.Array (a), Value.Int (Num.Int (n)) -> Array.set a n value
+      | _ -> raise (Failure "Invalid subscript operation"))
   | Op.Sub ->
       let intf n m = Value.Int (Num.sub_num n m) in
       let floatf x y = Value.Float (x -. y) in
       eval_binop stack intf floatf error error
+  | Op.Subscript ->
+      let index = Stack.pop stack in
+      let prefix = Stack.pop stack in
+      let value = match prefix, index with
+        Value.Array (a), Value.Int (Num.Int (n)) -> Array.get a n
+      | _ -> raise (Failure "Invalid subscript operation") in
+      Stack.push value stack
+
   | Op.Anchor -> ()
   | Op.Label -> ()
 

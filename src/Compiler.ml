@@ -7,7 +7,11 @@ let rec compile_expr oplist = function
   | Node.Assign { Node.left; Node.right } ->
       (compile_expr oplist right;
       match left with
-        Node.Var (name) ->
+        Node.Subscript { Node.prefix; Node.index } ->
+          (compile_expr oplist prefix;
+          compile_expr oplist index;
+          OpList.add oplist Op.StoreSubscript)
+      | Node.Var (name) ->
           (OpList.add oplist (Op.StoreLocal name);
           OpList.add oplist (Op.PushLocal name))
       | _ -> raise (Failure "Unsupported assign expression"))
@@ -20,6 +24,10 @@ let rec compile_expr oplist = function
   | Node.DivDiv (operands) -> compile_binop oplist operands Op.DivDiv
   | Node.Mul (operands) -> compile_binop oplist operands Op.Mul
   | Node.Sub (operands) -> compile_binop oplist operands Op.Sub
+  | Node.Subscript { Node.prefix; Node.index } ->
+      (compile_expr oplist prefix;
+      compile_expr oplist index;
+      OpList.add oplist Op.Subscript)
   | Node.Var (name) -> OpList.add oplist (Op.PushLocal name)
 and compile_binop oplist { Node.left; Node.right } op =
   compile_expr oplist left;

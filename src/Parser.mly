@@ -60,10 +60,13 @@ factor  : power { $1 }
 ;
 power : postfix_expr { $1 }
 ;
-postfix_expr  : atom { $1 }
-              | postfix_expr LPAR exprs RPAR {
+postfix_expr  : postfix_expr LPAR exprs RPAR {
   Node.Call { Node.callee=$1; Node.args=$3 }
 }
+              | postfix_expr LBRACKET expr RBRACKET {
+  Node.Subscript { Node.prefix=$1; Node.index=$3 }
+}
+              | atom { $1 }
 ;
 exprs : exprs COMMA expr { $1 @ [$3] }
       | expr { [$1] }

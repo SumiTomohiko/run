@@ -44,6 +44,7 @@ rule script_token = parse
       let pos = lexbuf.Lexing.lex_curr_pos in
       match peek_next_char buf pos with
         '('
+      | '['
       | '=' -> Parser.NAME s
       | _ -> (switch_to_command (); Parser.PATTERN s)
   }

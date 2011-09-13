@@ -14,7 +14,9 @@ type kind =
   | PushConst of Value.t
   | PushLocal of string
   | StoreLocal of string
+  | StoreSubscript
   | Sub
+  | Subscript
 
   (* For compiler *)
   | Anchor
@@ -40,7 +42,9 @@ let name_of_op = function
   | PushConst (_) -> "PushConst"
   | PushLocal (_) -> "PushLocal"
   | StoreLocal (_) -> "StoreLocal"
+  | StoreSubscript -> "StoreSubscript"
   | Sub -> "Sub"
+  | Subscript -> "Subscript"
 
   | Anchor -> "Anchor"
   | Label -> "Label"
