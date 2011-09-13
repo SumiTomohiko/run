@@ -22,6 +22,12 @@ let rec compile_expr oplist = function
   | Node.Const (v) -> OpList.add oplist (Op.PushConst v)
   | Node.Div (operands) -> compile_binop oplist operands Op.Div
   | Node.DivDiv (operands) -> compile_binop oplist operands Op.DivDiv
+  | Node.Hash pairs ->
+      let compile_pair { Node.key; Node.value } =
+        compile_expr oplist key;
+        compile_expr oplist value in
+      List.iter compile_pair pairs;
+      OpList.add oplist (Op.MakeHash (List.length pairs))
   | Node.Mul (operands) -> compile_binop oplist operands Op.Mul
   | Node.Sub (operands) -> compile_binop oplist operands Op.Sub
   | Node.Subscript { Node.prefix; Node.index } ->

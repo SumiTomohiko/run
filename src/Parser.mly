@@ -1,5 +1,5 @@
-%token AS COLON COMMA DIV DIV_DIV END EOF EQUAL EVERY FALSE LBRACKET LPAR MINUS
-%token NEWLINE PLUS RBRACKET RPAR STAR TRUE
+%token AS COLON COMMA DIV DIV_DIV END EOF EQUAL EVERY FALSE LBRACE LBRACKET LPAR
+%token MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -78,7 +78,14 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | STRING { Node.Const (Value.String $1) }
       | LBRACKET exprs RBRACKET { Node.Array $2 }
       | LBRACKET RBRACKET { Node.Array [] }
+      | LBRACE pairs RBRACE { Node.Hash $2 }
+      | LBRACE RBRACE { Node.Hash [] }
       | NAME { Node.Var ($1) }
+;
+pairs : pair { [$1] }
+      | pairs COMMA pair { $1 @ [$3] }
+;
+pair  : expr COLON expr { { Node.key=$1; Node.value=$3 } }
 ;
 /**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=sml

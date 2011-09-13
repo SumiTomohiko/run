@@ -30,12 +30,14 @@ rule script_token = parse
   | '+' { Parser.PLUS }
   | ',' { Parser.COMMA }
   | '-' { Parser.MINUS }
-  | '.' { Parser.COLON }
   | '/' { Parser.DIV }
+  | ':' { Parser.COLON }
   | '=' { Parser.EQUAL }
   | '[' { Parser.LBRACKET }
   | '\n' { Parser.NEWLINE }
   | ']' { Parser.RBRACKET }
+  | '{' { Parser.LBRACE }
+  | '}' { Parser.RBRACE }
   | alpha alnum* as s {
     if not !top_of_line then
       Parser.NAME s

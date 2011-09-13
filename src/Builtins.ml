@@ -7,7 +7,16 @@ let rec string_of_value = function
   | Value.String (s) -> s
   | Value.Array a ->
       let strings = Array.to_list (Array.map string_of_value a) in
-      "[" ^ String.concat ", " strings ^ "]"
+      "[" ^ (String.concat ", " strings) ^ "]"
+  | Value.Hash h ->
+      let string_of_pair key value init =
+        let pair = (string_of_value key) ^ ": " ^ (string_of_value value) in
+        pair :: init in
+      let pairs = Hashtbl.fold string_of_pair h [] in
+      if (List.length pairs = 0) then
+        "{}"
+      else
+        "{ " ^ (String.concat ", " pairs) ^ " }"
   | Value.Function (_) -> "Function"
 
 let output args f =
