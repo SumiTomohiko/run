@@ -8,14 +8,15 @@
 %%
 script  : stmts EOF { $1 }
 ;
-stmts : stmts stmt NEWLINE { $1 @ [$2] }
-      | stmt NEWLINE { [$1] }
+stmts : stmts stmt { match $2 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
+      | stmt { match $1 with Some stmt -> [stmt] | _ -> [] }
 ;
-stmt  : expr { Node.Expr $1 }
-      | EVERY patterns AS names NEWLINE stmts END {
-  Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 }
+stmt  : expr NEWLINE { Some (Node.Expr $1) }
+      | EVERY patterns AS names NEWLINE stmts END NEWLINE {
+  Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
 }
-       | patterns { Node.Command $1 }
+      | patterns NEWLINE { Some (Node.Command $1) }
+      | NEWLINE { None }
 ;
 names : NAME { [$1] }
       | names COMMA NAME { $1 @ [$3] }
