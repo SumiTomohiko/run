@@ -11,6 +11,7 @@ type kind =
   | JumpIfFalse of t
   | MakeArray of int
   | MakeDict of int
+  | MakeUserFunction of string list * int
   | Mul
   | Pop
   | PushConst of Value.t
@@ -41,6 +42,7 @@ let name_of_op = function
   | JumpIfFalse (_) -> "JumpIfFalse"
   | MakeArray _ -> "MakeArray"
   | MakeDict _ -> "MakeDict"
+  | MakeUserFunction _ -> "MakeUserFunction"
   | Mul -> "Mul"
   | Pop -> "Pop"
   | PushConst (_) -> "PushConst"
@@ -52,6 +54,12 @@ let name_of_op = function
 
   | Anchor -> "Anchor"
   | Label -> "Label"
+
+let ops: t list ref = ref []
+
+let register_ops op =
+  ops := !ops @ [op];
+  (List.length (!ops)) - 1
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

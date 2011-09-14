@@ -20,6 +20,19 @@ let call env callee args =
   match callee with
     Value.Function (f) -> f args
   | Value.Method (self, f) -> f self args
+  | Value.UserFunction (params, index) ->
+      let locals = Symboltbl.create () in
+      List.iter2 (fun param arg -> Symboltbl.add locals param arg) params args;
+      let ops = List.nth !Op.ops index in
+      let frame = {
+        locals=locals;
+        pc=Some ops;
+        stack=Stack.create ();
+        prev_frame=None;
+        outer_frame=None } in
+      Stack.push frame env.frames;
+      (* FIXME *)
+      Value.Nil
   | _ -> raise (Failure "Object is not callable")
 
 let find_global env = Symboltbl.find env.globals
@@ -129,6 +142,8 @@ let eval_op env frame op =
           iter (n - 1) in
       iter size;
       Stack.push (Value.Dict hash) stack
+  | Op.MakeUserFunction (args, ops_index) ->
+      Stack.push (Value.UserFunction (args, ops_index)) stack
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in

@@ -1,0 +1,9 @@
+SRC:
+def foo(bar, baz)
+  puts(bar)
+  puts(baz)
+end
+foo(42, 26)
+OUT:
+42
+26

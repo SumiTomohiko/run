@@ -1,5 +1,5 @@
-%token AS COLON COMMA DIV DIV_DIV DOT END EOF EQUAL EVERY FALSE LBRACE LBRACKET
-%token LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
+%token AS COLON COMMA DEF DIV DIV_DIV DOT END EOF EQUAL EVERY FALSE LBRACE
+%token LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -12,6 +12,12 @@ stmts : stmts stmt { match $2 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
       | stmt { match $1 with Some stmt -> [stmt] | _ -> [] }
 ;
 stmt  : expr NEWLINE { Some (Node.Expr $1) }
+      | DEF NAME LPAR names RPAR stmts END {
+  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=$6 })
+}
+      | DEF NAME LPAR RPAR stmts END {
+  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=$5 })
+}
       | EVERY patterns AS names NEWLINE stmts END NEWLINE {
   Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
 }

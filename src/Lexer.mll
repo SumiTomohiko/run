@@ -19,6 +19,7 @@ rule script_token = parse
   | "(:" { comment 1 lexbuf }
   | "//" { Parser.DIV_DIV }
   | "as" { Parser.AS }
+  | "def" { Parser.DEF }
   | "end" { Parser.END }
   | "every" { switch_to_command (); Parser.EVERY }
   | "false" { Parser.FALSE }

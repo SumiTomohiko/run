@@ -19,6 +19,7 @@ let rec string_of_value = function
         "{ " ^ (String.concat ", " pairs) ^ " }"
   | Value.Function (_) -> "Function"
   | Value.Method _ -> "Method"
+  | Value.UserFunction (_) -> "UserFunction"
 
 let output args f =
   List.fold_left (fun init v -> print_string (f v); init) Value.Nil args
