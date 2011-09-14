@@ -29,7 +29,7 @@ let main path =
   let test = parse_test path in
   let actual = write_src (Test.src_of_test test) exec_run in
   match (Test.out_of_test test) with
-    Some (out) -> assert (actual = out)
+    Some out -> assert (actual = out)
   | _ -> ()
 
 let _ = main (Array.get Sys.argv 1)

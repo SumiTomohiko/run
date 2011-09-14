@@ -18,7 +18,7 @@ let rec pop_args stack = function
 
 let call env callee args =
   match callee with
-    Value.Function (f) -> f args
+    Value.Function f -> f args
   | Value.Method (self, f) -> f self args
   | _ -> raise (Failure "Object is not callable")
 
@@ -37,11 +37,11 @@ let eval_binop stack intf floatf stringf string_intf =
   let right = Stack.pop stack in
   let left = Stack.pop stack in
   let result = match left, right with
-      Value.Int (n), Value.Int (m) -> intf n m
-    | Value.Float (x), Value.Float (y) -> floatf x y
-    | Value.String (s), Value.String (t) -> stringf s t
-    | Value.Int (n), Value.String (s) -> string_intf s n ""
-    | Value.String (s), Value.Int (n) -> string_intf s n ""
+      Value.Int n, Value.Int m -> intf n m
+    | Value.Float x, Value.Float y -> floatf x y
+    | Value.String s, Value.String t -> stringf s t
+    | Value.Int n, Value.String s -> string_intf s n ""
+    | Value.String s, Value.Int n -> string_intf s n ""
     | _ -> raise_unsupported_operands_error () in
   Stack.push result stack
 
@@ -80,7 +80,7 @@ let eval_op env frame op =
       let floatf x y = Value.Float (x +. y) in
       let stringf s t = Value.String (s ^ t) in
       eval_binop stack intf floatf stringf error
-  | Op.Call (nargs) ->
+  | Op.Call nargs ->
       let args = pop_args frame.stack nargs in
       let f = Stack.pop stack in
       (match f with
@@ -120,14 +120,14 @@ let eval_op env frame op =
   | Op.Expand -> (* TODO *) ()
   | Op.GetAttr name ->
       let attr = match Stack.pop stack with
-        Value.Array (a) -> get_array_attr a name
+        Value.Array a -> get_array_attr a name
       | Value.Dict h -> get_dict_attr h name
       | _ -> raise (Failure "Unknown object") in
       Stack.push attr stack
   | Op.Jump (label) -> frame.pc <- Some label
   | Op.JumpIfFalse (label) ->
       (match Stack.top stack with
-        Value.Bool (false) -> ignore (Stack.pop stack); frame.pc <- Some label
+        Value.Bool false -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
   | Op.MakeArray size ->
       Stack.push (Value.Array (Array.of_list (pop_args stack size))) stack
@@ -169,7 +169,7 @@ let eval_op env frame op =
       let prefix = Stack.pop stack in
       let value = Stack.top stack in
       (match prefix, index with
-        Value.Array (a), Value.Int (Num.Int (n)) -> Array.set a n value
+        Value.Array a, Value.Int (Num.Int n) -> Array.set a n value
       | Value.Dict h, _ -> Hashtbl.replace h index value
       | _ -> raise (Failure "Invalid subscript operation"))
   | Op.Sub ->
@@ -180,7 +180,7 @@ let eval_op env frame op =
       let index = Stack.pop stack in
       let prefix = Stack.pop stack in
       let value = match prefix, index with
-        Value.Array (a), Value.Int (Num.Int (n)) -> Array.get a n
+        Value.Array a, Value.Int (Num.Int n) -> Array.get a n
       | Value.Dict h, _ -> Hashtbl.find h index
       | _ -> raise (Failure "Invalid subscript operation") in
       Stack.push value stack
@@ -191,7 +191,7 @@ let eval_op env frame op =
 let rec eval_env env =
   let frame = Stack.top env.frames in
   match frame.pc with
-    Some (op) ->
+    Some op ->
       (frame.pc <- Op.next_of_op op;
       eval_op env frame (Op.kind_of_op op);
       eval_env env)

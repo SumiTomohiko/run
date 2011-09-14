@@ -11,7 +11,7 @@ let rec compile_expr oplist = function
           (compile_expr oplist prefix;
           compile_expr oplist index;
           OpList.add oplist Op.StoreSubscript)
-      | Node.Var (name) ->
+      | Node.Var name ->
           (OpList.add oplist (Op.StoreLocal name);
           OpList.add oplist (Op.PushLocal name))
       | _ -> raise (Failure "Unsupported assign expression"))
