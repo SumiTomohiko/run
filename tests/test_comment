@@ -1,0 +1,4 @@
+SRC:
+puts(42) # foobarbazquux
+OUT:
+42
