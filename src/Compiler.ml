@@ -46,8 +46,9 @@ and compile_exprs oplist = function
     expr :: exprs -> (compile_expr oplist expr; compile_exprs oplist exprs)
   | [] -> ()
 
-let rec compile_every oplist { Node.patterns; Node.name; Node.stmts } =
-  OpList.add oplist (Op.PushConst (Value.Bool false));
+let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
+  let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
+  List.iter push_false names;
   let f pattern _ =
     OpList.add oplist (Op.PushConst (Value.String pattern));
     OpList.add oplist Op.Expand in
@@ -56,7 +57,8 @@ let rec compile_every oplist { Node.patterns; Node.name; Node.stmts } =
   let top = Op.make_label () in
   OpList.add_op oplist top;
   OpList.add oplist (Op.JumpIfFalse last);
-  OpList.add oplist (Op.StoreLocal name);
+  let store name = OpList.add oplist (Op.StoreLocal name) in
+  List.iter store names;
   compile_stmts oplist stmts;
   OpList.add oplist (Op.Jump top);
   OpList.add_op oplist last

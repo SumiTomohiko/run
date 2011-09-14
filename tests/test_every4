@@ -1,0 +1,10 @@
+SRC:
+every foo bar 42 26 as baz, quux
+  puts(baz)
+  puts(quux)
+end
+OUT:
+foo
+bar
+42
+26

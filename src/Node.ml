@@ -18,7 +18,7 @@ and expr =
   | Sub of binop
   | Subscript of subscript
   | Var of string
-and every = { patterns: string list; name: string; stmts: stmt list }
+and every = { patterns: string list; names: string list; stmts: stmt list }
 and stmt =
     Command of string list
   | Every of every

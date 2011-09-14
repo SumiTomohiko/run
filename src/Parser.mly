@@ -12,10 +12,13 @@ stmts : stmts stmt NEWLINE { $1 @ [$2] }
       | stmt NEWLINE { [$1] }
 ;
 stmt  : expr { Node.Expr $1 }
-      | EVERY patterns AS NAME NEWLINE stmts END {
-  Node.Every { Node.patterns=$2; Node.name=$4; Node.stmts=$6 }
+      | EVERY patterns AS names NEWLINE stmts END {
+  Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 }
 }
        | patterns { Node.Command $1 }
+;
+names : NAME { [$1] }
+      | names COMMA NAME { $1 @ [$3] }
 ;
 patterns  : patterns pattern { $1 @ [$2] }
           | pattern { [$1] }
