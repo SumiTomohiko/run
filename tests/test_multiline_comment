@@ -1,0 +1,7 @@
+SRC:
+(:
+ : Here is a comment.
+ :)
+puts("42")
+OUT:
+42
