@@ -13,13 +13,17 @@ Features
 * External command executing with easy syntax
 * Powerfull redirecting
 * Basic Types
-  * Array
+  * Nil
   * Bool
-  * Float
-  * Dictionary (Hash)
   * Int
+  * Float
   * String
-* Structured programming with ``for``, ``while`` and ``if`` statements
+  * Array
+  * Dictionary (Hash)
+  * Function
+  * UserFunction
+  * Method
+* Structured programming with ``every``, ``while`` and ``if`` statements
 * Arithmetic operations
 * Function
 * UTF-8 (only) acceptable
