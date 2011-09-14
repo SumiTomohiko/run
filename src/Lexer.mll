@@ -16,6 +16,7 @@ let alnum = alpha | digit
 
 rule script_token = parse
     eof { Parser.EOF }
+  | "(:" { comment 1 lexbuf }
   | "//" { Parser.DIV_DIV }
   | "as" { Parser.AS }
   | "end" { Parser.END }
@@ -63,6 +64,12 @@ and command_token = parse
 and string_token s = parse
     '"' { Parser.STRING s }
   | [^'"']* as t { string_token (s ^ t) lexbuf }
+and comment depth = parse
+    ":)" {
+      if depth = 1 then script_token lexbuf else comment (depth - 1) lexbuf
+  }
+  | "(:" { comment (depth + 1) lexbuf }
+  | _ { comment depth lexbuf }
 
 {
 let token lexbuf =
