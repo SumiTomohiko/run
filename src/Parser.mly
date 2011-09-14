@@ -10,7 +10,7 @@ let add_return_nil stmts =
   | _ -> [Node.Return (Node.Const Value.Nil)]
 %}
 %token AS COLON COMMA DEF DIV DIV_DIV DOT END EOF EQUAL EVERY FALSE LBRACE
-%token LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
+%token LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RETURN RPAR STAR TRUE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -34,6 +34,7 @@ stmt  : expr NEWLINE { Some (Node.Expr $1) }
       | EVERY patterns AS names NEWLINE stmts END NEWLINE {
   Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
 }
+      | RETURN expr NEWLINE { Some (Node.Return $2) }
       | patterns NEWLINE { Some (Node.Command $1) }
       | NEWLINE { None }
 ;

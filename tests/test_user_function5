@@ -1,0 +1,7 @@
+SRC:
+def foo()
+  return 42
+end
+puts(foo())
+OUT:
+42

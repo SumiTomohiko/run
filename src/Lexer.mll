@@ -23,6 +23,7 @@ rule script_token = parse
   | "end" { Parser.END }
   | "every" { switch_to_command (); Parser.EVERY }
   | "false" { Parser.FALSE }
+  | "return" { Parser.RETURN }
   | "true" { Parser.TRUE }
   | ' '+ { script_token lexbuf }
   | '"' { string_token "" lexbuf }
