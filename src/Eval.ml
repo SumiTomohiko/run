@@ -52,6 +52,20 @@ let array_expand self _ =
       Value.String (String.concat " " strings)
   | _ -> raise (Failure "self must be Array")
 
+let dict_expand self _ =
+  match self with
+    Value.Dict h ->
+      let f key value init =
+        let s = Builtins.string_of_value key in
+        let t = Builtins.string_of_value value in
+        (s ^ " " ^ t) :: init in
+      Value.String (String.concat " " (Hashtbl.fold f h []))
+  | _ -> raise (Failure "self must be Dict")
+
+let get_dict_attr h = function
+    "expand" -> Value.Method ((Value.Dict h), dict_expand)
+  | name -> raise (Failure ("AttributeError: " ^ name))
+
 let get_array_attr a = function
     "size" -> Value.Int (Num.num_of_int (Array.length a))
   | "expand" -> Value.Method ((Value.Array a), array_expand)
@@ -93,6 +107,7 @@ let eval_op env frame op =
   | Op.GetAttr name ->
       let attr = match Stack.pop stack with
         Value.Array (a) -> get_array_attr a name
+      | Value.Dict h -> get_dict_attr h name
       | _ -> raise (Failure "Unknown object") in
       Stack.push attr stack
   | Op.Jump (label) -> frame.pc <- Some label

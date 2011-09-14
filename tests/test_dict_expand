@@ -1,0 +1,4 @@
+SRC:
+puts({ 42: 26 }.expand())
+OUT:
+42 26
