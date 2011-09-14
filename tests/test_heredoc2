@@ -1,0 +1,9 @@
+SRC:
+print(<<EOF1, <<EOF2)
+42
+EOF1
+26
+EOF2
+OUT:
+42
+26

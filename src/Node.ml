@@ -14,6 +14,7 @@ and expr =
   | Dict of pair list
   | Div of binop
   | DivDiv of binop
+  | Heredoc of Buffer.t
   | Mul of binop
   | Sub of binop
   | Subscript of subscript

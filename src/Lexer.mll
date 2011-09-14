@@ -1,13 +1,16 @@
 {
 type mode = Script | Command
-
 let mode = ref Script
 let switch_to_script () = mode := Script
 let switch_to_command () = mode := Command
+
 let top_of_line = ref true
+
 let rec peek_next_char s pos =
   let c = String.get s pos in
   if c = ' ' then peek_next_char s (pos + 1) else c
+
+let heredoc_queue = Queue.create ()
 }
 
 let digit = ['0'-'9']
@@ -16,6 +19,11 @@ let alnum = alpha | digit
 
 rule script_token = parse
     eof { Parser.EOF }
+  | "<<" (alpha alnum* as name) {
+    let buf = Buffer.create 16 in
+    Queue.add (name, ref buf) heredoc_queue;
+    Parser.HEREDOC buf
+  }
   | "(:" { comment 1 lexbuf }
   | "//" { Parser.DIV_DIV }
   | "as" { Parser.AS }
@@ -72,13 +80,25 @@ and comment depth = parse
   }
   | "(:" { comment (depth + 1) lexbuf }
   | _ { comment depth lexbuf }
+and heredoc name buf = parse
+    ([^'\n']* as s) '\n' {
+      if s = name then
+        ()
+      else
+        (Buffer.add_string buf (s ^ "\n"); heredoc name buf lexbuf)
+  }
 
 {
-let token lexbuf =
-  let f = match !mode with Script -> script_token | _ -> command_token in
-  let tok = f lexbuf in
-  top_of_line := (match tok with Parser.NEWLINE -> true | _ -> false);
-  tok
+let rec token lexbuf =
+  if !top_of_line && not (Queue.is_empty heredoc_queue) then
+    let name, buf = Queue.take heredoc_queue in
+    heredoc name !buf lexbuf;
+    token lexbuf
+  else
+    let f = match !mode with Script -> script_token | _ -> command_token in
+    let tok = f lexbuf in
+    top_of_line := (match tok with Parser.NEWLINE -> true | _ -> false);
+    tok
 }
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

@@ -1,0 +1,6 @@
+SRC:
+print(<<EOF)
+42
+EOF
+OUT:
+42

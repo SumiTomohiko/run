@@ -31,6 +31,9 @@ let rec compile_expr oplist = function
       OpList.add oplist (Op.MakeDict (List.length pairs))
   | Node.Div (operands) -> compile_binop oplist operands Op.Div
   | Node.DivDiv (operands) -> compile_binop oplist operands Op.DivDiv
+  | Node.Heredoc buf ->
+      let s = Buffer.contents buf in
+      OpList.add oplist (Op.PushConst (Value.String s))
   | Node.Mul (operands) -> compile_binop oplist operands Op.Mul
   | Node.Sub (operands) -> compile_binop oplist operands Op.Sub
   | Node.Subscript { Node.prefix; Node.index } ->

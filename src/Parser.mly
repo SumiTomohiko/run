@@ -14,6 +14,7 @@ let add_return_nil stmts =
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
+%token <Buffer.t> HEREDOC
 %start script
 %type <Node.stmt list> script
 %%
@@ -129,6 +130,7 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | INT { Node.Const (Value.Int $1) }
       | FLOAT { Node.Const (Value.Float $1) }
       | STRING { Node.Const (Value.String $1) }
+      | HEREDOC { Node.Heredoc $1 }
       | LBRACKET exprs RBRACKET { Node.Array $2 }
       | LBRACKET RBRACKET { Node.Array [] }
       | LBRACE pairs RBRACE { Node.Dict $2 }
