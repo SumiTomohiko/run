@@ -19,6 +19,7 @@ let rec pop_args stack = function
 let call env callee args =
   match callee with
     Value.Function (f) -> f args
+  | Value.Method (self, f) -> f self args
   | _ -> raise (Failure "Object is not callable")
 
 let find_global env = Symboltbl.find env.globals
@@ -44,8 +45,16 @@ let eval_binop stack intf floatf stringf string_intf =
     | _ -> raise_unsupported_operands_error () in
   Stack.push result stack
 
+let array_expand self _ =
+  match self with
+    Value.Array a ->
+      let strings = Array.to_list (Array.map Builtins.string_of_value a) in
+      Value.String (String.concat " " strings)
+  | _ -> raise (Failure "self must be Array")
+
 let get_array_attr a = function
     "size" -> Value.Int (Num.num_of_int (Array.length a))
+  | "expand" -> Value.Method ((Value.Array a), array_expand)
   | name -> raise (Failure ("AttributeError: " ^ name))
 
 let eval_op env frame op =

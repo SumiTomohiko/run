@@ -63,6 +63,9 @@ power : postfix_expr { $1 }
 postfix_expr  : postfix_expr LPAR exprs RPAR {
   Node.Call { Node.callee=$1; Node.args=$3 }
 }
+              | postfix_expr LPAR RPAR {
+  Node.Call { Node.callee=$1; Node.args=[] }
+}
               | postfix_expr LBRACKET expr RBRACKET {
   Node.Subscript { Node.prefix=$1; Node.index=$3 }
 }

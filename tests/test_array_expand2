@@ -1,0 +1,4 @@
+SRC:
+puts([42].expand())
+OUT:
+42
