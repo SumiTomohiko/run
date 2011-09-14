@@ -1,5 +1,5 @@
-%token AS COLON COMMA DIV DIV_DIV END EOF EQUAL EVERY FALSE LBRACE LBRACKET LPAR
-%token MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
+%token AS COLON COMMA DIV DIV_DIV DOT END EOF EQUAL EVERY FALSE LBRACE LBRACKET
+%token LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -65,6 +65,9 @@ postfix_expr  : postfix_expr LPAR exprs RPAR {
 }
               | postfix_expr LBRACKET expr RBRACKET {
   Node.Subscript { Node.prefix=$1; Node.index=$3 }
+}
+              | postfix_expr DOT NAME {
+  Node.Attr { Node.attr_prefix=$1; Node.attr_name=$3 }
 }
               | atom { $1 }
 ;

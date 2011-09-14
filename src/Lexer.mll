@@ -30,6 +30,7 @@ rule script_token = parse
   | '+' { Parser.PLUS }
   | ',' { Parser.COMMA }
   | '-' { Parser.MINUS }
+  | '.' { Parser.DOT }
   | '/' { Parser.DIV }
   | ':' { Parser.COLON }
   | '=' { Parser.EQUAL }

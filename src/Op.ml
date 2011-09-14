@@ -6,6 +6,7 @@ type kind =
   | DivDiv
   | Exec of int
   | Expand
+  | GetAttr of string
   | Jump of t
   | JumpIfFalse of t
   | MakeArray of int
@@ -35,6 +36,7 @@ let name_of_op = function
   | DivDiv -> "DivDiv"
   | Exec (_) -> "Exec"
   | Expand -> "Expand"
+  | GetAttr _ -> "GetAttr"
   | Jump (_) -> "Jump"
   | JumpIfFalse (_) -> "JumpIfFalse"
   | MakeArray _ -> "MakeArray"

@@ -3,10 +3,12 @@ type binop = { left: expr; right: expr }
 and call = { callee: expr; args: expr list }
 and subscript = { prefix: expr; index: expr }
 and pair = { key: expr; value: expr }
+and attr = { attr_prefix: expr; attr_name: string }
 and expr =
     Add of binop
   | Array of expr list
   | Assign of binop
+  | Attr of attr
   | Call of call
   | Const of Value.t
   | Dict of pair list

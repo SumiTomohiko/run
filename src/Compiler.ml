@@ -15,6 +15,9 @@ let rec compile_expr oplist = function
           (OpList.add oplist (Op.StoreLocal name);
           OpList.add oplist (Op.PushLocal name))
       | _ -> raise (Failure "Unsupported assign expression"))
+  | Node.Attr { Node.attr_prefix; Node.attr_name } ->
+      (compile_expr oplist attr_prefix;
+      OpList.add oplist (Op.GetAttr attr_name))
   | Node.Call { Node.callee; Node.args } ->
       (compile_expr oplist callee;
       compile_exprs oplist args;

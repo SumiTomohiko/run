@@ -44,6 +44,10 @@ let eval_binop stack intf floatf stringf string_intf =
     | _ -> raise_unsupported_operands_error () in
   Stack.push result stack
 
+let get_array_attr a = function
+    "size" -> Value.Int (Num.num_of_int (Array.length a))
+  | name -> raise (Failure ("AttributeError: " ^ name))
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -77,6 +81,11 @@ let eval_op env frame op =
       let pid = create_process prog (Array.of_list args) stdin stdout stderr in
       ignore (Unix.waitpid [] pid)
   | Op.Expand -> (* TODO *) ()
+  | Op.GetAttr name ->
+      let attr = match Stack.pop stack with
+        Value.Array (a) -> get_array_attr a name
+      | _ -> raise (Failure "Unknown object") in
+      Stack.push attr stack
   | Op.Jump (label) -> frame.pc <- Some label
   | Op.JumpIfFalse (label) ->
       (match Stack.top stack with
