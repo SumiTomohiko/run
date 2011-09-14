@@ -16,6 +16,7 @@ type kind =
   | Pop
   | PushConst of Value.t
   | PushLocal of string
+  | Return
   | StoreLocal of string
   | StoreSubscript
   | Sub
@@ -46,6 +47,7 @@ let name_of_op = function
   | Mul -> "Mul"
   | Pop -> "Pop"
   | PushConst (_) -> "PushConst"
+  | Return -> "Return"
   | PushLocal (_) -> "PushLocal"
   | StoreLocal (_) -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"

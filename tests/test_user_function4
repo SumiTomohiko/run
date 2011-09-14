@@ -1,0 +1,6 @@
+SRC:
+def foo()
+end
+puts(foo())
+OUT:
+nil

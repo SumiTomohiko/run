@@ -69,6 +69,9 @@ and compile_stmt oplist = function
       OpList.add oplist (Op.Exec (List.length patterns)))
   | Node.Expr (expr) -> (compile_expr oplist expr; OpList.add oplist Op.Pop)
   | Node.Every (every) -> compile_every oplist every
+  | Node.Return expr ->
+      compile_expr oplist expr;
+      OpList.add oplist Op.Return
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
       let func_ops = OpList.make () in
       compile_stmts func_ops uf_stmts;

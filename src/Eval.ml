@@ -20,19 +20,6 @@ let call env callee args =
   match callee with
     Value.Function (f) -> f args
   | Value.Method (self, f) -> f self args
-  | Value.UserFunction (params, index) ->
-      let locals = Symboltbl.create () in
-      List.iter2 (fun param arg -> Symboltbl.add locals param arg) params args;
-      let ops = List.nth !Op.ops index in
-      let frame = {
-        locals=locals;
-        pc=Some ops;
-        stack=Stack.create ();
-        prev_frame=None;
-        outer_frame=None } in
-      Stack.push frame env.frames;
-      (* FIXME *)
-      Value.Nil
   | _ -> raise (Failure "Object is not callable")
 
 let find_global env = Symboltbl.find env.globals
@@ -95,7 +82,21 @@ let eval_op env frame op =
       eval_binop stack intf floatf stringf error
   | Op.Call (nargs) ->
       let args = pop_args frame.stack nargs in
-      Stack.push (call env (Stack.pop stack) args) stack
+      let f = Stack.pop stack in
+      (match f with
+        Value.UserFunction (params, index) ->
+          let locals = Symboltbl.create () in
+          let store_param param arg = Symboltbl.add locals param arg in
+          List.iter2 store_param params args;
+          let ops = List.nth !Op.ops index in
+          let frame = {
+            locals=locals;
+            pc=Some ops;
+            stack=Stack.create ();
+            prev_frame=None;
+            outer_frame=None } in
+          Stack.push frame env.frames
+      | _ -> Stack.push (call env f args) stack)
   | Op.Div ->
       let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in
@@ -156,6 +157,11 @@ let eval_op env frame op =
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushConst (v) -> Stack.push v stack
   | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
+  | Op.Return ->
+      let value = Stack.pop stack in
+      ignore (Stack.pop env.frames);
+      let frame = Stack.top env.frames in
+      Stack.push value frame.stack
   | Op.StoreLocal (name) ->
       Symboltbl.add frame.locals name (Stack.pop stack)
   | Op.StoreSubscript ->

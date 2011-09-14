@@ -1,3 +1,14 @@
+%{
+let rec last = function
+    [] -> None
+  | [hd] -> Some hd
+  | hd :: tl -> last tl
+let add_return_nil stmts =
+  stmts @ match last stmts with
+    Some (Node.Return _) -> []
+  | None
+  | _ -> [Node.Return (Node.Const Value.Nil)]
+%}
 %token AS COLON COMMA DEF DIV DIV_DIV DOT END EOF EQUAL EVERY FALSE LBRACE
 %token LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RPAR STAR TRUE
 %token <Num.num> INT
@@ -13,10 +24,12 @@ stmts : stmts stmt { match $2 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
 ;
 stmt  : expr NEWLINE { Some (Node.Expr $1) }
       | DEF NAME LPAR names RPAR stmts END {
-  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=$6 })
+  let stmts = add_return_nil $6 in
+  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts })
 }
       | DEF NAME LPAR RPAR stmts END {
-  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=$5 })
+  let stmts = add_return_nil $5 in
+  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts })
 }
       | EVERY patterns AS names NEWLINE stmts END NEWLINE {
   Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
