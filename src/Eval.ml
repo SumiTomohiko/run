@@ -68,7 +68,7 @@ let get_dict_attr h = function
 
 let get_array_attr a = function
     "size" -> Value.Int (Num.num_of_int (Array.length a))
-  | "expand" -> Value.Method ((Value.Array a), array_expand)
+  | "expand" -> Value.Method (Value.Array a, array_expand)
   | name -> raise (Failure ("AttributeError: " ^ name))
 
 let eval_comparison stack f =
@@ -126,10 +126,10 @@ let eval_op env frame op =
       let floatf x y = Value.Float (x /. y) in
       eval_binop stack intf floatf error error
   | Op.Equal -> eval_equality stack ((=) 0)
-  | Op.Exec (nargs) ->
-      let string_of_value = (function
-          Value.String (s) -> s
-        | _ -> raise (Failure "Unsupported command")) in
+  | Op.Exec nargs ->
+      let string_of_value = function
+          Value.String s -> s
+        | _ -> raise (Failure "Unsupported command") in
       let args = List.map string_of_value (pop_args stack nargs) in
       let create_process = Unix.create_process in
       let prog = List.hd args in
@@ -147,8 +147,8 @@ let eval_op env frame op =
       | Value.Dict h -> get_dict_attr h name
       | _ -> raise (Failure "Unknown object") in
       Stack.push attr stack
-  | Op.Jump (label) -> frame.pc <- Some label
-  | Op.JumpIfFalse (label) ->
+  | Op.Jump label -> frame.pc <- Some label
+  | Op.JumpIfFalse label ->
       (match Stack.top stack with
         Value.Bool false -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
@@ -181,14 +181,14 @@ let eval_op env frame op =
       eval_binop stack intf floatf error string_intf
   | Op.NotEqual -> eval_equality stack ((<>) 0)
   | Op.Pop -> ignore (Stack.pop stack)
-  | Op.PushConst (v) -> Stack.push v stack
-  | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack
+  | Op.PushConst v -> Stack.push v stack
+  | Op.PushLocal name -> Stack.push (find_local env frame name) stack
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);
       let frame = Stack.top env.frames in
       Stack.push value frame.stack
-  | Op.StoreLocal (name) ->
+  | Op.StoreLocal name ->
       Symboltbl.add frame.locals name (Stack.pop stack)
   | Op.StoreSubscript ->
       let index = Stack.pop stack in
@@ -218,9 +218,9 @@ let rec eval_env env =
   let frame = Stack.top env.frames in
   match frame.pc with
     Some op ->
-      (frame.pc <- Op.next_of_op op;
+      frame.pc <- Op.next_of_op op;
       eval_op env frame (Op.kind_of_op op);
-      eval_env env)
+      eval_env env
   | None -> ()
 
 let eval ops =
