@@ -125,9 +125,9 @@ arith_expr  : arith_expr PLUS term { Node.Add { Node.left=$1; Node.right=$3 } }
             | term { $1 }
 ;
 
-term  : term STAR factor { Node.Mul { Node.left=$1; Node.right=$3 }}
-      | term DIV factor { Node.Div { Node.left=$1; Node.right=$3 }}
-      | term DIV_DIV factor { Node.DivDiv { Node.left=$1; Node.right=$3 }}
+term  : term STAR factor { Node.Mul { Node.left=$1; Node.right=$3 } }
+      | term DIV factor { Node.Div { Node.left=$1; Node.right=$3 } }
+      | term DIV_DIV factor { Node.DivDiv { Node.left=$1; Node.right=$3 } }
       | factor { $1 }
 ;
 
@@ -166,7 +166,7 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | LBRACKET RBRACKET { Node.Array [] }
       | LBRACE pairs RBRACE { Node.Dict $2 }
       | LBRACE RBRACE { Node.Dict [] }
-      | NAME { Node.Var ($1) }
+      | NAME { Node.Var $1 }
 ;
 
 pairs : pair { [$1] }
