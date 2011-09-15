@@ -117,6 +117,7 @@ and compile_stmt oplist = function
       OpList.add oplist (Op.Jump while_begin);
       OpList.add_op oplist while_end;
       ignore (Stack.pop while_stack)
+  | Node.Empty -> ()
 and compile_stmts oplist = function
     hd :: tl -> (compile_stmt oplist hd; compile_stmts oplist tl)
   | [] -> ()

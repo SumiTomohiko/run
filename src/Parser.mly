@@ -23,33 +23,31 @@ let add_return_nil stmts =
 script  : stmts EOF { $1 }
 ;
 
-stmts : stmts NEWLINE stmt { match $3 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
-      | stmt { match $1 with Some stmt -> [stmt] | _ -> [] }
+stmts : stmts NEWLINE stmt { $1 @ [$3] }
+      | stmt { [$1] }
 ;
 
-stmt  : expr { Some (Node.Expr $1) }
+stmt  : expr { Node.Expr $1 }
       | DEF NAME LPAR names RPAR stmts END {
   let stmts = add_return_nil $6 in
-  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts })
+  Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts }
 }
       | DEF NAME LPAR RPAR stmts END {
   let stmts = add_return_nil $5 in
-  Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts })
+  Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts }
 }
       | EVERY patterns AS names NEWLINE stmts END {
-  Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
+  Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 }
 }
-      | IF expr NEWLINE stmts END { Some (Node.If ($2, $4, [])) }
-      | IF expr NEWLINE stmts ELSE stmts END {
-  Some (Node.If ($2, $4, $6))
-}
-      | IF expr NEWLINE stmts elif END { Some (Node.If ($2, $4, [$5])) }
-      | WHILE expr NEWLINE stmts END { Some (Node.While ($2, $4)) }
-      | NEXT { Some Node.Next }
-      | BREAK { Some Node.Break }
-      | RETURN expr { Some (Node.Return $2) }
-      | patterns { Some (Node.Command $1) }
-      | { None }
+      | IF expr NEWLINE stmts END { Node.If ($2, $4, []) }
+      | IF expr NEWLINE stmts ELSE stmts END { Node.If ($2, $4, $6) }
+      | IF expr NEWLINE stmts elif END { Node.If ($2, $4, [$5]) }
+      | WHILE expr NEWLINE stmts END { Node.While ($2, $4) }
+      | NEXT { Node.Next }
+      | BREAK { Node.Break }
+      | RETURN expr { Node.Return $2 }
+      | patterns { Node.Command $1 }
+      | { Node.Empty }
 ;
 
 elif  : ELIF expr NEWLINE stmts { Node.If ($2, $4, []) }

@@ -42,6 +42,9 @@ and stmt =
   | UserFunction of user_function
   | While of expr * stmt list
 
+  (* For an empty line *)
+  | Empty
+
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)
