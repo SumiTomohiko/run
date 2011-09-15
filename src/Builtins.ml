@@ -1,10 +1,10 @@
 
 let rec string_of_value = function
     Value.Nil -> "nil"
-  | Value.Bool (b) -> if b then "true" else "false"
-  | Value.Int (n) -> Num.string_of_num n
-  | Value.Float (f) -> string_of_float f
-  | Value.String (s) -> s
+  | Value.Bool b -> if b then "true" else "false"
+  | Value.Int n -> Num.string_of_num n
+  | Value.Float f -> string_of_float f
+  | Value.String s -> s
   | Value.Array a ->
       let strings = Array.to_list (Array.map string_of_value a) in
       "[" ^ (String.concat ", " strings) ^ "]"
@@ -17,9 +17,9 @@ let rec string_of_value = function
         "{}"
       else
         "{ " ^ (String.concat ", " pairs) ^ " }"
-  | Value.Function (_) -> "Function"
+  | Value.Function _ -> "Function"
   | Value.Method _ -> "Method"
-  | Value.UserFunction (_) -> "UserFunction"
+  | Value.UserFunction _ -> "UserFunction"
 
 let output args f =
   List.fold_left (fun init v -> print_string (f v); init) Value.Nil args
