@@ -27,6 +27,7 @@ rule script_token = parse
   | "(:" { comment 1 lexbuf }
   | "//" { Parser.DIV_DIV }
   | "as" { Parser.AS }
+  | "break" { Parser.BREAK }
   | "def" { Parser.DEF }
   | "elif" { Parser.ELIF }
   | "else" { Parser.ELSE }
@@ -34,8 +35,10 @@ rule script_token = parse
   | "every" { switch_to_command (); Parser.EVERY }
   | "false" { Parser.FALSE }
   | "if" { Parser.IF }
+  | "next" { Parser.NEXT }
   | "return" { Parser.RETURN }
   | "true" { Parser.TRUE }
+  | "while" { Parser.WHILE }
   | ' '+ { script_token lexbuf }
   | '"' { string_token "" lexbuf }
   | '#' [^'\n']* { script_token lexbuf }

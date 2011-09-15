@@ -1,4 +1,6 @@
 
+let while_stack = Stack.create ()
+
 let rec compile_expr oplist = function
     Node.Add (operands) -> compile_binop oplist operands Op.Add
   | Node.Array exprs ->
@@ -66,7 +68,10 @@ let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   OpList.add oplist (Op.Jump top);
   OpList.add_op oplist last
 and compile_stmt oplist = function
-    Node.Command (patterns) ->
+    Node.Break ->
+      let _, label = Stack.top while_stack in
+      OpList.add oplist (Op.Jump label)
+  | Node.Command (patterns) ->
       let f _ pat = OpList.add oplist (Op.PushConst (Value.String pat)) in
       (List.fold_left f () patterns;
       OpList.add oplist (Op.Exec (List.length patterns)))
@@ -82,6 +87,9 @@ and compile_stmt oplist = function
       OpList.add_op oplist else_begin;
       compile_stmts oplist stmts2;
       OpList.add_op oplist else_end
+  | Node.Next ->
+      let label, _ = Stack.top while_stack in
+      OpList.add oplist (Op.Jump label)
   | Node.Return expr ->
       compile_expr oplist expr;
       OpList.add oplist Op.Return
@@ -92,6 +100,17 @@ and compile_stmt oplist = function
       let op = Op.MakeUserFunction (uf_args, func_ops_index) in
       OpList.add oplist op;
       OpList.add oplist (Op.StoreLocal uf_name)
+  | Node.While (expr, stmts) ->
+      let while_begin = Op.make_label () in
+      let while_end = Op.make_label () in
+      Stack.push (while_begin, while_end) while_stack;
+      OpList.add_op oplist while_begin;
+      compile_expr oplist expr;
+      OpList.add oplist (Op.JumpIfFalse while_end);
+      compile_stmts oplist stmts;
+      OpList.add oplist (Op.Jump while_begin);
+      OpList.add_op oplist while_end;
+      ignore (Stack.pop while_stack)
 and compile_stmts oplist = function
     hd :: tl -> (compile_stmt oplist hd; compile_stmts oplist tl)
   | [] -> ()

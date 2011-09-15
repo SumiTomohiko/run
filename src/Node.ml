@@ -26,12 +26,15 @@ and user_function = {
   uf_stmts: stmt list
 }
 and stmt =
-    Command of string list
+    Break
+  | Command of string list
   | Every of every
   | Expr of expr
   | If of expr * stmt list * stmt list
+  | Next
   | Return of expr
   | UserFunction of user_function
+  | While of expr * stmt list
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

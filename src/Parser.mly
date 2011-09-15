@@ -9,9 +9,9 @@ let add_return_nil stmts =
   | None
   | _ -> [Node.Return (Node.Const Value.Nil)]
 %}
-%token AS COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL EVERY FALSE IF
-%token LBRACE LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RETURN RPAR STAR
-%token TRUE
+%token AS BREAK COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL EVERY
+%token FALSE IF LBRACE LBRACKET LPAR MINUS NEWLINE NEXT PLUS RBRACE RBRACKET
+%token RETURN RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -49,6 +49,9 @@ stmt  : expr NEWLINE { Some (Node.Expr $1) }
       | IF expr NEWLINE stmts_opt elif END NEWLINE {
   Some (Node.If ($2, $4, [$5]))
 }
+      | WHILE expr NEWLINE stmts END NEWLINE { Some (Node.While ($2, $4)) }
+      | NEXT NEWLINE { Some Node.Next }
+      | BREAK NEWLINE { Some Node.Break }
       | RETURN expr NEWLINE { Some (Node.Return $2) }
       | patterns NEWLINE { Some (Node.Command $1) }
       | NEWLINE { None }

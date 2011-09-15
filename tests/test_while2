@@ -1,0 +1,7 @@
+SRC:
+while false
+  puts(42)
+end
+puts(26)
+OUT:
+26

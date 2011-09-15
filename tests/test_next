@@ -1,0 +1,12 @@
+SRC:
+foo = true
+while foo
+  puts(42)
+  foo = false
+  next
+  puts(26)
+end
+puts("foo")
+OUT:
+42
+foo
