@@ -20,18 +20,14 @@ let add_return_nil stmts =
 %start script
 %type <Node.stmt list> script
 %%
-script  : stmts_opt EOF { $1 }
+script  : stmts EOF { $1 }
 ;
 
-stmts_opt : stmts { $1 }
-          | { [] }
-;
-
-stmts : stmts stmt { match $2 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
+stmts : stmts NEWLINE stmt { match $3 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
       | stmt { match $1 with Some stmt -> [stmt] | _ -> [] }
 ;
 
-stmt  : expr NEWLINE { Some (Node.Expr $1) }
+stmt  : expr { Some (Node.Expr $1) }
       | DEF NAME LPAR names RPAR stmts END {
   let stmts = add_return_nil $6 in
   Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts })
@@ -40,27 +36,25 @@ stmt  : expr NEWLINE { Some (Node.Expr $1) }
   let stmts = add_return_nil $5 in
   Some (Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts })
 }
-      | EVERY patterns AS names NEWLINE stmts END NEWLINE {
+      | EVERY patterns AS names NEWLINE stmts END {
   Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
 }
-      | IF expr NEWLINE stmts_opt END NEWLINE { Some (Node.If ($2, $4, [])) }
-      | IF expr NEWLINE stmts_opt ELSE stmts_opt END NEWLINE {
+      | IF expr NEWLINE stmts END { Some (Node.If ($2, $4, [])) }
+      | IF expr NEWLINE stmts ELSE stmts END {
   Some (Node.If ($2, $4, $6))
 }
-      | IF expr NEWLINE stmts_opt elif END NEWLINE {
-  Some (Node.If ($2, $4, [$5]))
-}
-      | WHILE expr NEWLINE stmts END NEWLINE { Some (Node.While ($2, $4)) }
-      | NEXT NEWLINE { Some Node.Next }
-      | BREAK NEWLINE { Some Node.Break }
-      | RETURN expr NEWLINE { Some (Node.Return $2) }
-      | patterns NEWLINE { Some (Node.Command $1) }
-      | NEWLINE { None }
+      | IF expr NEWLINE stmts elif END { Some (Node.If ($2, $4, [$5])) }
+      | WHILE expr NEWLINE stmts END { Some (Node.While ($2, $4)) }
+      | NEXT { Some Node.Next }
+      | BREAK { Some Node.Break }
+      | RETURN expr { Some (Node.Return $2) }
+      | patterns { Some (Node.Command $1) }
+      | { None }
 ;
 
-elif  : ELIF expr NEWLINE stmts_opt { Node.If ($2, $4, []) }
-      | ELIF expr NEWLINE stmts_opt ELSE stmts_opt { Node.If ($2, $4, $6) }
-      | ELIF expr NEWLINE stmts_opt elif { Node.If ($2, $4, [$5]) }
+elif  : ELIF expr NEWLINE stmts { Node.If ($2, $4, []) }
+      | ELIF expr NEWLINE stmts ELSE stmts { Node.If ($2, $4, $6) }
+      | ELIF expr NEWLINE stmts elif { Node.If ($2, $4, [$5]) }
 ;
 
 names : NAME { [$1] }
