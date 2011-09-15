@@ -29,6 +29,7 @@ and stmt =
     Command of string list
   | Every of every
   | Expr of expr
+  | If of expr * stmt list * stmt list
   | Return of expr
   | UserFunction of user_function
 

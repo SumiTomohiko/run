@@ -9,8 +9,9 @@ let add_return_nil stmts =
   | None
   | _ -> [Node.Return (Node.Const Value.Nil)]
 %}
-%token AS COLON COMMA DEF DIV DIV_DIV DOT END EOF EQUAL EVERY FALSE LBRACE
-%token LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RETURN RPAR STAR TRUE
+%token AS COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL EVERY FALSE IF
+%token LBRACE LBRACKET LPAR MINUS NEWLINE PLUS RBRACE RBRACKET RETURN RPAR STAR
+%token TRUE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -18,7 +19,11 @@ let add_return_nil stmts =
 %start script
 %type <Node.stmt list> script
 %%
-script  : stmts EOF { $1 }
+script  : stmts_opt EOF { $1 }
+;
+
+stmts_opt : stmts { $1 }
+          | { [] }
 ;
 
 stmts : stmts stmt { match $2 with Some stmt -> $1 @ [stmt]  | _ -> $1 }
@@ -37,9 +42,21 @@ stmt  : expr NEWLINE { Some (Node.Expr $1) }
       | EVERY patterns AS names NEWLINE stmts END NEWLINE {
   Some (Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 })
 }
+      | IF expr NEWLINE stmts_opt END NEWLINE { Some (Node.If ($2, $4, [])) }
+      | IF expr NEWLINE stmts_opt ELSE stmts_opt END NEWLINE {
+  Some (Node.If ($2, $4, $6))
+}
+      | IF expr NEWLINE stmts_opt elif END NEWLINE {
+  Some (Node.If ($2, $4, [$5]))
+}
       | RETURN expr NEWLINE { Some (Node.Return $2) }
       | patterns NEWLINE { Some (Node.Command $1) }
       | NEWLINE { None }
+;
+
+elif  : ELIF expr NEWLINE stmts_opt { Node.If ($2, $4, []) }
+      | ELIF expr NEWLINE stmts_opt ELSE stmts_opt { Node.If ($2, $4, $6) }
+      | ELIF expr NEWLINE stmts_opt elif { Node.If ($2, $4, [$5]) }
 ;
 
 names : NAME { [$1] }

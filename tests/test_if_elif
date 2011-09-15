@@ -1,0 +1,7 @@
+SRC:
+if false
+elif true
+  puts(42)
+end
+OUT:
+42

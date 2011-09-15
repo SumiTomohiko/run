@@ -28,9 +28,12 @@ rule script_token = parse
   | "//" { Parser.DIV_DIV }
   | "as" { Parser.AS }
   | "def" { Parser.DEF }
+  | "elif" { Parser.ELIF }
+  | "else" { Parser.ELSE }
   | "end" { Parser.END }
   | "every" { switch_to_command (); Parser.EVERY }
   | "false" { Parser.FALSE }
+  | "if" { Parser.IF }
   | "return" { Parser.RETURN }
   | "true" { Parser.TRUE }
   | ' '+ { script_token lexbuf }

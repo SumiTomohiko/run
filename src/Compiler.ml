@@ -72,6 +72,16 @@ and compile_stmt oplist = function
       OpList.add oplist (Op.Exec (List.length patterns)))
   | Node.Expr (expr) -> (compile_expr oplist expr; OpList.add oplist Op.Pop)
   | Node.Every (every) -> compile_every oplist every
+  | Node.If (expr, stmts1, stmts2) ->
+      let else_begin = Op.make_label () in
+      let else_end = Op.make_label () in
+      compile_expr oplist expr;
+      OpList.add oplist (Op.JumpIfFalse else_begin);
+      compile_stmts oplist stmts1;
+      OpList.add oplist (Op.Jump else_end);
+      OpList.add_op oplist else_begin;
+      compile_stmts oplist stmts2;
+      OpList.add_op oplist else_end
   | Node.Return expr ->
       compile_expr oplist expr;
       OpList.add oplist Op.Return
