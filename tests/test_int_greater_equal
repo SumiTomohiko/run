@@ -1,0 +1,4 @@
+SRC:
+puts(26 >= 42)
+OUT:
+false

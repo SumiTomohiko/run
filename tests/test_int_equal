@@ -1,0 +1,4 @@
+SRC:
+puts(42 == 42)
+OUT:
+true

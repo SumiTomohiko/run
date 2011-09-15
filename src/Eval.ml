@@ -71,6 +71,26 @@ let get_array_attr a = function
   | "expand" -> Value.Method ((Value.Array a), array_expand)
   | name -> raise (Failure ("AttributeError: " ^ name))
 
+let eval_comparison stack f =
+  let right = Stack.pop stack in
+  let left = Stack.pop stack in
+  let result = match left, right with
+    Value.Int n, Value.Int m -> compare n m
+  | Value.Float f, Value.Float g -> compare f g
+  | Value.String s, Value.String t -> compare s t
+  | _ -> raise (Failure "Invalid comparison") in
+  Stack.push (Value.Bool (f result)) stack
+
+let eval_equality stack f =
+  let right = Stack.pop stack in
+  let left = Stack.pop stack in
+  let result = match left, right with
+    Value.Int n, Value.Int m -> compare n m
+  | Value.Float f, Value.Float g -> compare f g
+  | Value.String s, Value.String t -> compare s t
+  | _ -> 1 in
+  Stack.push (Value.Bool (f result)) stack
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -105,6 +125,7 @@ let eval_op env frame op =
       let intf n m = Value.Int (Num.floor_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in
       eval_binop stack intf floatf error error
+  | Op.Equal -> eval_equality stack ((=) 0)
   | Op.Exec (nargs) ->
       let string_of_value = (function
           Value.String (s) -> s
@@ -118,6 +139,8 @@ let eval_op env frame op =
       let pid = create_process prog (Array.of_list args) stdin stdout stderr in
       ignore (Unix.waitpid [] pid)
   | Op.Expand -> (* TODO *) ()
+  | Op.Greater -> eval_comparison stack ((<) 0)
+  | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
   | Op.GetAttr name ->
       let attr = match Stack.pop stack with
         Value.Array a -> get_array_attr a name
@@ -129,6 +152,8 @@ let eval_op env frame op =
       (match Stack.top stack with
         Value.Bool false -> ignore (Stack.pop stack); frame.pc <- Some label
       | _ -> ())
+  | Op.Less -> eval_comparison stack ((>) 0)
+  | Op.LessEqual -> eval_comparison stack ((>=) 0)
   | Op.MakeArray size ->
       Stack.push (Value.Array (Array.of_list (pop_args stack size))) stack
   | Op.MakeDict size ->
@@ -154,6 +179,7 @@ let eval_op env frame op =
         else
           string_intf s (Num.pred_num n) (accum ^ s) in
       eval_binop stack intf floatf error string_intf
+  | Op.NotEqual -> eval_equality stack ((<>) 0)
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushConst (v) -> Stack.push v stack
   | Op.PushLocal (name) -> Stack.push (find_local env frame name) stack

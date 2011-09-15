@@ -24,8 +24,12 @@ rule script_token = parse
     Queue.add (name, ref buf) heredoc_queue;
     Parser.HEREDOC buf
   }
+  | "!=" { Parser.NOT_EQUAL }
   | "(:" { comment 1 lexbuf }
   | "//" { Parser.DIV_DIV }
+  | "<=" { Parser.LESS_EQUAL }
+  | "==" { Parser.EQUAL_EQUAL }
+  | ">=" { Parser.GREATER_EQUAL }
   | "as" { Parser.AS }
   | "break" { Parser.BREAK }
   | "def" { Parser.DEF }
@@ -51,7 +55,9 @@ rule script_token = parse
   | '.' { Parser.DOT }
   | '/' { Parser.DIV }
   | ':' { Parser.COLON }
+  | '<' { Parser.LESS }
   | '=' { Parser.EQUAL }
+  | '>' { Parser.GREATER }
   | '[' { Parser.LBRACKET }
   | '\n' { Parser.NEWLINE }
   | ']' { Parser.RBRACKET }

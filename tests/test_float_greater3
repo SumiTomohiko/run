@@ -1,0 +1,4 @@
+SRC:
+puts(3.14 > 2.7)
+OUT:
+true

@@ -33,10 +33,16 @@ let rec compile_expr oplist = function
       OpList.add oplist (Op.MakeDict (List.length pairs))
   | Node.Div (operands) -> compile_binop oplist operands Op.Div
   | Node.DivDiv (operands) -> compile_binop oplist operands Op.DivDiv
+  | Node.EqualEqual operands -> compile_binop oplist operands Op.Equal
+  | Node.Greater operands -> compile_binop oplist operands Op.Greater
+  | Node.GreaterEqual operands -> compile_binop oplist operands Op.GreaterEqual
   | Node.Heredoc buf ->
       let s = Buffer.contents buf in
       OpList.add oplist (Op.PushConst (Value.String s))
+  | Node.Less operands -> compile_binop oplist operands Op.Less
+  | Node.LessEqual operands -> compile_binop oplist operands Op.LessEqual
   | Node.Mul (operands) -> compile_binop oplist operands Op.Mul
+  | Node.NotEqual operands -> compile_binop oplist operands Op.NotEqual
   | Node.Sub (operands) -> compile_binop oplist operands Op.Sub
   | Node.Subscript { Node.prefix; Node.index } ->
       (compile_expr oplist prefix;

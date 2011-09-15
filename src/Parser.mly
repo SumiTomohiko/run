@@ -9,9 +9,10 @@ let add_return_nil stmts =
   | None
   | _ -> [Node.Return (Node.Const Value.Nil)]
 %}
-%token AS BREAK COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL EVERY
-%token FALSE IF LBRACE LBRACKET LPAR MINUS NEWLINE NEXT PLUS RBRACE RBRACKET
-%token RETURN RPAR STAR TRUE WHILE
+%token AS BREAK COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL
+%token EQUAL_EQUAL EVERY FALSE GREATER GREATER_EQUAL IF LBRACE LBRACKET LESS
+%token LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL PLUS RBRACE RBRACKET RETURN
+%token RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -94,7 +95,25 @@ logical_and_expr  : not_expr { $1 }
 not_expr  : comparison { $1 }
 ;
 
-comparison  : xor_expr { $1 }
+comparison  : xor_expr LESS xor_expr {
+  Node.Less { Node.left=$1; Node.right=$3 }
+}
+            | xor_expr LESS_EQUAL xor_expr {
+  Node.LessEqual { Node.left=$1; Node.right=$3 }
+}
+            | xor_expr GREATER xor_expr {
+  Node.Greater { Node.left=$1; Node.right=$3 }
+}
+            | xor_expr GREATER_EQUAL xor_expr {
+  Node.GreaterEqual { Node.left=$1; Node.right=$3 }
+}
+            | xor_expr EQUAL_EQUAL xor_expr {
+  Node.EqualEqual { Node.left=$1; Node.right=$3 }
+}
+            | xor_expr NOT_EQUAL xor_expr {
+  Node.NotEqual { Node.left=$1; Node.right=$3 }
+}
+            | xor_expr { $1 }
 ;
 
 xor_expr  : or_expr { $1 }

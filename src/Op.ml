@@ -4,15 +4,21 @@ type kind =
   | Call of int
   | Div
   | DivDiv
+  | Equal
   | Exec of int
   | Expand
   | GetAttr of string
+  | Greater
+  | GreaterEqual
   | Jump of t
   | JumpIfFalse of t
+  | Less
+  | LessEqual
   | MakeArray of int
   | MakeDict of int
   | MakeUserFunction of string list * int
   | Mul
+  | NotEqual
   | Pop
   | PushConst of Value.t
   | PushLocal of string
@@ -36,19 +42,25 @@ let name_of_op = function
   | Call (_) -> "Call"
   | Div (_) -> "Div"
   | DivDiv -> "DivDiv"
+  | Equal -> "Equal"
   | Exec (_) -> "Exec"
   | Expand -> "Expand"
   | GetAttr _ -> "GetAttr"
+  | Greater -> "Greater"
+  | GreaterEqual -> "GreaterEqual"
   | Jump (_) -> "Jump"
   | JumpIfFalse (_) -> "JumpIfFalse"
+  | Less -> "Less"
+  | LessEqual -> "LessEqual"
   | MakeArray _ -> "MakeArray"
   | MakeDict _ -> "MakeDict"
   | MakeUserFunction _ -> "MakeUserFunction"
   | Mul -> "Mul"
+  | NotEqual -> "NotEqual"
   | Pop -> "Pop"
   | PushConst (_) -> "PushConst"
-  | Return -> "Return"
   | PushLocal (_) -> "PushLocal"
+  | Return -> "Return"
   | StoreLocal (_) -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"
   | Sub -> "Sub"

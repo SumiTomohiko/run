@@ -14,8 +14,14 @@ and expr =
   | Dict of pair list
   | Div of binop
   | DivDiv of binop
+  | EqualEqual of binop
+  | Greater of binop
+  | GreaterEqual of binop
   | Heredoc of Buffer.t
+  | Less of binop
+  | LessEqual of binop
   | Mul of binop
+  | NotEqual of binop
   | Sub of binop
   | Subscript of subscript
   | Var of string

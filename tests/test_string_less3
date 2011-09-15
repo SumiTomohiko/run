@@ -1,0 +1,4 @@
+SRC:
+puts("foo" < "bar")
+OUT:
+false
