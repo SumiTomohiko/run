@@ -9,10 +9,10 @@ let add_return_nil stmts =
   | None
   | _ -> [Node.Return (Node.Const Value.Nil)]
 %}
-%token AS BREAK COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL
+%token AS AT BREAK COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL
 %token EQUAL_EQUAL EVERY FALSE GREATER GREATER_EQUAL IF LBRACE LBRACKET LESS
 %token LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL PLUS RBRACE RBRACKET RETURN
-%token RPAR STAR TRUE WHILE
+%token RIGHT_ARROW RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -46,8 +46,17 @@ stmt  : expr { Node.Expr $1 }
       | NEXT { Node.Next }
       | BREAK { Node.Break }
       | RETURN expr { Node.Return $2 }
-      | patterns { Node.Command $1 }
+      | pipeline { Node.Pipeline $1 }
       | { Node.Empty }
+;
+
+pipeline  : patterns RIGHT_ARROW pipeline {
+  ($1, Some (Node.Write None)) :: $3
+}
+          | patterns RIGHT_ARROW AT PATTERN {
+  [($1, Some (Node.Write (Some $4)))]
+}
+          | patterns { [($1, None)] }
 ;
 
 elif  : ELIF expr NEWLINE stmts { Node.If ($2, $4, []) }
@@ -176,5 +185,5 @@ pairs : pair { [$1] }
 pair  : expr COLON expr { { Node.key=$1; Node.value=$3 } }
 ;
 /**
- * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=sml
+ * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  */

@@ -1,10 +1,15 @@
 
+type command = {
+  mutable cmd_params: string list;
+  mutable cmd_path: string option
+}
+
 type frame = {
-  locals: Symboltbl.t;
   mutable pc: Op.t option;
+  locals: Symboltbl.t;
+  outer_frame: frame option;
   stack: Value.t Stack.t;
-  prev_frame: frame option;
-  outer_frame: frame option
+  pipelines: command list Stack.t
 }
 
 type env = {
@@ -91,6 +96,46 @@ let eval_equality stack f =
   | _ -> 1 in
   Stack.push (Value.Bool (f result)) stack
 
+let rec make_pipes pairs prev_pair last_pair = function
+    hd :: tl ->
+      if (List.length tl) = 0 then
+        pairs @ [(prev_pair, last_pair)]
+      else
+        let rfd, wfd = Unix.pipe () in
+        let pair = (Some rfd, Some wfd) in
+        make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair tl
+  | [] -> assert false
+
+let opt default = function
+    Some p -> p
+  | None -> default
+
+let exec_cmd cmd (pipe1, pipe2) =
+  match Unix.fork () with
+    0 ->
+      (match snd pipe1 with
+        Some fd -> Unix.close fd
+      | None -> ());
+      (match fst pipe2 with
+        Some fd -> Unix.close fd
+      | None -> ());
+      let args = cmd.cmd_params in
+      let prog = List.hd args in
+      Unix.dup2 (opt Unix.stdin (fst pipe1)) Unix.stdin;
+      Unix.dup2 (opt Unix.stdout (snd pipe2)) Unix.stdout;
+      Unix.execvp prog (Array.of_list args)
+  | pid -> pid
+
+let rec close_pipes = function
+    (_, pair) :: tl ->
+      (match pair with
+        (Some fd1, Some fd2) -> Unix.close fd1; Unix.close fd2
+      | (Some fd1, None) -> Unix.close fd1
+      | (None, Some fd2) -> Unix.close fd2
+      | _ -> ());
+      close_pipes tl
+  | [] -> ()
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -110,13 +155,18 @@ let eval_op env frame op =
           List.iter2 store_param params args;
           let ops = List.nth !Op.ops index in
           let frame = {
-            locals=locals;
             pc=Some ops;
+            locals=locals;
+            outer_frame=None;
             stack=Stack.create ();
-            prev_frame=None;
-            outer_frame=None } in
+            pipelines=Stack.create () } in
           Stack.push frame env.frames
       | _ -> Stack.push (call env f args) stack)
+  | Op.DefineRedirectOut ->
+      let cmd = List.hd (Stack.top frame.pipelines) in
+      (match Stack.pop stack with
+        Value.String path -> cmd.cmd_path <- Some path
+      | _ -> raise (Failure "Unsupported redirection"))
   | Op.Div ->
       let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in
@@ -126,18 +176,21 @@ let eval_op env frame op =
       let floatf x y = Value.Float (x /. y) in
       eval_binop stack intf floatf error error
   | Op.Equal -> eval_equality stack ((=) 0)
-  | Op.Exec nargs ->
-      let string_of_value = function
-          Value.String s -> s
-        | _ -> raise (Failure "Unsupported command") in
-      let args = List.map string_of_value (pop_args stack nargs) in
-      let create_process = Unix.create_process in
-      let prog = List.hd args in
-      let stdin = Unix.stdin in
-      let stdout = Unix.stdout in
-      let stderr = Unix.stderr in
-      let pid = create_process prog (Array.of_list args) stdin stdout stderr in
-      ignore (Unix.waitpid [] pid)
+  | Op.Exec ->
+      let pipeline = Stack.pop frame.pipelines in
+      let first_pair = ((match List.hd pipeline with
+        { cmd_params; cmd_path=Some path } ->
+          Some (Unix.openfile path [Unix.O_RDONLY] 0)
+      | _ -> None), None) in
+      let last_pair = (None, match List.hd (List.rev pipeline) with
+        { cmd_params; cmd_path=Some path } ->
+          let flag = [Unix.O_WRONLY; Unix.O_CREAT] in
+          Some (Unix.openfile path flag 0o644)
+      | _ -> None) in
+      let pipes = make_pipes [] first_pair last_pair pipeline in
+      let pids = List.map2 exec_cmd (List.rev pipeline) pipes in
+      close_pipes pipes;
+      List.iter (fun pid -> ignore (Unix.waitpid [] pid)) pids
   | Op.Expand -> (* TODO *) ()
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
@@ -170,6 +223,15 @@ let eval_op env frame op =
       Stack.push (Value.Dict hash) stack
   | Op.MakeUserFunction (args, ops_index) ->
       Stack.push (Value.UserFunction (args, ops_index)) stack
+  | Op.MoveParam ->
+      let value = Stack.pop stack in
+      (match value with
+        Value.String param ->
+          let cmd = List.hd (Stack.top frame.pipelines) in
+          cmd.cmd_params <- cmd.cmd_params @ [param]
+      | _ ->
+          let header = "Unsupported redirect: " in
+          raise (Failure (header ^ (Builtins.string_of_value value))))
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in
@@ -181,8 +243,13 @@ let eval_op env frame op =
       eval_binop stack intf floatf error string_intf
   | Op.NotEqual -> eval_equality stack ((<>) 0)
   | Op.Pop -> ignore (Stack.pop stack)
+  | Op.PushCommand ->
+      let cmd = { cmd_params=[]; cmd_path=None } in
+      let cmds = Stack.pop frame.pipelines in
+      Stack.push (cmd :: cmds) frame.pipelines
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
+  | Op.PushPipeline -> Stack.push [] frame.pipelines
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);
@@ -225,11 +292,11 @@ let rec eval_env env =
 
 let eval ops =
   let frame = {
-    locals=Symboltbl.create ();
     pc=Some ops;
+    locals=Symboltbl.create ();
+    outer_frame=None;
     stack=Stack.create ();
-    prev_frame=None;
-    outer_frame=None } in
+    pipelines=Stack.create () } in
   let stack = Stack.create () in
   Stack.push frame stack;
   eval_env { globals=Builtins.create (); frames=stack }

@@ -79,8 +79,10 @@ rule script_token = parse
   | digit+ alpha+ alnum* as s { switch_to_command (); Parser.PATTERN s }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token = parse
-    "as" { switch_to_script (); Parser.AS }
+    "->" { Parser.RIGHT_ARROW }
+  | "as" { switch_to_script (); Parser.AS }
   | ' ' { command_token lexbuf }
+  | '@' { Parser.AT }
   | '\n' { switch_to_script (); Parser.NEWLINE }
   | [^' ' '\n']+ as s { Parser.PATTERN s }
 and string_token s = parse

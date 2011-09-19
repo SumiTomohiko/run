@@ -73,14 +73,37 @@ let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   compile_stmts oplist stmts;
   OpList.add oplist (Op.Jump top);
   OpList.add_op oplist last
+and compile_commands oplist = function
+    (params, redirect) :: tl ->
+      OpList.add oplist Op.PushCommand;
+      let f param =
+        OpList.add oplist (Op.PushConst (Value.String param));
+        OpList.add oplist Op.MoveParam in
+      List.iter f params;
+      (match redirect with
+        Some (Node.Write None) -> ()
+      | Some (Node.Write (Some path)) ->
+          OpList.add oplist (Op.PushConst (Value.String path));
+          OpList.add oplist Op.DefineRedirectOut
+      | Some (Node.Append (Some path)) ->
+          OpList.add oplist (Op.PushConst (Value.String path));
+          OpList.add oplist Op.DefineRedirectOut
+      | Some (Node.ReadWrite None) -> ()
+      | Some (Node.Write2 None) -> ()
+      | Some (Node.Write2 (Some path)) ->
+          OpList.add oplist (Op.PushConst (Value.String path));
+          OpList.add oplist Op.DefineRedirectOut
+      | Some (Node.Append2 (Some path)) ->
+          OpList.add oplist (Op.PushConst (Value.String path));
+          OpList.add oplist Op.DefineRedirectOut
+      | Some _ -> raise (Failure "Unsupported redirection")
+      | None -> ());
+      compile_commands oplist tl
+  | [] -> ()
 and compile_stmt oplist = function
     Node.Break ->
       let _, label = Stack.top while_stack in
       OpList.add oplist (Op.Jump label)
-  | Node.Command patterns ->
-      let f _ pat = OpList.add oplist (Op.PushConst (Value.String pat)) in
-      List.fold_left f () patterns;
-      OpList.add oplist (Op.Exec (List.length patterns))
   | Node.Expr expr ->
       compile_expr oplist expr;
       OpList.add oplist Op.Pop
@@ -98,6 +121,10 @@ and compile_stmt oplist = function
   | Node.Next ->
       let label, _ = Stack.top while_stack in
       OpList.add oplist (Op.Jump label)
+  | Node.Pipeline commands ->
+      OpList.add oplist Op.PushPipeline;
+      compile_commands oplist commands;
+      OpList.add oplist Op.Exec
   | Node.Return expr ->
       compile_expr oplist expr;
       OpList.add oplist Op.Return

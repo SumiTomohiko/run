@@ -2,10 +2,11 @@
 type kind =
     Add
   | Call of int
+  | DefineRedirectOut
   | Div
   | DivDiv
   | Equal
-  | Exec of int
+  | Exec
   | Expand
   | GetAttr of string
   | Greater
@@ -17,11 +18,14 @@ type kind =
   | MakeArray of int
   | MakeDict of int
   | MakeUserFunction of string list * int
+  | MoveParam
   | Mul
   | NotEqual
   | Pop
+  | PushCommand
   | PushConst of Value.t
   | PushLocal of string
+  | PushPipeline
   | Return
   | StoreLocal of string
   | StoreSubscript
@@ -40,10 +44,11 @@ let kind_of_op op = op.kind
 let name_of_op = function
     Add -> "Add"
   | Call _ -> "Call"
+  | DefineRedirectOut -> "DefineRedirectOut"
   | Div _ -> "Div"
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"
-  | Exec _ -> "Exec"
+  | Exec -> "Exec"
   | Expand -> "Expand"
   | GetAttr _ -> "GetAttr"
   | Greater -> "Greater"
@@ -55,11 +60,14 @@ let name_of_op = function
   | MakeArray _ -> "MakeArray"
   | MakeDict _ -> "MakeDict"
   | MakeUserFunction _ -> "MakeUserFunction"
+  | MoveParam -> "MoveParam"
   | Mul -> "Mul"
   | NotEqual -> "NotEqual"
   | Pop -> "Pop"
+  | PushCommand -> "PushCommand"
   | PushConst _ -> "PushConst"
   | PushLocal _ -> "PushLocal"
+  | PushPipeline -> "PushPipeline"
   | Return -> "Return"
   | StoreLocal _ -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"

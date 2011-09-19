@@ -1,0 +1,4 @@
+SRC:
+cat list -> grep foo
+OUT:
+foo
