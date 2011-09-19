@@ -16,7 +16,7 @@ let rec compile_expr oplist = function
       | Node.Var name ->
           (OpList.add oplist (Op.StoreLocal name);
           OpList.add oplist (Op.PushLocal name))
-      | _ -> raise (Failure "Unsupported assign expression"))
+      | _ -> failwith "Unsupported assign expression")
   | Node.Attr { Node.attr_prefix; Node.attr_name } ->
       (compile_expr oplist attr_prefix;
       OpList.add oplist (Op.GetAttr attr_name))
@@ -96,7 +96,7 @@ and compile_commands oplist = function
       | Some (Node.Append2 (Some path)) ->
           OpList.add oplist (Op.PushConst (Value.String path));
           OpList.add oplist Op.DefineRedirectOut
-      | Some _ -> raise (Failure "Unsupported redirection")
+      | Some _ -> failwith "Unsupported redirection"
       | None -> ());
       compile_commands oplist tl
   | [] -> ()

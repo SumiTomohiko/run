@@ -25,7 +25,7 @@ let call env callee args =
   match callee with
     Value.Function f -> f args
   | Value.Method (self, f) -> f self args
-  | _ -> raise (Failure "Object is not callable")
+  | _ -> failwith "Object is not callable"
 
 let find_global env = Symboltbl.find env.globals
 
@@ -36,7 +36,7 @@ let find_local env frame name =
     Not_found -> find_global env name
 
 let raise_unsupported_operands_error () =
-  raise (Failure "Unsupported operands")
+  failwith "Unsupported operands"
 
 let eval_binop stack intf floatf stringf string_intf =
   let right = Stack.pop stack in
@@ -55,7 +55,7 @@ let array_expand self _ =
     Value.Array a ->
       let strings = Array.to_list (Array.map Builtins.string_of_value a) in
       Value.String (String.concat " " strings)
-  | _ -> raise (Failure "self must be Array")
+  | _ -> failwith "self must be Array"
 
 let dict_expand self _ =
   match self with
@@ -65,16 +65,16 @@ let dict_expand self _ =
         let t = Builtins.string_of_value value in
         (s ^ " " ^ t) :: init in
       Value.String (String.concat " " (Hashtbl.fold f h []))
-  | _ -> raise (Failure "self must be Dict")
+  | _ -> failwith "self must be Dict"
 
 let get_dict_attr h = function
     "expand" -> Value.Method ((Value.Dict h), dict_expand)
-  | name -> raise (Failure ("AttributeError: " ^ name))
+  | name -> failwith ("AttributeError: " ^ name)
 
 let get_array_attr a = function
     "size" -> Value.Int (Num.num_of_int (Array.length a))
   | "expand" -> Value.Method (Value.Array a, array_expand)
-  | name -> raise (Failure ("AttributeError: " ^ name))
+  | name -> failwith ("AttributeError: " ^ name)
 
 let eval_comparison stack f =
   let right = Stack.pop stack in
@@ -83,7 +83,7 @@ let eval_comparison stack f =
     Value.Int n, Value.Int m -> compare n m
   | Value.Float f, Value.Float g -> compare f g
   | Value.String s, Value.String t -> compare s t
-  | _ -> raise (Failure "Invalid comparison") in
+  | _ -> failwith "Invalid comparison" in
   Stack.push (Value.Bool (f result)) stack
 
 let eval_equality stack f =
@@ -166,7 +166,7 @@ let eval_op env frame op =
       let cmd = List.hd (Stack.top frame.pipelines) in
       (match Stack.pop stack with
         Value.String path -> cmd.cmd_path <- Some path
-      | _ -> raise (Failure "Unsupported redirection"))
+      | _ -> failwith "Unsupported redirection")
   | Op.Div ->
       let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in
@@ -198,7 +198,7 @@ let eval_op env frame op =
       let attr = match Stack.pop stack with
         Value.Array a -> get_array_attr a name
       | Value.Dict h -> get_dict_attr h name
-      | _ -> raise (Failure "Unknown object") in
+      | _ -> failwith "Unknown object" in
       Stack.push attr stack
   | Op.Jump label -> frame.pc <- Some label
   | Op.JumpIfFalse label ->
@@ -231,7 +231,7 @@ let eval_op env frame op =
           cmd.cmd_params <- cmd.cmd_params @ [param]
       | _ ->
           let header = "Unsupported redirect: " in
-          raise (Failure (header ^ (Builtins.string_of_value value))))
+          failwith (header ^ (Builtins.string_of_value value)))
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in
@@ -264,7 +264,7 @@ let eval_op env frame op =
       (match prefix, index with
         Value.Array a, Value.Int (Num.Int n) -> Array.set a n value
       | Value.Dict h, _ -> Hashtbl.replace h index value
-      | _ -> raise (Failure "Invalid subscript operation"))
+      | _ -> failwith "Invalid subscript operation")
   | Op.Sub ->
       let intf n m = Value.Int (Num.sub_num n m) in
       let floatf x y = Value.Float (x -. y) in
@@ -275,7 +275,7 @@ let eval_op env frame op =
       let value = match prefix, index with
         Value.Array a, Value.Int (Num.Int n) -> Array.get a n
       | Value.Dict h, _ -> Hashtbl.find h index
-      | _ -> raise (Failure "Invalid subscript operation") in
+      | _ -> failwith "Invalid subscript operation" in
       Stack.push value stack
 
   | Op.Anchor -> ()
