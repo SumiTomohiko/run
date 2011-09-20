@@ -1,6 +1,6 @@
 
 type command = {
-  mutable cmd_params: string list;
+  cmd_params: string DynArray.t;
   mutable cmd_path: string option
 }
 
@@ -117,10 +117,10 @@ let exec_cmd cmd (pipe1, pipe2) =
         Some fd -> Unix.close fd
       | None -> ());
       let args = cmd.cmd_params in
-      let prog = List.hd args in
+      let prog = DynArray.get args 0 in
       dup (fst pipe1) Unix.stdin;
       dup (snd pipe2) Unix.stdout;
-      Unix.execvp prog (Array.of_list args)
+      Unix.execvp prog (DynArray.to_array args)
   | pid -> pid
 
 let close = Option.may Unix.close
@@ -224,7 +224,7 @@ let eval_op env frame op =
       (match value with
         Value.String param ->
           let cmd = List.hd (Stack.top frame.pipelines) in
-          cmd.cmd_params <- cmd.cmd_params @ [param]
+          DynArray.add cmd.cmd_params param
       | _ ->
           let header = "Unsupported redirect: " in
           failwith (header ^ (Builtins.string_of_value value)))
@@ -240,7 +240,7 @@ let eval_op env frame op =
   | Op.NotEqual -> eval_equality stack ((<>) 0)
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushCommand ->
-      let cmd = { cmd_params=[]; cmd_path=None } in
+      let cmd = { cmd_params=DynArray.create (); cmd_path=None } in
       let cmds = Stack.pop frame.pipelines in
       Stack.push (cmd :: cmds) frame.pipelines
   | Op.PushConst v -> Stack.push v stack
