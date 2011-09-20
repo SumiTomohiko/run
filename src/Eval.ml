@@ -9,7 +9,7 @@ type frame = {
   locals: Symboltbl.t;
   outer_frame: frame option;
   stack: Value.t Stack.t;
-  pipelines: command list Stack.t
+  pipelines: command DynArray.t Stack.t
 }
 
 type env = {
@@ -97,13 +97,11 @@ let eval_equality stack f =
   Stack.push (Value.Bool (f result)) stack
 
 let rec make_pipes pairs prev_pair last_pair = function
-    [hd] -> pairs @ [(prev_pair, last_pair)]
-  | hd :: tl ->
+    1 -> pairs @ [(prev_pair, last_pair)]
+  | n ->
     let rfd, wfd = Unix.pipe () in
     let pair = (Some rfd, Some wfd) in
-    make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair tl
-  (* OCaml 3.12.0 cannot detect that next pattern is never used *)
-  | [] -> assert false
+    make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair (n - 1)
 
 let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 
@@ -159,7 +157,7 @@ let eval_op env frame op =
           Stack.push frame env.frames
       | _ -> Stack.push (call env f args) stack)
   | Op.DefineRedirectOut ->
-      let cmd = List.hd (Stack.top frame.pipelines) in
+      let cmd = DynArray.last (Stack.top frame.pipelines) in
       (match Stack.pop stack with
         Value.String path -> cmd.cmd_path <- Some path
       | _ -> failwith "Unsupported redirection")
@@ -174,17 +172,18 @@ let eval_op env frame op =
   | Op.Equal -> eval_equality stack ((=) 0)
   | Op.Exec ->
       let pipeline = Stack.pop frame.pipelines in
-      let first_pair = ((match List.hd pipeline with
+      let first_pair = ((match DynArray.get pipeline 0 with
         { cmd_params; cmd_path=Some path } ->
           Some (Unix.openfile path [Unix.O_RDONLY] 0)
       | _ -> None), None) in
-      let last_pair = (None, match List.hd (List.rev pipeline) with
+      let last_pair = (None, match DynArray.last pipeline with
         { cmd_params; cmd_path=Some path } ->
           let flag = [Unix.O_WRONLY; Unix.O_CREAT] in
           Some (Unix.openfile path flag 0o644)
       | _ -> None) in
-      let pipes = make_pipes [] first_pair last_pair pipeline in
-      let pids = List.map2 exec_cmd (List.rev pipeline) pipes in
+      let num_cmds = DynArray.length pipeline in
+      let pipes = make_pipes [] first_pair last_pair num_cmds in
+      let pids = List.map2 exec_cmd (DynArray.to_list pipeline) pipes in
       close_pipes pipes;
       List.iter (fun pid -> ignore (Unix.waitpid [] pid)) pids
   | Op.Expand -> (* TODO *) ()
@@ -222,7 +221,7 @@ let eval_op env frame op =
       let value = Stack.pop stack in
       (match value with
         Value.String param ->
-          let cmd = List.hd (Stack.top frame.pipelines) in
+          let cmd = DynArray.last (Stack.top frame.pipelines) in
           DynArray.add cmd.cmd_params param
       | _ ->
           let header = "Unsupported redirect: " in
@@ -240,11 +239,11 @@ let eval_op env frame op =
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushCommand ->
       let cmd = { cmd_params=DynArray.create (); cmd_path=None } in
-      let cmds = Stack.pop frame.pipelines in
-      Stack.push (cmd :: cmds) frame.pipelines
+      let pipeline = Stack.top frame.pipelines in
+      DynArray.add pipeline cmd
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
-  | Op.PushPipeline -> Stack.push [] frame.pipelines
+  | Op.PushPipeline -> Stack.push (DynArray.create ()) frame.pipelines
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);
