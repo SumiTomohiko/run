@@ -207,14 +207,13 @@ let eval_op env frame op =
       Stack.push (Value.Array (Array.of_list (pop_args stack size))) stack
   | Op.MakeDict size ->
       let hash = Hashtbl.create 0 in
-      let rec iter n =
-        if n = 0 then
-          ()
-        else
-          let value = Stack.pop stack in
-          let key = Stack.pop stack in
-          Hashtbl.replace hash key value;
-          iter (n - 1) in
+      let rec iter = function
+          0 -> ()
+        | n ->
+            let value = Stack.pop stack in
+            let key = Stack.pop stack in
+            Hashtbl.replace hash key value;
+            iter (n - 1) in
       iter size;
       Stack.push (Value.Dict hash) stack
   | Op.MakeUserFunction (args, ops_index) ->
