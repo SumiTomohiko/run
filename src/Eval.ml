@@ -105,23 +105,19 @@ let rec make_pipes pairs prev_pair last_pair = function
 
 let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 
+let close = Option.may Unix.close
+
 let exec_cmd cmd (pipe1, pipe2) =
   match Unix.fork () with
     0 ->
-      (match snd pipe1 with
-        Some fd -> Unix.close fd
-      | None -> ());
-      (match fst pipe2 with
-        Some fd -> Unix.close fd
-      | None -> ());
+      close (snd pipe1);
+      close (fst pipe2);
       let args = cmd.cmd_params in
       let prog = DynArray.get args 0 in
       dup (fst pipe1) Unix.stdin;
       dup (snd pipe2) Unix.stdout;
       Unix.execvp prog (DynArray.to_array args)
   | pid -> pid
-
-let close = Option.may Unix.close
 
 let rec close_pipes = function
     (_, pair) :: tl ->
