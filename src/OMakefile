@@ -47,6 +47,8 @@ FILES[] =
     Main
 #
 PROGRAM = run
+USE_OCAMLFIND = true
+OCAMLPACKS = extlib
 OCAML_OTHER_LIBS += unix nums ensure
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))

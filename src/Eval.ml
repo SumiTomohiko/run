@@ -105,9 +105,7 @@ let rec make_pipes pairs prev_pair last_pair = function
   (* OCaml 3.12.0 cannot detect that next pattern is never used *)
   | [] -> assert false
 
-let opt default = function
-    Some p -> p
-  | None -> default
+let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 
 let exec_cmd cmd (pipe1, pipe2) =
   match Unix.fork () with
@@ -120,8 +118,8 @@ let exec_cmd cmd (pipe1, pipe2) =
       | None -> ());
       let args = cmd.cmd_params in
       let prog = List.hd args in
-      Unix.dup2 (opt Unix.stdin (fst pipe1)) Unix.stdin;
-      Unix.dup2 (opt Unix.stdout (snd pipe2)) Unix.stdout;
+      dup (fst pipe1) Unix.stdin;
+      dup (snd pipe2) Unix.stdout;
       Unix.execvp prog (Array.of_list args)
   | pid -> pid
 
