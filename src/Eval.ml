@@ -97,13 +97,12 @@ let eval_equality stack f =
   Stack.push (Value.Bool (f result)) stack
 
 let rec make_pipes pairs prev_pair last_pair = function
-    hd :: tl ->
-      if (List.length tl) = 0 then
-        pairs @ [(prev_pair, last_pair)]
-      else
-        let rfd, wfd = Unix.pipe () in
-        let pair = (Some rfd, Some wfd) in
-        make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair tl
+    [hd] -> pairs @ [(prev_pair, last_pair)]
+  | hd :: tl ->
+    let rfd, wfd = Unix.pipe () in
+    let pair = (Some rfd, Some wfd) in
+    make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair tl
+  (* OCaml 3.12.0 cannot detect that next pattern is never used *)
   | [] -> assert false
 
 let opt default = function
