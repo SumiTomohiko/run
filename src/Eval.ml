@@ -185,6 +185,7 @@ let eval_op env frame op =
       let pipes = make_pipes [] first_pair last_pair num_cmds in
       let pids = List.map2 exec_cmd (DynArray.to_list pipeline) pipes in
       close_pipes pipes;
+      close (fst first_pair);
       List.iter (fun pid -> ignore (Unix.waitpid [] pid)) pids
   | Op.Expand -> (* TODO *) ()
   | Op.Greater -> eval_comparison stack ((<) 0)
