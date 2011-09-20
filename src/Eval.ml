@@ -123,13 +123,12 @@ let exec_cmd cmd (pipe1, pipe2) =
       Unix.execvp prog (Array.of_list args)
   | pid -> pid
 
+let close = Option.may Unix.close
+
 let rec close_pipes = function
     (_, pair) :: tl ->
-      (match pair with
-        (Some fd1, Some fd2) -> Unix.close fd1; Unix.close fd2
-      | (Some fd1, None) -> Unix.close fd1
-      | (None, Some fd2) -> Unix.close fd2
-      | _ -> ());
+      close (fst pair);
+      close (snd pair);
       close_pipes tl
   | [] -> ()
 
