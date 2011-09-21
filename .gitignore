@@ -19,5 +19,6 @@ tests/Lexer.mli
 tests/Parser.ml
 tests/Parser.mli
 tests/Parser.output
+tests/list.tmp
 tests/run_test
 tests/run_test.opt

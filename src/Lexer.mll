@@ -80,11 +80,24 @@ rule script_token = parse
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token = parse
     "->" { Parser.RIGHT_ARROW }
+  | "->>" { Parser.RIGHT_RIGHT_ARROW }
+  | "<-" { Parser.LEFT_ARROW }
+  | "=>" { Parser.RIGHT_ARROW2 }
+  | "=>>" { Parser.RIGHT_RIGHT_ARROW2 }
   | "as" { switch_to_script (); Parser.AS }
-  | ' ' { command_token lexbuf }
+  | "err->" { Parser.ERR_RIGHT_ARROW }
+  | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
+  | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
+  | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
+  | '"' {
+    match string_token "" lexbuf with
+      Parser.STRING s -> Parser.PATTERN s
+    | _ -> failwith "Invaild string token"
+  }
+  | ' '+ { command_token lexbuf }
   | '@' { Parser.AT }
   | '\n' { switch_to_script (); Parser.NEWLINE }
-  | [^' ' '\n']+ as s { Parser.PATTERN s }
+  | [^'"' '@' ' ' '\n']+ as s { Parser.PATTERN s }
 and string_token s = parse
     '"' { Parser.STRING s }
   | [^'"']* as t { string_token (s ^ t) lexbuf }

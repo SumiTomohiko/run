@@ -1,0 +1,11 @@
+SRC:
+cp -f list list.tmp
+sh -c "echo foo 1>&2 && echo bar" =>> @list.tmp
+cat list.tmp
+OUT:
+foo
+bar
+baz
+quux
+foo
+bar

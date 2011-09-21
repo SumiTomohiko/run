@@ -1,0 +1,7 @@
+SRC:
+cat <- @list
+OUT:
+foo
+bar
+baz
+quux

@@ -43,6 +43,7 @@ FILES[] =
     Compiler
     Symboltbl
     Builtins
+    Redirect
     Eval
     Main
 #

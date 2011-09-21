@@ -1,0 +1,7 @@
+SRC:
+sh -c "cat list 1>&2" => cat
+OUT:
+foo
+bar
+baz
+quux

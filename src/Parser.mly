@@ -1,18 +1,25 @@
 %{
-let rec last = function
-    [] -> None
-  | [hd] -> Some hd
-  | hd :: tl -> last tl
-let add_return_nil stmts =
-  stmts @ match last stmts with
-    Some (Node.Return _) -> []
-  | None
+let make_default_return stmts =
+  match (List.hd (List.rev stmts)) with
+    Node.Return _ -> []
   | _ -> [Node.Return (Node.Const Value.Nil)]
+
+let make_file_redirect path flags = Some (Node.File (path, flags))
+let write_flags = [Unix.O_CREAT; Unix.O_WRONLY]
+let make_write_redirect path =
+  make_file_redirect path (Unix.O_TRUNC :: write_flags)
+let make_append_redirect path =
+  make_file_redirect path (Unix.O_APPEND :: write_flags)
+
+let stderr_redirect = Some Node.Dup
 %}
 %token AS AT BREAK COLON COMMA DEF DIV DIV_DIV DOT ELIF ELSE END EOF EQUAL
-%token EQUAL_EQUAL EVERY FALSE GREATER GREATER_EQUAL IF LBRACE LBRACKET LESS
-%token LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL PLUS RBRACE RBRACKET RETURN
-%token RIGHT_ARROW RPAR STAR TRUE WHILE
+%token EQUAL_EQUAL ERR_RIGHT_ARROW ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW
+%token EVERY FALSE GREATER GREATER_EQUAL IF LBRACE LBRACKET LEFT_ARROW LESS
+%token LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW
+%token OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN
+%token RIGHT_ARROW RIGHT_ARROW2 RIGHT_RIGHT_ARROW RIGHT_RIGHT_ARROW2 RPAR STAR
+%token TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME PATTERN STRING
@@ -29,11 +36,11 @@ stmts : stmts NEWLINE stmt { $1 @ [$3] }
 
 stmt  : expr { Node.Expr $1 }
       | DEF NAME LPAR names RPAR stmts END {
-  let stmts = add_return_nil $6 in
+  let stmts = $6 @ (make_default_return $6) in
   Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts }
 }
       | DEF NAME LPAR RPAR stmts END {
-  let stmts = add_return_nil $5 in
+  let stmts = $5 @ (make_default_return $5) in
   Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts }
 }
       | EVERY patterns AS names NEWLINE stmts END {
@@ -47,17 +54,72 @@ stmt  : expr { Node.Expr $1 }
       | BREAK { Node.Break }
       | RETURN expr { Node.Return $2 }
       | pipeline { Node.Pipeline $1 }
-      | { Node.Empty }
+      | /* empty */ { Node.Empty }
 ;
 
-pipeline  : patterns RIGHT_ARROW pipeline {
-  ($1, Some (Node.Write None)) :: $3
-}
-          | patterns RIGHT_ARROW AT PATTERN {
-  [($1, Some (Node.Write (Some $4)))]
-}
-          | patterns { [($1, None)] }
-;
+pipeline
+  : single_command { [$1] }
+  | first_command last_command { [$1; $2] }
+  | first_command commands last_command { $1 :: ($2 @ [$3]) }
+  ;
+
+single_command
+  : patterns stdin_opt stderr_opt stdout_opt {
+    ($1, $2, $4, $3)
+  }
+  | patterns stdin_opt RIGHT_ARROW2 AT pattern {
+    ($1, $2, make_write_redirect $5, stderr_redirect)
+  }
+  | patterns stdin_opt RIGHT_RIGHT_ARROW2 AT pattern {
+    ($1, $2, make_append_redirect $5, stderr_redirect)
+  }
+  ;
+
+stdin_opt
+  : /* empty */ { None }
+  | LEFT_ARROW AT pattern { Some $3 }
+  ;
+
+stderr_opt
+  : /* empty */ { None }
+  | ERR_RIGHT_ARROW AT pattern { make_write_redirect $3 }
+  | ERR_RIGHT_RIGHT_ARROW AT pattern { make_append_redirect $3 }
+  | ERR_RIGHT_ARROW_OUT { stderr_redirect }
+  ;
+
+stdout_opt
+  : /* empty */ { None }
+  | RIGHT_ARROW AT pattern { make_write_redirect $3 }
+  | RIGHT_RIGHT_ARROW AT pattern { make_append_redirect $3 }
+  | OUT_RIGHT_ARROW_ERR { Some Node.Dup }
+  | OUT_RIGHT_ARROW AT pattern { make_write_redirect $3 }
+  | OUT_RIGHT_RIGHT_ARROW AT pattern { make_append_redirect $3 }
+  ;
+
+first_command
+  : patterns stdin_opt stderr_opt RIGHT_ARROW { ($1, $2, None, $3) }
+  | patterns stdin_opt RIGHT_ARROW2 { ($1, $2, None, stderr_redirect) }
+  ;
+
+last_command
+  : patterns stderr_opt stdout_opt { ($1, None, $3, $2) }
+  | patterns RIGHT_ARROW2 AT pattern {
+    ($1, None, make_write_redirect $4, None)
+  }
+  | patterns RIGHT_RIGHT_ARROW2 pattern {
+    ($1, None, make_write_redirect $3, stderr_redirect)
+  }
+  ;
+
+commands
+  : commands command { $1 @ [$2] }
+  | command { [$1] }
+  ;
+
+command
+  : patterns stderr_opt RIGHT_ARROW { ($1, None, None, $2) }
+  | patterns RIGHT_ARROW2 { ($1, None, None, stderr_redirect) }
+  ;
 
 elif  : ELIF expr NEWLINE stmts { Node.If ($2, $4, []) }
       | ELIF expr NEWLINE stmts ELSE stmts { Node.If ($2, $4, $6) }

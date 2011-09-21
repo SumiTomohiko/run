@@ -2,7 +2,6 @@
 type kind =
     Add
   | Call of int
-  | DefineRedirectOut
   | Div
   | DivDiv
   | Equal
@@ -22,10 +21,11 @@ type kind =
   | Mul
   | NotEqual
   | Pop
-  | PushCommand
+  | PushCommand of Unix.open_flag list
+  | PushCommandE2O
   | PushConst of Value.t
   | PushLocal of string
-  | PushPipeline
+  | PushPipeline of Unix.open_flag list
   | Return
   | StoreLocal of string
   | StoreSubscript
@@ -44,7 +44,6 @@ let kind_of_op op = op.kind
 let name_of_op = function
     Add -> "Add"
   | Call _ -> "Call"
-  | DefineRedirectOut -> "DefineRedirectOut"
   | Div _ -> "Div"
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"
@@ -64,10 +63,11 @@ let name_of_op = function
   | Mul -> "Mul"
   | NotEqual -> "NotEqual"
   | Pop -> "Pop"
-  | PushCommand -> "PushCommand"
+  | PushCommand _ -> "PushCommand"
+  | PushCommandE2O -> "PushCommandE2O"
   | PushConst _ -> "PushConst"
   | PushLocal _ -> "PushLocal"
-  | PushPipeline -> "PushPipeline"
+  | PushPipeline _ -> "PushPipeline"
   | Return -> "Return"
   | StoreLocal _ -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"

@@ -1,0 +1,9 @@
+SRC:
+rm -f list.tmp
+cat list ->> @list.tmp
+cat list.tmp
+OUT:
+foo
+bar
+baz
+quux

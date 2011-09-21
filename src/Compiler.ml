@@ -57,6 +57,17 @@ and compile_exprs oplist = function
     expr :: exprs -> (compile_expr oplist expr; compile_exprs oplist exprs)
   | [] -> ()
 
+let compile_params oplist params =
+  let f param =
+    OpList.add oplist (Op.PushConst (Value.String param));
+    OpList.add oplist Op.MoveParam in
+  List.iter f params
+
+let add_command oplist params path flags =
+  OpList.add oplist (Op.PushConst path);
+  OpList.add oplist (Op.PushCommand flags);
+  compile_params oplist params
+
 let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
   List.iter push_false names;
@@ -74,30 +85,15 @@ let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   OpList.add oplist (Op.Jump top);
   OpList.add_op oplist last
 and compile_commands oplist = function
-    (params, redirect) :: tl ->
-      OpList.add oplist Op.PushCommand;
-      let f param =
-        OpList.add oplist (Op.PushConst (Value.String param));
-        OpList.add oplist Op.MoveParam in
-      List.iter f params;
-      (match redirect with
-        Some (Node.Write None) -> ()
-      | Some (Node.Write (Some path)) ->
-          OpList.add oplist (Op.PushConst (Value.String path));
-          OpList.add oplist Op.DefineRedirectOut
-      | Some (Node.Append (Some path)) ->
-          OpList.add oplist (Op.PushConst (Value.String path));
-          OpList.add oplist Op.DefineRedirectOut
-      | Some (Node.ReadWrite None) -> ()
-      | Some (Node.Write2 None) -> ()
-      | Some (Node.Write2 (Some path)) ->
-          OpList.add oplist (Op.PushConst (Value.String path));
-          OpList.add oplist Op.DefineRedirectOut
-      | Some (Node.Append2 (Some path)) ->
-          OpList.add oplist (Op.PushConst (Value.String path));
-          OpList.add oplist Op.DefineRedirectOut
-      | Some _ -> failwith "Unsupported redirection"
-      | None -> ());
+    (params, _, _, Some Node.Dup) :: tl ->
+      OpList.add oplist Op.PushCommandE2O;
+      compile_params oplist params;
+      compile_commands oplist tl
+  | (params, _, _, Some (Node.File (path, flags))) :: tl ->
+      add_command oplist params (Value.String path) flags;
+      compile_commands oplist tl
+  | (params, _, _, None) :: tl ->
+      add_command oplist params Value.Nil [];
       compile_commands oplist tl
   | [] -> ()
 and compile_stmt oplist = function
@@ -122,7 +118,18 @@ and compile_stmt oplist = function
       let label, _ = Stack.top while_stack in
       OpList.add oplist (Op.Jump label)
   | Node.Pipeline commands ->
-      OpList.add oplist Op.PushPipeline;
+      let (_, first_stdin, _, _) = List.hd commands in
+      let stdin_path = match first_stdin with
+        Some path -> Value.String path
+      | None -> Value.Nil in
+      OpList.add oplist (Op.PushConst stdin_path);
+      let (_, _, last_stdout, _) = List.hd (List.rev commands) in
+      let stdout_path, flags = match last_stdout with
+        Some (Node.File (path, flags)) -> Value.String path, flags
+      | None -> Value.Nil, []
+      | Some _ -> failwith "Invalid stdout redirect" in
+      OpList.add oplist (Op.PushConst stdout_path);
+      OpList.add oplist (Op.PushPipeline flags);
       compile_commands oplist commands;
       OpList.add oplist Op.Exec
   | Node.Return expr ->

@@ -1,7 +1,13 @@
 
 type command = {
   cmd_params: string DynArray.t;
-  mutable cmd_path: string option
+  cmd_stderr_redirect: Redirect.t option
+}
+
+type pipeline = {
+  pl_commands: command DynArray.t;
+  pl_first_stdin: string option;
+  pl_last_stdout: (string * Unix.open_flag list) option
 }
 
 type frame = {
@@ -9,7 +15,7 @@ type frame = {
   locals: Symboltbl.t;
   outer_frame: frame option;
   stack: Value.t Stack.t;
-  pipelines: command DynArray.t Stack.t
+  pipelines: pipeline Stack.t
 }
 
 type env = {
@@ -99,9 +105,9 @@ let eval_equality stack f =
 let rec make_pipes pairs prev_pair last_pair = function
     1 -> pairs @ [(prev_pair, last_pair)]
   | n ->
-    let rfd, wfd = Unix.pipe () in
-    let pair = (Some rfd, Some wfd) in
-    make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair (n - 1)
+      let rfd, wfd = Unix.pipe () in
+      let pair = (Some rfd, Some wfd) in
+      make_pipes (pairs @ [(prev_pair, pair)]) pair last_pair (n - 1)
 
 let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 
@@ -112,10 +118,17 @@ let exec_cmd cmd (pipe1, pipe2) =
     0 ->
       close (snd pipe1);
       close (fst pipe2);
-      let args = cmd.cmd_params in
-      let prog = DynArray.get args 0 in
       dup (fst pipe1) Unix.stdin;
       dup (snd pipe2) Unix.stdout;
+      (match cmd.cmd_stderr_redirect with
+        Some (Redirect.File (path, flags)) ->
+          let fd = Unix.openfile path flags 0o644 in
+          Unix.dup2 fd Unix.stderr;
+          Unix.close fd
+      | Some Redirect.Dup -> Unix.dup2 Unix.stdout Unix.stderr
+      | None -> ());
+      let args = cmd.cmd_params in
+      let prog = DynArray.get args 0 in
       Unix.execvp prog (DynArray.to_array args)
   | pid -> pid
 
@@ -125,6 +138,8 @@ let rec close_pipes = function
       close (snd pair);
       close_pipes tl
   | [] -> ()
+
+let add_command frame = DynArray.add (Stack.top frame.pipelines).pl_commands
 
 let eval_op env frame op =
   let stack = frame.stack in
@@ -152,11 +167,6 @@ let eval_op env frame op =
             pipelines=Stack.create () } in
           Stack.push frame env.frames
       | _ -> Stack.push (call env f args) stack)
-  | Op.DefineRedirectOut ->
-      let cmd = DynArray.last (Stack.top frame.pipelines) in
-      (match Stack.pop stack with
-        Value.String path -> cmd.cmd_path <- Some path
-      | _ -> failwith "Unsupported redirection")
   | Op.Div ->
       let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in
@@ -168,20 +178,20 @@ let eval_op env frame op =
   | Op.Equal -> eval_equality stack ((=) 0)
   | Op.Exec ->
       let pipeline = Stack.pop frame.pipelines in
-      let first_pair = ((match DynArray.get pipeline 0 with
-        { cmd_params; cmd_path=Some path } ->
-          Some (Unix.openfile path [Unix.O_RDONLY] 0)
-      | _ -> None), None) in
-      let last_pair = (None, match DynArray.last pipeline with
-        { cmd_params; cmd_path=Some path } ->
-          let flag = [Unix.O_WRONLY; Unix.O_CREAT] in
-          Some (Unix.openfile path flag 0o644)
-      | _ -> None) in
-      let num_cmds = DynArray.length pipeline in
+      let first_stdin_fd = match pipeline.pl_first_stdin with
+        Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
+      | None -> None in
+      let first_pair = (first_stdin_fd, None) in
+      let last_stdout_fd = match pipeline.pl_last_stdout with
+        Some (path, flags) -> Some (Unix.openfile path flags 0o644)
+      | None -> None in
+      let last_pair = (None, last_stdout_fd) in
+      let cmds = pipeline.pl_commands in
+      let num_cmds = DynArray.length cmds in
       let pipes = make_pipes [] first_pair last_pair num_cmds in
-      let pids = List.map2 exec_cmd (DynArray.to_list pipeline) pipes in
+      let pids = List.map2 exec_cmd (DynArray.to_list cmds) pipes in
       close_pipes pipes;
-      close (fst first_pair);
+      close first_stdin_fd;
       List.iter (fun pid -> ignore (Unix.waitpid [] pid)) pids
   | Op.Expand -> (* TODO *) ()
   | Op.Greater -> eval_comparison stack ((<) 0)
@@ -215,12 +225,11 @@ let eval_op env frame op =
   | Op.MakeUserFunction (args, ops_index) ->
       Stack.push (Value.UserFunction (args, ops_index)) stack
   | Op.MoveParam ->
-      let value = Stack.pop stack in
-      (match value with
+      (match Stack.pop stack with
         Value.String param ->
-          let cmd = DynArray.last (Stack.top frame.pipelines) in
+          let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
           DynArray.add cmd.cmd_params param
-      | _ ->
+      | value ->
           let header = "Unsupported redirect: " in
           failwith (header ^ (Builtins.string_of_value value)))
   | Op.Mul ->
@@ -234,13 +243,35 @@ let eval_op env frame op =
       eval_binop stack intf floatf error string_intf
   | Op.NotEqual -> eval_equality stack ((<>) 0)
   | Op.Pop -> ignore (Stack.pop stack)
-  | Op.PushCommand ->
-      let cmd = { cmd_params=DynArray.create (); cmd_path=None } in
-      let pipeline = Stack.top frame.pipelines in
-      DynArray.add pipeline cmd
+  | Op.PushCommand flags ->
+      let stderr_redirect = match Stack.pop stack with
+        Value.String path -> Some (Redirect.File (path, flags))
+      | Value.Nil -> None
+      | _ -> failwith "Invalid stderr redirect" in
+      let cmd = {
+        cmd_params=DynArray.create (); cmd_stderr_redirect=stderr_redirect } in
+      add_command frame cmd
+  | Op.PushCommandE2O ->
+      let cmd = {
+        cmd_params=DynArray.create ();
+        cmd_stderr_redirect=Some Redirect.Dup } in
+      add_command frame cmd
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
-  | Op.PushPipeline -> Stack.push (DynArray.create ()) frame.pipelines
+  | Op.PushPipeline flags ->
+      let stdout = match Stack.pop stack with
+        Value.String path -> Some (path, flags)
+      | Value.Nil -> None
+      | _ -> failwith "Invalid stdout path" in
+      let stdin = match Stack.pop stack with
+        Value.String path -> Some path
+      | Value.Nil -> None
+      | _ -> failwith "Invalid stdin path" in
+      let pipeline = {
+        pl_commands=DynArray.create ();
+        pl_first_stdin=stdin;
+        pl_last_stdout=stdout } in
+      Stack.push pipeline frame.pipelines
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);

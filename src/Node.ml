@@ -31,20 +31,15 @@ and user_function = {
   uf_args: string list;
   uf_stmts: stmt list
 }
-and redirect =
-    Read of string option
-  | Write of string option
-  | Append of string option
-  | ReadWrite of string option
-  | Write2 of string option
-  | Append2 of string option
+and redirect = Dup | File of string * Unix.open_flag list
+and command = string list * string option * redirect option * redirect option
 and stmt =
     Break
   | Every of every
   | Expr of expr
   | If of expr * stmt list * stmt list
   | Next
-  | Pipeline of (string list * redirect option) list
+  | Pipeline of command list
   | Return of expr
   | UserFunction of user_function
   | While of expr * stmt list
