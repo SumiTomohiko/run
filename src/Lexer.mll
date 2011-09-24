@@ -1,9 +1,3 @@
-{
-type mode = Script | Command | Comment
-let mode = ref Script
-let switch_to_script () = mode := Script
-let switch_to_command () = mode := Command
-}
 
 let digit = ['0'-'9']
 let alpha = ['A'-'Z' 'a'-'z' '_']
@@ -14,7 +8,7 @@ rule script_token heredoc_queue = parse
   | "<<" (alpha alnum* as name) {
     let buf = Buffer.create 16 in
       (match heredoc_queue with
-        Some queue -> Queue.add (name, ref buf) queue
+        Some queue -> Queue.add (name, buf) queue
       | None -> ());
       Parser.HEREDOC buf
   }
@@ -30,7 +24,7 @@ rule script_token heredoc_queue = parse
   | "elif" { Parser.ELIF }
   | "else" { Parser.ELSE }
   | "end" { Parser.END }
-  | "every" { switch_to_command (); Parser.EVERY }
+  | "every" { Parser.EVERY }
   | "false" { Parser.FALSE }
   | "if" { Parser.IF }
   | "next" { Parser.NEXT }
@@ -59,7 +53,6 @@ rule script_token heredoc_queue = parse
   | '}' { Parser.RBRACE }
   | alpha alnum* as s { Parser.NAME s }
   | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
-  | digit+ alpha+ alnum* as s { switch_to_command (); Parser.PATTERN s }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token heredoc_queue = parse
     "->" { Parser.RIGHT_ARROW }
@@ -68,7 +61,7 @@ and command_token heredoc_queue = parse
   | "<->" { Parser.LEFT_RIGHT_ARROW }
   | "=>" { Parser.RIGHT_ARROW2 }
   | "=>>" { Parser.RIGHT_RIGHT_ARROW2 }
-  | "as" { switch_to_script (); Parser.AS }
+  | "as" { Parser.AS }
   | "err->" { Parser.ERR_RIGHT_ARROW }
   | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
   | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
@@ -76,7 +69,7 @@ and command_token heredoc_queue = parse
   | '"' { Parser.PATTERN (string_token "" lexbuf) }
   | ' '+ { command_token heredoc_queue lexbuf }
   | '@' { Parser.AT }
-  | '\n' { switch_to_script (); Parser.NEWLINE }
+  | '\n' { Parser.NEWLINE }
   | [^'"' '@' ' ' '\n']+ as s { Parser.PATTERN s }
 and string_token s = parse
     '"' { s }
@@ -110,7 +103,7 @@ let rec peek_next_char s pos =
 
 let read_heredoc heredoc_queue lexbuf =
   let name, buf = Queue.take heredoc_queue in
-  heredoc name !buf lexbuf
+  heredoc name buf lexbuf
 
 let try_expr line =
   try
@@ -146,6 +139,8 @@ let try_keyword line =
     Failure _
   | Parser.Error -> false
 
+type mode = Script | Command | Comment
+
 let determine_mode line =
   if (try_expr line) || (try_keyword line) then
     Script
@@ -154,53 +149,66 @@ let determine_mode line =
   else
     Command
 
+type lexer = {
+  mutable buffer: string;
+  (**
+   * If top_of_line is true, it indicates both of:
+   * 1. Current position is top of a line.
+   * 2. We don't still know that this line is Script or Command.
+   *)
+  mutable top_of_line: bool;
+  mutable mode: mode;
+  heredoc_queue: (string * Buffer.t) Queue.t
+}
+
 let make_tokenizer ch =
-  let buf = ref "" in
+  let lexer = {
+    buffer="";
+    top_of_line=true;
+    mode=Script;
+    heredoc_queue=Queue.create () } in
   let fill s size =
-    if !buf = "" then
+    if lexer.buffer = "" then
       try
-        buf := (input_line ch) ^ "\n"
+        lexer.buffer <- (input_line ch) ^ "\n"
       with
         End_of_file -> ()
     else
       ();
 
     let rec loop s size pos =
-      if (size = pos) || (!buf = "") then
+      if (size = pos) || (lexer.buffer = "") then
         pos
-      else begin
-        String.set s pos (String.get !buf 0);
-        buf := String.sub !buf 1 ((String.length !buf) - 1);
-        loop s size (pos + 1)
-      end in
+      else
+        let buf = lexer.buffer in
+        String.set s pos (String.get buf 0);
+        lexer.buffer <- String.sub buf 1 ((String.length buf) - 1);
+        loop s size (pos + 1) in
     loop s size 0 in
 
-  (**
-   * If top_of_line is true, it indicates both of:
-   *
-   * 1. Current position is top of a line.
-   * 2. We don't still know that this line is Script or Command.
-   *)
-  let top_of_line = ref true in
-  let heredoc_queue = Queue.create () in
   let rec token lexbuf =
-    if !top_of_line && not (Queue.is_empty heredoc_queue) then begin
-      read_heredoc heredoc_queue lexbuf;
+    if lexer.top_of_line && not (Queue.is_empty lexer.heredoc_queue) then begin
+      read_heredoc lexer.heredoc_queue lexbuf;
       token lexbuf
-    end else if not !top_of_line then begin
-      let tok = match !mode with
-        Script -> script_token (Some heredoc_queue) lexbuf
-      | Command -> command_token (Some heredoc_queue) lexbuf
-      | _ -> comment (Some heredoc_queue) 0 lexbuf in
-      top_of_line := (match tok with Parser.NEWLINE -> true | _ -> false);
+    end else if not lexer.top_of_line then begin
+      let tok = match lexer.mode with
+        Script -> script_token (Some lexer.heredoc_queue) lexbuf
+      | Command -> command_token (Some lexer.heredoc_queue) lexbuf
+      | _ -> comment (Some lexer.heredoc_queue) 0 lexbuf in
+      lexer.top_of_line <- (match tok with Parser.NEWLINE -> true | _ -> false);
+      (match tok with
+        Parser.AS
+      | Parser.NEWLINE -> lexer.mode <- Script
+      | Parser.EVERY -> lexer.mode <- Command
+      | _ -> ());
       tok
     end else begin
-      buf := (try
+      lexer.buffer <- (try
         (input_line ch) ^ "\n"
       with
         End_of_file -> "");
-      mode := determine_mode !buf;
-      top_of_line := false;
+      lexer.mode <- determine_mode lexer.buffer;
+      lexer.top_of_line <- false;
       token lexbuf
     end in
   token, Lexing.from_function fill
