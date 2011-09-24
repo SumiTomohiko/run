@@ -65,6 +65,7 @@ and command_token heredoc_queue = parse
     "->" { Parser.RIGHT_ARROW }
   | "->>" { Parser.RIGHT_RIGHT_ARROW }
   | "<-" { Parser.LEFT_ARROW }
+  | "<->" { Parser.LEFT_RIGHT_ARROW }
   | "=>" { Parser.RIGHT_ARROW2 }
   | "=>>" { Parser.RIGHT_RIGHT_ARROW2 }
   | "as" { switch_to_script (); Parser.AS }

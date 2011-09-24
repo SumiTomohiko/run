@@ -100,6 +100,17 @@ and compile_stmt oplist = function
     Node.Break ->
       let _, label = Stack.top while_stack in
       OpList.add oplist (Op.Jump label)
+  | Node.Communication (left, right) ->
+      OpList.add oplist (Op.PushConst Value.Nil);
+      OpList.add oplist (Op.PushConst Value.Nil);
+      OpList.add oplist (Op.PushPipeline []);
+      OpList.add oplist (Op.PushConst Value.Nil);
+      OpList.add oplist (Op.PushCommand []);
+      compile_params oplist left;
+      OpList.add oplist (Op.PushConst Value.Nil);
+      OpList.add oplist (Op.PushCommand []);
+      compile_params oplist right;
+      OpList.add oplist Op.Communicate
   | Node.Expr expr ->
       compile_expr oplist expr;
       OpList.add oplist Op.Pop

@@ -1,0 +1,5 @@
+SRC:
+./ping <-> ./pong
+ERR:
+PING
+PONG

@@ -1,0 +1,6 @@
+SRC:
+i = 0
+while i < 2048
+  ./ping <-> ./pong
+  i = i + 1
+end

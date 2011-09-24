@@ -2,6 +2,7 @@
 type kind =
     Add
   | Call of int
+  | Communicate
   | Div
   | DivDiv
   | Equal
@@ -44,6 +45,7 @@ let kind_of_op op = op.kind
 let name_of_op = function
     Add -> "Add"
   | Call _ -> "Call"
+  | Communicate -> "Communicate"
   | Div _ -> "Div"
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"

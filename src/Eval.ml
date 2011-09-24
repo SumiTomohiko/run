@@ -113,7 +113,26 @@ let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 
 let close = Option.may Unix.close
 
-let exec_cmd cmd (pipe1, pipe2) =
+let exec cmd =
+  let args = cmd.cmd_params in
+  let prog = DynArray.get args 0 in
+  Unix.execvp prog (DynArray.to_array args)
+
+let dup_and_close oldfd newfd =
+  Unix.dup2 oldfd newfd;
+  Unix.close oldfd
+
+let exec_communicate cmd pipes =
+  match Unix.fork () with
+    0 ->
+      dup_and_close (fst (List.hd pipes)) Unix.stdin;
+      dup_and_close (snd (List.hd (List.tl pipes))) Unix.stdout;
+      let args = cmd.cmd_params in
+      let prog = DynArray.get args 0 in
+      Unix.execv prog (DynArray.to_array args)
+  | pid -> pid
+
+let exec_command cmd (pipe1, pipe2) =
   match Unix.fork () with
     0 ->
       close (snd pipe1);
@@ -127,9 +146,7 @@ let exec_cmd cmd (pipe1, pipe2) =
           Unix.close fd
       | Some Redirect.Dup -> Unix.dup2 Unix.stdout Unix.stderr
       | None -> ());
-      let args = cmd.cmd_params in
-      let prog = DynArray.get args 0 in
-      Unix.execvp prog (DynArray.to_array args)
+      exec cmd
   | pid -> pid
 
 let rec close_pipes = function
@@ -140,6 +157,13 @@ let rec close_pipes = function
   | [] -> ()
 
 let add_command frame = DynArray.add (Stack.top frame.pipelines).pl_commands
+
+let wait_children = List.iter (fun pid -> ignore (Unix.waitpid [] pid))
+
+let close_all_pipes = function
+    [(rfd1, wfd1); (rfd2, wfd2)] ->
+      List.iter Unix.close [rfd1; wfd1; rfd2; wfd2]
+  | _ -> failwith "Invalid pipes"
 
 let eval_op env frame op =
   let stack = frame.stack in
@@ -167,6 +191,13 @@ let eval_op env frame op =
             pipelines=Stack.create () } in
           Stack.push frame env.frames
       | _ -> Stack.push (call env f args) stack)
+  | Op.Communicate ->
+      let pipeline = Stack.pop frame.pipelines in
+      let pipes = [Unix.pipe (); Unix.pipe ()] in
+      let cmds = DynArray.to_list pipeline.pl_commands in
+      let pids = List.map2 exec_communicate cmds [pipes; (List.rev pipes)] in
+      close_all_pipes pipes;
+      wait_children pids
   | Op.Div ->
       let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in
@@ -189,10 +220,10 @@ let eval_op env frame op =
       let cmds = pipeline.pl_commands in
       let num_cmds = DynArray.length cmds in
       let pipes = make_pipes [] first_pair last_pair num_cmds in
-      let pids = List.map2 exec_cmd (DynArray.to_list cmds) pipes in
+      let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
       close_pipes pipes;
       close first_stdin_fd;
-      List.iter (fun pid -> ignore (Unix.waitpid [] pid)) pids
+      wait_children pids
   | Op.Expand -> (* TODO *) ()
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)

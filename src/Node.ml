@@ -35,6 +35,7 @@ and redirect = Dup | File of string * Unix.open_flag list
 and command = string list * string option * redirect option * redirect option
 and stmt =
     Break
+  | Communication of string list * string list
   | Every of every
   | Expr of expr
   | If of expr * stmt list * stmt list

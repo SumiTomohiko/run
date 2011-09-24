@@ -38,4 +38,11 @@ FILES[] = Test Parser Lexer Main
 PROGRAM = run_test
 OCAML_OTHER_LIBS += unix ensure
 #
-.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
+PING_EXE = ping
+PONG_EXE = pong
+OCamlProgram($(PROGRAM), $(FILES))
+OCamlProgram($(PING_EXE), ping)
+OCamlProgram($(PONG_EXE), pong)
+.DEFAULT: $(PROGRAM) $(PING_EXE) $(PONG_EXE)
+
+# vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
