@@ -1,16 +1,17 @@
 %token <string> CONTENT
-%token EOF OUT SRC
+%token EOF ERR OUT SRC
 %start test
 %type <Test.t> test
-%type <string> contents src
-%type <string option> out
 %%
-test  : src out EOF { Test.make $1 $2 (*{ src=$1; out=$2 }*) }
+test  : src out_opt err_opt EOF { Test.make $1 $2 $3 }
 ;
 src : SRC contents { $2 }
 ;
-out : { None }
-    | OUT contents { Some ($2) }
+out_opt : { None }
+        | OUT contents { Some ($2) }
+;
+err_opt : { None }
+        | ERR contents { Some $2 }
 ;
 contents  : { "" }
           | contents CONTENT { $1 ^ $2 }

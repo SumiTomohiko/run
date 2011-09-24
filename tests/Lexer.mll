@@ -4,6 +4,7 @@ rule token = parse
     match s with
       "SRC:\n" -> Parser.SRC
     | "OUT:\n" -> Parser.OUT
+    | "ERR:\n" -> Parser.ERR
     | _ -> Parser.CONTENT (s)
   }
   | eof { Parser.EOF }

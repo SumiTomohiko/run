@@ -17,20 +17,28 @@ let open_temp_file f g =
   ensure body (fun () -> Unix.unlink path)
 
 let exec_run path =
-  let (stdout, stdin) = Unix.open_process ("../src/run " ^ path) in
-  let actual = input_all stdout "" in
-  let _ = Unix.close_process (stdout, stdin) in
-  actual
+  let cmd = "../src/run " ^ path in
+  let stdout, stdin, stderr = Unix.open_process_full cmd [||] in
+  let out = input_all stdout "" in
+  let err = input_all stderr "" in
+  (match Unix.close_process_full (stdout, stdin, stderr) with
+    Unix.WEXITED 0 -> ()
+  | _ -> assert false);
+  out, err
 
 let write_src src f =
   open_temp_file (fun ch -> output_string ch src) f
 
+let do_test expected actual =
+  match expected with
+    Some s -> assert (actual = s)
+  | None -> ()
+
 let main path =
   let test = parse_test path in
-  let actual = write_src (Test.src_of_test test) exec_run in
-  match (Test.out_of_test test) with
-    Some out -> assert (actual = out)
-  | _ -> ()
+  let out, err = write_src (Test.src_of_test test) exec_run in
+  do_test (Test.out_of_test test) out;
+  do_test (Test.err_of_test test) err
 
 let _ = main (Array.get Sys.argv 1)
 
