@@ -7,12 +7,35 @@ Objective
 
 An objective of run is replacing schell scripts.
 
+Samples
+=======
+
+Hello, world!
+-------------
+
+::
+
+  puts("Hello, world!")
+
+Pipeline
+--------
+
+TODO
+
+Communication between two processes
+-----------------------------------
+
+::
+
+  ./ping <-> ./pong
+
 Features
 ========
 
 * External command executing with easy syntax
 * Powerfull redirecting
 * Basic Types
+
   * Nil
   * Bool
   * Int
@@ -23,7 +46,8 @@ Features
   * Function
   * UserFunction
   * Method
-* Structured programming with ``every``, ``while`` and ``if`` statements
+
+* Structured programming with ``if``, ``while`` and ``every`` statements
 * Arithmetic operations
 * Function
 * UTF-8 (only) acceptable
