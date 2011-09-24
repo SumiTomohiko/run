@@ -1,6 +1,4 @@
 
-let ensure = Ensure.ensure
-
 let rec input_all ch s =
   try
     input_all ch (s ^ (input_line ch) ^ "\n")
@@ -13,8 +11,11 @@ let parse_test path =
 
 let open_temp_file f g =
   let (path, ch) = Filename.open_temp_file "test_run." ".run" in
-  let body () = ((ensure (fun () -> f ch) (fun () -> close_out ch)); g path) in
-  ensure body (fun () -> Unix.unlink path)
+  let close () = close_out ch in
+  let body () =
+    Std.finally close f ch;
+    g path in
+  Std.finally (fun () -> Unix.unlink path) body ()
 
 let exec_run path =
   let cmd = "../src/run " ^ path in
