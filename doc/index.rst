@@ -52,6 +52,7 @@ Features
 * Function
 * UTF-8 (only) acceptable
 * Written in Objective Caml
+* MIT Lisence
 
 Author
 ======
