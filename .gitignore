@@ -8,6 +8,7 @@
 .ditz-config
 .omakedb
 .omakedb.lock
+doc/html
 src/Lexer.ml
 src/Parser.automaton
 src/Parser.ml
