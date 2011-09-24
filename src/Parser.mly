@@ -34,7 +34,8 @@ stmts : stmts NEWLINE stmt { $1 @ [$3] }
       | stmt { [$1] }
 ;
 
-stmt  : expr { Node.Expr $1 }
+stmt  : assign_expr { Node.Expr $1 }
+      | call_expr { Node.Expr $1 }
       | DEF NAME LPAR names RPAR stmts END {
   let stmts = $6 @ (make_default_return $6) in
   Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts }
@@ -138,12 +139,12 @@ pattern : PATTERN { $1 }
 ;
 
 expr  : assign_expr { $1 }
+      | conditional_expr { $1 }
 ;
 
 assign_expr : postfix_expr EQUAL conditional_expr {
   Node.Assign { Node.left=$1; Node.right=$3 }
 }
-            | conditional_expr { $1 }
 ;
 
 conditional_expr  : logical_or_expr { $1 }
@@ -208,12 +209,12 @@ factor  : power { $1 }
 power : postfix_expr { $1 }
 ;
 
-postfix_expr  : postfix_expr LPAR exprs RPAR {
-  Node.Call { Node.callee=$1; Node.args=$3 }
-}
-              | postfix_expr LPAR RPAR {
-  Node.Call { Node.callee=$1; Node.args=[] }
-}
+call_expr
+  : postfix_expr LPAR exprs RPAR { Node.Call { Node.callee=$1; Node.args=$3 } }
+  | postfix_expr LPAR RPAR { Node.Call { Node.callee=$1; Node.args=[] } }
+  ;
+
+postfix_expr  : call_expr { $1 }
               | postfix_expr LBRACKET expr RBRACKET {
   Node.Subscript { Node.prefix=$1; Node.index=$3 }
 }
