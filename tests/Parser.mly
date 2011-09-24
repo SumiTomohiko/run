@@ -1,9 +1,9 @@
 %token <string> CONTENT
-%token EOF ERR OUT SRC
+%token EOF ERR OUT SRC STAT
 %start test
 %type <Test.t> test
 %%
-test  : src out_opt err_opt EOF { Test.make $1 $2 $3 }
+test  : src out_opt err_opt stat_opt EOF { Test.make $1 $2 $3 $4 }
 ;
 src : SRC contents { $2 }
 ;
@@ -12,6 +12,11 @@ out_opt : { None }
 ;
 err_opt : { None }
         | ERR contents { Some $2 }
+;
+stat_opt  : { None }
+          | STAT contents {
+  let s = String.sub $2 0 ((String.length $2) - 1) in Some (int_of_string s)
+}
 ;
 contents  : { "" }
           | contents CONTENT { $1 ^ $2 }

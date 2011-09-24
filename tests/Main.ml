@@ -21,10 +21,9 @@ let exec_run path =
   let stdout, stdin, stderr = Unix.open_process_full cmd [||] in
   let out = input_all stdout "" in
   let err = input_all stderr "" in
-  (match Unix.close_process_full (stdout, stdin, stderr) with
-    Unix.WEXITED 0 -> ()
-  | _ -> assert false);
-  out, err
+  match Unix.close_process_full (stdout, stdin, stderr) with
+    Unix.WEXITED stat -> out, err, stat
+  | _ -> assert false
 
 let write_src src f =
   open_temp_file (fun ch -> output_string ch src) f
@@ -36,9 +35,12 @@ let do_test expected actual =
 
 let main path =
   let test = parse_test path in
-  let out, err = write_src (Test.src_of_test test) exec_run in
+  let out, err, stat = write_src (Test.src_of_test test) exec_run in
   do_test (Test.out_of_test test) out;
-  do_test (Test.err_of_test test) err
+  do_test (Test.err_of_test test) err;
+  match Test.stat_of_test test with
+    Some expected -> assert (expected = stat)
+  | None -> ()
 
 let _ = main (Array.get Sys.argv 1)
 
