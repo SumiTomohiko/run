@@ -235,17 +235,20 @@ atom  : TRUE { Node.Const (Value.Bool true) }
       | HEREDOC { Node.Heredoc $1 }
       | LBRACKET exprs RBRACKET { Node.Array $2 }
       | LBRACKET RBRACKET { Node.Array [] }
-      | LBRACE pairs RBRACE { Node.Dict $2 }
+      | LBRACE dict_pairs RBRACE { Node.Dict $2 }
       | LBRACE RBRACE { Node.Dict [] }
       | NAME { Node.Var $1 }
 ;
 
-pairs : pair { [$1] }
-      | pairs COMMA pair { $1 @ [$3] }
-;
+dict_pairs
+  : dict_pair { [$1] }
+  | dict_pairs COMMA dict_pair { $1 @ [$3] }
+  ;
 
-pair  : expr COLON expr { { Node.key=$1; Node.value=$3 } }
-;
+dict_pair
+  : expr COLON expr { { Node.key=$1; Node.value=$3 } }
+  ;
+
 /**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  */

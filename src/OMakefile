@@ -49,6 +49,8 @@ FILES[] =
 #
 PROGRAM = run
 USE_OCAMLFIND = true
+MENHIR_ENABLED = true
+MENHIR_FLAGS = --comment --dump --explain --infer
 OCAMLPACKS = extlib
 OCAML_OTHER_LIBS += unix nums ensure
 #
