@@ -44,8 +44,8 @@ stmt  : assign_expr { Node.Expr $1 }
   let stmts = $5 @ (make_default_return $5) in
   Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts }
 }
-      | EVERY patterns AS names NEWLINE stmts END {
-  Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$6 }
+      | EVERY patterns AS names stmts END {
+  Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$5 }
 }
       | IF expr NEWLINE stmts END { Node.If ($2, $4, []) }
       | IF expr NEWLINE stmts ELSE stmts END { Node.If ($2, $4, $6) }
