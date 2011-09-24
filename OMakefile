@@ -22,7 +22,7 @@
 # Phony targets are scoped, so you probably want to declare them first.
 #
 
-.PHONY: test
+.PHONY: test clean
 
 ########################################################################
 # Subdirectories.
@@ -42,5 +42,8 @@ OCAMLPACKS = extlib
 
 test:
     cd tests && ./run_tests
+
+clean:
+    rm -f **/*.{cmi,cmx,o,annot,automaton,a,omc}
 
 # vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
