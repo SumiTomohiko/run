@@ -54,6 +54,11 @@ Features
 * Written in Objective Caml
 * MIT Lisence
 
+Documentations
+==============
+
+:doc:`install`
+
 Author
 ======
 
