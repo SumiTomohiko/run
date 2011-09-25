@@ -19,7 +19,7 @@ rule token lexer = shortest
       DynArray.delete_range stack 0 pos
     with
       Not_found -> DynArray.insert stack 0 c);
-    Parser.UNDERLINE
+    Parser.UNDERLINE (DynArray.length stack)
   }
   | ".." _* newline { token lexer lexbuf }
   | (_+ as s) newline { Parser.LINE s }
