@@ -24,7 +24,7 @@ let convert_block generator = function
   | BlockNode.Title nodes -> "<h1>" ^ (convert_inlines nodes) ^ "</h1>"
 
 let generate generator ch node =
-  output_string ch ((convert_block generator node) ^ "\n\n")
+  output_string ch ((convert_block generator node) ^ "\n")
 
 let generate_header ch =
   output_string ch "<!DOCTYPE html>
