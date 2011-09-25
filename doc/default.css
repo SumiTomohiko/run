@@ -5,21 +5,27 @@ body {
 }
 
 h1 {
+    background: #d9f0c7;
     padding: 10px;
 }
 
+body > h1 {
+    background: #fbb4d9;
+    margin: 0px;
+}
+
 header {
-    background: #0a50a1;
+    background: #ffff00;
     text-align: center;
 }
 
 header a:link, header a:visited {
-    color: white;
+    color: black;
     text-decoration: none;
 }
 
 section {
-    padding: 10px;
+    padding-left: 10px;
 }
 
 /**
