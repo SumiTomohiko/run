@@ -22,7 +22,7 @@
 # Phony targets are scoped, so you probably want to declare them first.
 #
 
-.PHONY: test clean doc
+.PHONY: test clean html
 
 ########################################################################
 # Subdirectories.
@@ -45,5 +45,8 @@ test:
 
 clean:
     rm -f **/*.{cmi,cmx,o,annot,automaton,a,omc}
+
+html:
+    cd doc && ./rst2html index.rst
 
 # vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
