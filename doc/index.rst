@@ -22,8 +22,8 @@ Pipeline
 
 TODO
 
-Communication between two processes
------------------------------------
+Communication between two processes, ``ping`` and ``pong``
+----------------------------------------------------------
 
 TODO::
 
