@@ -13,7 +13,7 @@ Samples
 Hello, world!
 -------------
 
-::
+TODO::
 
   puts("Hello, world!")
 
@@ -25,7 +25,7 @@ TODO
 Communication between two processes
 -----------------------------------
 
-::
+TODO::
 
   ./ping <-> ./pong
 

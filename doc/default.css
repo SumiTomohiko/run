@@ -1,0 +1,31 @@
+
+body {
+    /*
+    background: #d9f1f7;
+    */
+    background: #e6f6f9;
+    margin: 0px;
+    padding: 0px;
+}
+
+h1 {
+    padding: 10px;
+}
+
+header {
+    background: #0a50a1;
+    text-align: center;
+}
+
+header a:link, header a:visited {
+    color: white;
+    text-decoration: none;
+}
+
+section {
+    padding: 10px;
+}
+
+/**
+ * vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
+ */

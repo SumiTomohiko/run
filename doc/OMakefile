@@ -22,28 +22,27 @@
 # Phony targets are scoped, so you probably want to declare them first.
 #
 
-.PHONY: test clean doc
+# .PHONY: all install clean
 
 ########################################################################
-# Subdirectories.
-# You may want to include some subdirectories in this project.
-# If so, define the subdirectory targets and uncomment this section.
+# OCaml configuration.
+# Delete this section if you are not building OCaml files.
 #
 
-NATIVE_ENABLED = true
-BYTE_ENABLED = false
-LIB_DIR = $(dir lib)
-OCAMLOPTFLAGS += -dtypes -g -I $(LIB_DIR)
-OCAML_NATIVE_LINK_FLAGS = -I $(LIB_DIR)
-OCAMLYACCFLAGS += -v
-USE_OCAMLFIND = true
-OCAMLPACKS = extlib
-.SUBDIRS: doc lib src tests
+################################################
+# Build an OCaml program
+#
 
-test:
-    cd tests && ./run_tests
-
-clean:
-    rm -f **/*.{cmi,cmx,o,annot,automaton,a,omc}
+FILES[] =
+    InlineNode
+    InlineLexer
+    BlockNode
+    Parser
+    BlockLexer
+    Main
+#
+PROGRAM = rst2html
+#
+.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
 
 # vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
