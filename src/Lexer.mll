@@ -126,7 +126,7 @@ let make_lexer () = {
 let try_expr line =
   let lexer = make_lexer () in
   try
-    ignore (Parser.script (script_token lexer) (Lexing.from_string line));
+    ignore (Parser.program (script_token lexer) (Lexing.from_string line));
     true
   with
     Failure _
