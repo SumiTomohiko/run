@@ -4,8 +4,7 @@ type page = { title: string; nodes: BlockNode.t list }
 type generator = {
   mutable section_depth: int;
   mutable list_depth: int Stack.t;
-  waiting_queue: string DynArray.t;
-  mutable pages: (string, page) Hashtbl.t
+  pages: (string, page) Hashtbl.t
 }
 
 let escape_char = function
@@ -138,11 +137,10 @@ let rec find_all_references founds = function
       find_all_references (founds @ names) tl
   | [] -> founds
 
-let rec read_all_pages generator hash =
-  if DynArray.empty generator.waiting_queue then
+let rec read_all_pages queue hash =
+  if DynArray.empty queue then
     ()
   else
-    let queue = generator.waiting_queue in
     let name = DynArray.get queue 0 in
     DynArray.delete queue 0;
     let inch = open_in (name ^ ".rst") in
@@ -151,7 +149,7 @@ let rec read_all_pages generator hash =
     let mem name = not (Hashtbl.mem hash name) in
     let pages = List.filter mem (find_all_references [] nodes) in
     List.iter (DynArray.add queue) pages;
-    read_all_pages generator hash
+    read_all_pages queue hash
 
 let rec plain_text_of_inline_node s = function
     hd :: tl ->
@@ -193,20 +191,19 @@ let output_all_pages generator =
   Hashtbl.iter (output_page generator) generator.pages
 
 let main () =
-  let generator = {
-    section_depth=1;
-    list_depth=Stack.create ();
-    waiting_queue=DynArray.create ();
-    pages=Hashtbl.create 16 } in
-  let name = (Filename.chop_extension (Array.get Sys.argv 1)) in
-  DynArray.add generator.waiting_queue name;
+  let first_page_name = (Filename.chop_extension (Array.get Sys.argv 1)) in
+  let queue = DynArray.create () in
+  DynArray.add queue first_page_name;
   let name2nodes = Hashtbl.create 16 in
-  read_all_pages generator name2nodes;
+  read_all_pages queue name2nodes;
   let name2title = Hashtbl.create 16 in
   read_titles name2nodes name2title;
   let pages = Hashtbl.create 16 in
   Hashtbl.iter (register_page pages name2title) name2nodes;
-  generator.pages <- pages;
+  let generator = {
+    section_depth=1;
+    list_depth=Stack.create ();
+    pages=pages } in
   Stack.push (-1) generator.list_depth; (* -1 is a sentinel *)
   output_all_pages generator
 
