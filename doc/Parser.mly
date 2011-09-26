@@ -48,7 +48,7 @@ lines_opt
   ;
 
 lines
-  : lines line { $1 @ $2 }
+  : lines LINE { $1 @ (parse_inline ("\n" ^ $2)) }
   | line { $1 }
   ;
 
