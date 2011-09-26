@@ -198,10 +198,13 @@ let main () =
   let hash_size = 16 in
   let name2nodes = Hashtbl.create hash_size in
   read_all_pages queue name2nodes;
+
   let name2title = Hashtbl.create hash_size in
   read_titles name2nodes name2title;
+
   let pages = Hashtbl.create hash_size in
   Hashtbl.iter (register_page pages name2title) name2nodes;
+
   let generator = {
     section_depth=1;
     list_depth=Stack.create ();
