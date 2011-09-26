@@ -24,8 +24,8 @@ header a:link, header a:visited {
     text-decoration: none;
 }
 
-section {
-    padding-left: 10px;
+p {
+    padding: 10px;
 }
 
 /**
