@@ -62,13 +62,13 @@ let open_list generator depth =
   end else
     ""
 
-let close_list generator tags =
+let rec close_list generator tags =
   let stack = generator.list_depth in
   if (Stack.length stack) = 1 then
     tags
   else begin
     ignore (Stack.pop stack);
-    tags ^ "</ul>\n"
+    close_list generator (tags ^ "</ul>\n")
   end
 
 let convert_nonlist_block generator = function
