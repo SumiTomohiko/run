@@ -12,6 +12,7 @@ let whitespace = ' '
 
 rule token lexer = shortest
     eof { Parser.EOF }
+  | "::" newline { token lexer lexbuf }
   | (title_mark as c) title_mark* newline {
     let stack = lexer.title_marks in
     (try
