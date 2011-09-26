@@ -58,6 +58,7 @@ Documentations
 ==============
 
 * :doc:`install`
+* :doc:`parsing`
 
 Author
 ======
