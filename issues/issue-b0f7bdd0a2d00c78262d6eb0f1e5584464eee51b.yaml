@@ -1,18 +1,18 @@
 --- !ditz.rubyforge.org,2008-03-06/issue 
-title: Make Integer type
-desc: Num.num includes Ratio.ratio which is not needed. Is Big_int better?
+title: "[[:alnum:]]"
+desc: Add [[:alnum:]] filename pattern.
 type: :task
 component: core
 release: 
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
-creation_time: 2011-09-12 16:36:33.851041 Z
+creation_time: 2011-09-26 13:27:25.014066 Z
 references: []
 
-id: 6a5eb36f89860334b511cd435840c791b1153700
+id: b0f7bdd0a2d00c78262d6eb0f1e5584464eee51b
 log_events: 
-- - 2011-09-12 16:36:34.461714 Z
+- - 2011-09-26 13:27:25.471717 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - created
   - ""

@@ -1,18 +1,18 @@
 --- !ditz.rubyforge.org,2008-03-06/issue 
-title: Make Integer type
-desc: Num.num includes Ratio.ratio which is not needed. Is Big_int better?
+title: Replacing ${foo} in a string
+desc: If foo is 42, "${foo}" becomes "42".
 type: :task
 component: core
 release: 
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
-creation_time: 2011-09-12 16:36:33.851041 Z
+creation_time: 2011-09-26 13:32:18.930865 Z
 references: []
 
-id: 6a5eb36f89860334b511cd435840c791b1153700
+id: 6ceac26b8f205caca58a9f5bd331d3f472358837
 log_events: 
-- - 2011-09-12 16:36:34.461714 Z
+- - 2011-09-26 13:32:19.504962 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - created
   - ""

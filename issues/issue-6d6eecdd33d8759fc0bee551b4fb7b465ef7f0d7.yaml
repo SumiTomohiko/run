@@ -1,18 +1,18 @@
 --- !ditz.rubyforge.org,2008-03-06/issue 
-title: Make Integer type
-desc: Num.num includes Ratio.ratio which is not needed. Is Big_int better?
+title: $(command) expression
+desc: ""
 type: :task
 component: core
 release: 
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
-creation_time: 2011-09-12 16:36:33.851041 Z
+creation_time: 2011-09-26 13:31:23.131320 Z
 references: []
 
-id: 6a5eb36f89860334b511cd435840c791b1153700
+id: 6d6eecdd33d8759fc0bee551b4fb7b465ef7f0d7
 log_events: 
-- - 2011-09-12 16:36:34.461714 Z
+- - 2011-09-26 13:31:23.887943 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - created
   - ""

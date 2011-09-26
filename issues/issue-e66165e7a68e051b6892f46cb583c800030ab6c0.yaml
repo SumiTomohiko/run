@@ -1,18 +1,18 @@
 --- !ditz.rubyforge.org,2008-03-06/issue 
-title: Make Integer type
-desc: Num.num includes Ratio.ratio which is not needed. Is Big_int better?
+title: Build exception system.
+desc: ""
 type: :task
 component: core
 release: 
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
-creation_time: 2011-09-12 16:36:33.851041 Z
+creation_time: 2011-09-26 13:39:13.524643 Z
 references: []
 
-id: 6a5eb36f89860334b511cd435840c791b1153700
+id: e66165e7a68e051b6892f46cb583c800030ab6c0
 log_events: 
-- - 2011-09-12 16:36:34.461714 Z
+- - 2011-09-26 13:39:13.983273 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - created
   - ""
