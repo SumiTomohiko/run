@@ -89,8 +89,8 @@ let convert_block generator = function
 let generate generator ch node =
   output_string ch ((convert_block generator node) ^ "\n")
 
-let generate_header ch =
-  output_string ch "<!DOCTYPE html>
+let generate_header ch title =
+  output_string ch (Printf.sprintf "<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/>
@@ -98,8 +98,8 @@ let generate_header ch =
 <title>run Documentation</title>
 </head>
 <body>
-<header><a href=\"index.html\">run Documentation</a></header>
-"
+<header><a href=\"index.html\">run Documentation - %s</a></header>
+" (escape_html title))
 
 let generate_footer ch =
   output_string ch "</body>
@@ -112,8 +112,8 @@ let parse ch =
 
 let change_extension path = (Filename.chop_extension path) ^ ".html"
 
-let generate_page generator ch nodes =
-  generate_header ch;
+let generate_page generator ch title nodes =
+  generate_header ch title;
   List.iter (generate generator ch) nodes;
   output_string ch (close_sections generator 1);
   generate_footer ch
@@ -184,8 +184,10 @@ let register_page dest name2title name nodes =
 
 let output_page generator name page =
   let outch = open_out (name ^ ".html") in
+  let title = page.title in
   let nodes = page.nodes in
-  Std.finally (fun () -> close_out outch) (generate_page generator outch) nodes
+  let f = generate_page generator outch title in
+  Std.finally (fun () -> close_out outch) f nodes
 
 let output_all_pages generator =
   Hashtbl.iter (output_page generator) generator.pages
