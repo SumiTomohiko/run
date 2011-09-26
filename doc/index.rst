@@ -57,7 +57,7 @@ Features
 Documentations
 ==============
 
-:doc:`install`
+* :doc:`install`
 
 Author
 ======
