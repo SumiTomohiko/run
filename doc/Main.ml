@@ -3,6 +3,7 @@ type page = { title: string; nodes: BlockNode.t list }
 
 type generator = {
   mutable section_depth: int;
+  mutable list_depth: int Stack.t;
   waiting_queue: string DynArray.t;
   mutable pages: (string, page) Hashtbl.t
 }
@@ -46,15 +47,44 @@ let open_section generator =
   generator.section_depth <- generator.section_depth + 1;
   if generator.section_depth = 1 then "" else "<section>\n"
 
+let enclose_tag tag text = Printf.sprintf "<%s>%s</%s>" tag text tag
+
 let convert_title generator depth nodes =
   let closing = close_sections generator depth in
   let opening = open_section generator in
-  closing ^ opening ^ "<h1>" ^ (convert_inlines generator nodes) ^ "</h1>"
+  closing ^ opening ^ (enclose_tag "h1" (convert_inlines generator nodes))
+
+let open_list generator depth =
+  let current_depth = Stack.top generator.list_depth in
+  if current_depth < depth then begin
+    Stack.push depth generator.list_depth;
+    "<ul>\n"
+  end else
+    ""
+
+let close_list generator tags =
+  let stack = generator.list_depth in
+  if (Stack.length stack) = 1 then
+    tags
+  else begin
+    ignore (Stack.pop stack);
+    tags ^ "</ul>\n"
+  end
+
+let convert_nonlist_block generator = function
+    BlockNode.BulletItem _ -> assert false
+  | BlockNode.Paragraph nodes ->
+      enclose_tag "p" (convert_inlines generator nodes)
+  | BlockNode.Title (depth, nodes) ->
+      convert_title generator depth nodes
 
 let convert_block generator = function
-    BlockNode.Paragraph nodes ->
-      "<p>" ^ (convert_inlines generator nodes) ^ "</p>"
-  | BlockNode.Title (depth, nodes) -> convert_title generator depth nodes
+    BlockNode.BulletItem (depth, nodes) ->
+      let opening = open_list generator depth in
+      opening ^ (enclose_tag "li" (convert_inlines generator nodes))
+  | node ->
+      let list_closing = close_list generator "" in
+      list_closing ^ (convert_nonlist_block generator node)
 
 let generate generator ch node =
   output_string ch ((convert_block generator node) ^ "\n")
@@ -101,7 +131,8 @@ let rec find_all_references_inline founds = function
 let rec find_all_references founds = function
     hd :: tl ->
       let nodes = match hd with
-        BlockNode.Paragraph nodes -> nodes
+        BlockNode.BulletItem (_, nodes) -> nodes
+      | BlockNode.Paragraph nodes -> nodes
       | BlockNode.Title (_, nodes) -> nodes in
       let names = find_all_references_inline [] nodes in
       find_all_references (founds @ names) tl
@@ -162,6 +193,7 @@ let output_all_pages generator =
 let main () =
   let generator = {
     section_depth=1;
+    list_depth=Stack.create ();
     waiting_queue=DynArray.create ();
     pages=Hashtbl.create 16 } in
   let name = (Filename.chop_extension (Array.get Sys.argv 1)) in
@@ -173,6 +205,7 @@ let main () =
   let pages = Hashtbl.create 16 in
   Hashtbl.iter (register_page pages name2title) name2nodes;
   generator.pages <- pages;
+  Stack.push (-1) generator.list_depth; (* -1 is a sentinel *)
   output_all_pages generator
 
 let _ = main ()

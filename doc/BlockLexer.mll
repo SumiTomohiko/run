@@ -21,6 +21,9 @@ rule token lexer = shortest
       Not_found -> DynArray.insert stack 0 c);
     Parser.UNDERLINE (DynArray.length stack)
   }
+  | (whitespace* as ws) bullet_mark whitespace* (_* as text) newline {
+    Parser.BULLET_ITEM ((String.length ws), text)
+  }
   | ".." _* newline { token lexer lexbuf }
   | (_+ as s) newline { Parser.LINE s }
   | newline+ { Parser.EMPTY }
