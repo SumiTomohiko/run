@@ -19,12 +19,15 @@ let escape_html s =
   String.iter (DynArray.add chars) s;
   String.concat "" (DynArray.to_list (DynArray.map escape_char chars))
 
+let enclose_tag tag text = Printf.sprintf "<%s>%s</%s>" tag text tag
+
 let convert_inline generator = function
     InlineNode.Plain s -> escape_html s
-  | InlineNode.Literal s -> "<code>" ^ (escape_html s) ^ "</code>"
+  | InlineNode.Literal s -> enclose_tag "code" (escape_html s)
   | InlineNode.Eof -> ""
   | InlineNode.Reference name ->
-      let title = (Hashtbl.find generator.pages name).title in
+      let plain_title = (Hashtbl.find generator.pages name).title in
+      let title = escape_html plain_title in
       Printf.sprintf "<a href=\"%s.html\">%s</a>" (escape_html name) title
 
 let convert_inlines generator nodes =
@@ -45,8 +48,6 @@ let rec close_sections generator depth =
 let open_section generator =
   generator.section_depth <- generator.section_depth + 1;
   if generator.section_depth = 1 then "" else "<section>\n"
-
-let enclose_tag tag text = Printf.sprintf "<%s>%s</%s>" tag text tag
 
 let convert_title generator depth nodes =
   let closing = close_sections generator depth in
@@ -194,11 +195,12 @@ let main () =
   let first_page_name = (Filename.chop_extension (Array.get Sys.argv 1)) in
   let queue = DynArray.create () in
   DynArray.add queue first_page_name;
-  let name2nodes = Hashtbl.create 16 in
+  let hash_size = 16 in
+  let name2nodes = Hashtbl.create hash_size in
   read_all_pages queue name2nodes;
-  let name2title = Hashtbl.create 16 in
+  let name2title = Hashtbl.create hash_size in
   read_titles name2nodes name2title;
-  let pages = Hashtbl.create 16 in
+  let pages = Hashtbl.create hash_size in
   Hashtbl.iter (register_page pages name2title) name2nodes;
   let generator = {
     section_depth=1;
