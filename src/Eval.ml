@@ -209,21 +209,26 @@ let eval_op env frame op =
   | Op.Equal -> eval_equality stack ((=) 0)
   | Op.Exec ->
       let pipeline = Stack.pop frame.pipelines in
-      let first_stdin_fd = match pipeline.pl_first_stdin with
-        Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
-      | None -> None in
-      let first_pair = (first_stdin_fd, None) in
-      let last_stdout_fd = match pipeline.pl_last_stdout with
-        Some (path, flags) -> Some (Unix.openfile path flags 0o644)
-      | None -> None in
-      let last_pair = (None, last_stdout_fd) in
       let cmds = pipeline.pl_commands in
-      let num_cmds = DynArray.length cmds in
-      let pipes = make_pipes [] first_pair last_pair num_cmds in
-      let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
-      close_pipes pipes;
-      close first_stdin_fd;
-      wait_children pids
+      let cmd = DynArray.get cmds 0 in
+      if (DynArray.get cmd.cmd_params 0) = "cd" then
+        let dir = DynArray.get cmd.cmd_params 1 in
+        Unix.chdir(dir)
+      else
+        let first_stdin_fd = match pipeline.pl_first_stdin with
+          Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
+        | None -> None in
+        let first_pair = (first_stdin_fd, None) in
+        let last_stdout_fd = match pipeline.pl_last_stdout with
+          Some (path, flags) -> Some (Unix.openfile path flags 0o644)
+        | None -> None in
+        let last_pair = (None, last_stdout_fd) in
+        let num_cmds = DynArray.length cmds in
+        let pipes = make_pipes [] first_pair last_pair num_cmds in
+        let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
+        close_pipes pipes;
+        close first_stdin_fd;
+        wait_children pids
   | Op.Expand -> (* TODO *) ()
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
