@@ -7,7 +7,6 @@ type kind =
   | DivDiv
   | Equal
   | Exec
-  | Expand
   | GetAttr of string
   | Greater
   | GreaterEqual
@@ -50,7 +49,6 @@ let name_of_op = function
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"
   | Exec -> "Exec"
-  | Expand -> "Expand"
   | GetAttr _ -> "GetAttr"
   | Greater -> "Greater"
   | GreaterEqual -> "GreaterEqual"

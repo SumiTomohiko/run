@@ -229,7 +229,6 @@ let eval_op env frame op =
         close_pipes pipes;
         close first_stdin_fd;
         wait_children pids
-  | Op.Expand -> (* TODO *) ()
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
   | Op.GetAttr name ->

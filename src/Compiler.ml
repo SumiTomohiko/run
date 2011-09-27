@@ -71,9 +71,7 @@ let add_command oplist params path flags =
 let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
   List.iter push_false names;
-  let f pattern _ =
-    OpList.add oplist (Op.PushConst (Value.String pattern));
-    OpList.add oplist Op.Expand in
+  let f pattern _ = OpList.add oplist (Op.PushConst (Value.String pattern)) in
   List.fold_right f patterns ();
   let last = Op.make_label () in
   let top = Op.make_label () in
