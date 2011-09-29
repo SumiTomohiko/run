@@ -18,6 +18,10 @@ doc/html
 doc/rst2html
 doc/rst2html.opt
 src/Lexer.ml
+src/Matching/Lexer.ml
+src/Matching/Parser.ml
+src/Matching/Parser.mli
+src/Matching/Parser.output
 src/Parser.automaton
 src/Parser.ml
 src/Parser.mli

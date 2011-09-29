@@ -23,6 +23,7 @@
 #
 
 # .PHONY: all install clean
+.SUBDIRS: Matching
 
 ########################################################################
 # OCaml configuration.
@@ -35,6 +36,7 @@
 
 FILES[] =
     Value
+    Matching/Matching
     Node
     Parser
     Lexer

@@ -1,0 +1,11 @@
+
+PKG = Matching
+FILES[] =
+    Parser
+    Lexer
+    Main
+.DEFAULT: $(OCamlPackage $(PKG), $(FILES))
+# See http://lists.metaprl.org/pipermail/omake/2007-February/001475.html
+OCAMLFLAGS = -for-pack $(PKG) -warn-error A
+
+# vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
