@@ -38,7 +38,7 @@ OCAML_NATIVE_LINK_FLAGS = -I $(LIB_DIR)
 OCAMLYACCFLAGS += -v
 USE_OCAMLFIND = true
 OCAMLPACKS = extlib
-.SUBDIRS: doc lib src tests
+.SUBDIRS: doc $(LIB_DIR) src tests
 
 test:
     cd tests && ./run_tests
