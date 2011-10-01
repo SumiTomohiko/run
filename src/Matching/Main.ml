@@ -29,10 +29,33 @@ and try_pattern pattern name index =
         else
           try_pattern tl name index
     | Op.Star :: tl -> try_star tl name index size
+    | Op.StarStar :: _ -> true, pattern
     | [] -> false, []
     | _ -> failwith "Invalid operation"
 
-let rec find_at dirp dir pattern founds =
+let rec traverse dir pattern =
+  try
+    let dirp = Unix.opendir dir in
+    let cleanup () = Unix.closedir dirp in
+    let rec loop founds =
+      try
+        match Unix.readdir dirp with
+        | "."
+        | ".." -> loop founds
+        | name ->
+            let path = Printf.sprintf "%s/%s" dir name in
+            let matched = find_abs path pattern in
+            let matched2 = if (Unix.stat path).Unix.st_kind = Unix.S_DIR then
+              traverse path pattern
+            else
+              [] in
+            loop (founds @ matched @ matched2)
+      with
+      | End_of_file -> founds in
+    Std.finally cleanup loop []
+  with
+  | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
+and find_at dirp dir pattern founds =
   try
     let matched = match Unix.readdir dirp with
       "."
@@ -46,13 +69,15 @@ let rec find_at dirp dir pattern founds =
     find_at dirp dir pattern (founds @ matched)
   with
     End_of_file -> founds
-and find_abs dir pattern =
-  try
-    let dirp = Unix.opendir dir in
-    let cleanup () = Unix.closedir dirp in
-    Std.finally cleanup (fun () -> find_at dirp dir pattern []) ()
-  with
-  | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
+and find_abs dir = function
+  | Op.StarStar :: Op.Dir :: tl -> traverse dir tl
+  | pattern ->
+      try
+        let dirp = Unix.opendir dir in
+        let cleanup () = Unix.closedir dirp in
+        Std.finally cleanup (fun () -> find_at dirp dir pattern []) ()
+      with
+      | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
 
 let find dir pattern =
   let size = (String.length dir) + 1 in

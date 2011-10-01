@@ -10,7 +10,12 @@ pattern
   ;
 
 path
-  : path SEP exprs { $1 @ [Node.Dir] @ $3 }
+  : path SEP name { $1 @ [Node.Dir] @ $3 }
+  | name { $1 }
+  ;
+
+name
+  : STAR_STAR { [Node.StarStar] }
   | exprs { $1 }
   ;
 
@@ -22,7 +27,6 @@ exprs
 expr
   : CHAR { Node.Char $1 }
   | STAR { Node.Star }
-  | STAR_STAR { Node.StarStar }
   | LBRACE patterns RBRACE { Node.Branch $2 }
   ;
 

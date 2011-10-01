@@ -1,0 +1,5 @@
+SRC:
+cd matching_star_star3
+ls **/expected
+OUT:
+foo/bar/expected
