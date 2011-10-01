@@ -57,11 +57,14 @@ and compile_exprs oplist = function
     expr :: exprs -> (compile_expr oplist expr; compile_exprs oplist exprs)
   | [] -> ()
 
-let compile_params oplist params =
-  let f param =
-    OpList.add oplist (Op.PushConst (Value.String param));
-    OpList.add oplist Op.MoveParam in
-  List.iter f params
+let compile_params oplist =
+  let f = function
+      Matching.Main.Static s ->
+        OpList.add oplist (Op.PushConst (Value.String s));
+        OpList.add oplist Op.MoveParam
+    | Matching.Main.Dynamic pattern ->
+        OpList.add oplist (Op.ExpandParam pattern) in
+  List.iter f
 
 let add_command oplist params path flags =
   OpList.add oplist (Op.PushConst path);
@@ -71,7 +74,11 @@ let add_command oplist params path flags =
 let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
   List.iter push_false names;
-  let f pattern _ = OpList.add oplist (Op.PushConst (Value.String pattern)) in
+  let f pattern _ =
+    let op = match pattern with
+      Matching.Main.Static s -> Op.PushConst (Value.String s)
+    | Matching.Main.Dynamic pat -> Op.Expand pat in
+    OpList.add oplist op in
   List.fold_right f patterns ();
   let last = Op.make_label () in
   let top = Op.make_label () in

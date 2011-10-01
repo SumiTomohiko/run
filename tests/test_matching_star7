@@ -1,0 +1,5 @@
+SRC:
+cd matching_star7
+ls ex*
+OUT:
+expected

@@ -23,6 +23,13 @@
 #
 
 # .PHONY: all install clean
+
+########################################################################
+# Subdirectories.
+# You may want to include some subdirectories in this project.
+# If so, define the subdirectory targets and uncomment this section.
+#
+
 .SUBDIRS: Matching
 
 ########################################################################
@@ -36,8 +43,8 @@
 
 FILES[] =
     Value
-    Matching/Matching
     Node
+    Matching
     Parser
     Lexer
     Op

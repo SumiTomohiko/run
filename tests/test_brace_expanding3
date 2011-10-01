@@ -1,0 +1,4 @@
+SRC:
+echo foo{bar,baz}
+OUT:
+foobar foobaz

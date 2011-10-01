@@ -7,6 +7,8 @@ type kind =
   | DivDiv
   | Equal
   | Exec
+  | Expand of Matching.Main.pattern
+  | ExpandParam of Matching.Main.pattern
   | GetAttr of string
   | Greater
   | GreaterEqual
@@ -49,6 +51,8 @@ let name_of_op = function
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"
   | Exec -> "Exec"
+  | Expand _ -> "Expand"
+  | ExpandParam _ -> "ExpandParam"
   | GetAttr _ -> "GetAttr"
   | Greater -> "Greater"
   | GreaterEqual -> "GreaterEqual"

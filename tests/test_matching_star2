@@ -1,0 +1,6 @@
+SRC:
+cd matching_star2
+ls * -> sort
+OUT:
+expected
+expected2

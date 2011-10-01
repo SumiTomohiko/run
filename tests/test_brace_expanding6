@@ -1,0 +1,4 @@
+SRC:
+echo {foo,bar}baz{hogehoge,fugafuga}
+OUT:
+foobazhogehoge foobazfugafuga barbazhogehoge barbazfugafuga

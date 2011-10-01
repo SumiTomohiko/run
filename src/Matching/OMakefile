@@ -1,10 +1,16 @@
 
+DEST_DIR = ..
 PKG = Matching
 FILES[] =
+    Node
     Parser
     Lexer
+    Op
+    Compiler
     Main
-.DEFAULT: $(OCamlPackage $(PKG), $(FILES))
+
+.DEFAULT: $(OCamlPackage $(DEST_DIR)/$(PKG), $(FILES))
+
 # See http://lists.metaprl.org/pipermail/omake/2007-February/001475.html
 OCAMLFLAGS = -for-pack $(PKG) -warn-error A
 

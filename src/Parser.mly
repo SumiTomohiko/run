@@ -22,8 +22,9 @@ let stderr_redirect = Some Node.Dup
 %token RIGHT_RIGHT_ARROW2 RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
-%token <string> NAME PATTERN STRING
+%token <string> NAME STRING
 %token <Buffer.t> HEREDOC
+%token <Matching.Main.t list> PATTERN
 %start program
 %type <Node.stmt list> program
 %%
@@ -72,33 +73,41 @@ single_command
   : patterns stdin_opt stderr_opt stdout_opt {
     ($1, $2, $4, $3)
   }
-  | patterns stdin_opt RIGHT_ARROW2 AT pattern {
+  | patterns stdin_opt RIGHT_ARROW2 AT redirect_dest {
     ($1, $2, make_write_redirect $5, stderr_redirect)
   }
-  | patterns stdin_opt RIGHT_RIGHT_ARROW2 AT pattern {
+  | patterns stdin_opt RIGHT_RIGHT_ARROW2 AT redirect_dest {
     ($1, $2, make_append_redirect $5, stderr_redirect)
+  }
+  ;
+
+redirect_dest
+  : PATTERN {
+    match $1 with
+      Matching.Main.Static path :: [] -> path
+    | _ -> failwith "Sorry, redirect destination must be static string."
   }
   ;
 
 stdin_opt
   : /* empty */ { None }
-  | LEFT_ARROW AT pattern { Some $3 }
+  | LEFT_ARROW AT redirect_dest { Some $3 }
   ;
 
 stderr_opt
   : /* empty */ { None }
-  | ERR_RIGHT_ARROW AT pattern { make_write_redirect $3 }
-  | ERR_RIGHT_RIGHT_ARROW AT pattern { make_append_redirect $3 }
+  | ERR_RIGHT_ARROW AT redirect_dest { make_write_redirect $3 }
+  | ERR_RIGHT_RIGHT_ARROW AT redirect_dest { make_append_redirect $3 }
   | ERR_RIGHT_ARROW_OUT { stderr_redirect }
   ;
 
 stdout_opt
   : /* empty */ { None }
-  | RIGHT_ARROW AT pattern { make_write_redirect $3 }
-  | RIGHT_RIGHT_ARROW AT pattern { make_append_redirect $3 }
+  | RIGHT_ARROW AT redirect_dest { make_write_redirect $3 }
+  | RIGHT_RIGHT_ARROW AT redirect_dest { make_append_redirect $3 }
   | OUT_RIGHT_ARROW_ERR { Some Node.Dup }
-  | OUT_RIGHT_ARROW AT pattern { make_write_redirect $3 }
-  | OUT_RIGHT_RIGHT_ARROW AT pattern { make_append_redirect $3 }
+  | OUT_RIGHT_ARROW AT redirect_dest { make_write_redirect $3 }
+  | OUT_RIGHT_RIGHT_ARROW AT redirect_dest { make_append_redirect $3 }
   ;
 
 first_command
@@ -108,10 +117,10 @@ first_command
 
 last_command
   : patterns stderr_opt stdout_opt { ($1, None, $3, $2) }
-  | patterns RIGHT_ARROW2 AT pattern {
+  | patterns RIGHT_ARROW2 AT redirect_dest {
     ($1, None, make_write_redirect $4, None)
   }
-  | patterns RIGHT_RIGHT_ARROW2 pattern {
+  | patterns RIGHT_RIGHT_ARROW2 redirect_dest {
     ($1, None, make_write_redirect $3, stderr_redirect)
   }
   ;
@@ -138,12 +147,8 @@ names
   ;
 
 patterns
-  : patterns pattern { $1 @ [$2] }
-  | pattern { [$1] }
-  ;
-
-pattern
-  : PATTERN { $1 }
+  : patterns PATTERN { $1 @ $2 }
+  | PATTERN { $1 }
   ;
 
 expr

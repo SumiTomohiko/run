@@ -78,11 +78,11 @@ and command_token lexer = parse
   | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
   | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
   | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
-  | '"' { Parser.PATTERN (string_token "" lexbuf) }
+  | '"' { Parser.PATTERN [Matching.Main.Static (string_token "" lexbuf)] }
   | ' '+ { command_token lexer lexbuf }
   | '@' { Parser.AT }
   | '\n' { Parser.NEWLINE }
-  | [^'"' '@' ' ' '\n']+ as s { Parser.PATTERN s }
+  | "" { Parser.PATTERN (Matching.Main.compile lexbuf) }
 and string_token s = parse
     '"' { s }
   | [^'"']* as t { string_token (s ^ t) lexbuf }

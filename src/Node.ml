@@ -25,17 +25,20 @@ and expr =
   | Sub of binop
   | Subscript of subscript
   | Var of string
-and every = { patterns: string list; names: string list; stmts: stmt list }
+and every = {
+  patterns: Matching.Main.t list;
+  names: string list;
+  stmts: stmt list }
 and user_function = {
   uf_name: string;
   uf_args: string list;
-  uf_stmts: stmt list
-}
+  uf_stmts: stmt list }
 and redirect = Dup | File of string * Unix.open_flag list
-and command = string list * string option * redirect option * redirect option
+and command =
+  Matching.Main.t list * string option * redirect option * redirect option
 and stmt =
     Break
-  | Communication of string list * string list
+  | Communication of Matching.Main.t list * Matching.Main.t list
   | Every of every
   | Expr of expr
   | If of expr * stmt list * stmt list

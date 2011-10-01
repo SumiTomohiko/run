@@ -1,0 +1,5 @@
+SRC:
+cd matching_star8
+ls *
+OUT:
+README

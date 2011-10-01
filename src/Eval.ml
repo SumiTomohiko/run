@@ -212,8 +212,7 @@ let eval_op env frame op =
       let cmds = pipeline.pl_commands in
       let cmd = DynArray.get cmds 0 in
       if (DynArray.get cmd.cmd_params 0) = "cd" then
-        let dir = DynArray.get cmd.cmd_params 1 in
-        Unix.chdir(dir)
+        Unix.chdir (DynArray.get cmd.cmd_params 1)
       else
         let first_stdin_fd = match pipeline.pl_first_stdin with
           Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
@@ -229,6 +228,13 @@ let eval_op env frame op =
         close_pipes pipes;
         close first_stdin_fd;
         wait_children pids
+  | Op.Expand pattern ->
+      let f path = Stack.push (Value.String path) stack in
+      List.iter f (Matching.Main.find pattern)
+  | Op.ExpandParam pattern ->
+      let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
+      let params = cmd.cmd_params in
+      List.iter (DynArray.add params) (Matching.Main.find pattern)
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
   | Op.GetAttr name ->
@@ -265,7 +271,7 @@ let eval_op env frame op =
           let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
           DynArray.add cmd.cmd_params param
       | value ->
-          let header = "Unsupported redirect: " in
+          let header = "Unsupported parameter type: " in
           failwith (header ^ (Builtins.string_of_value value)))
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in

@@ -1,6 +1,12 @@
 
 rule token = parse
-"foo" { 42 }
+    '*' { Parser.STAR }
+  | "**" { Parser.STAR_STAR }
+  | '{' { Parser.LBRACE }
+  | '}' { Parser.RBRACE }
+  | ',' { Parser.COMMA }
+  | [^'\n' ' '] as c { Parser.CHAR c }
+  | eof | ' ' | "" { Parser.EOF }
 
 (**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
