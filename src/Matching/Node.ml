@@ -2,6 +2,7 @@
 type t =
     Branch of t list list
   | Char of char
+  | Dir
   | Star
   | StarStar
 

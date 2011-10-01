@@ -165,6 +165,8 @@ let close_all_pipes = function
       List.iter Unix.close [rfd1; wfd1; rfd2; wfd2]
   | _ -> failwith "Invalid pipes"
 
+let files_of_cwd pattern = Matching.Main.find (Unix.getcwd ()) pattern
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -230,11 +232,11 @@ let eval_op env frame op =
         wait_children pids
   | Op.Expand pattern ->
       let f path = Stack.push (Value.String path) stack in
-      List.iter f (Matching.Main.find pattern)
+      List.iter f (files_of_cwd pattern)
   | Op.ExpandParam pattern ->
       let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
       let params = cmd.cmd_params in
-      List.iter (DynArray.add params) (Matching.Main.find pattern)
+      List.iter (DynArray.add params) (files_of_cwd pattern)
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
   | Op.GetAttr name ->

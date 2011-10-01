@@ -1,14 +1,17 @@
-%token COMMA EOF LBRACE RBRACE STAR STAR_STAR
+%token COMMA EOF LBRACE RBRACE SEP STAR STAR_STAR
 %token <char> CHAR
 %type <Node.t list> pattern
 %start pattern
 %%
 pattern
-  : body EOF { $1 }
+  : path EOF { $1 }
+  | SEP path EOF { [Node.Dir] @ $2 }
+  | SEP EOF { [Node.Dir] }
   ;
 
-body
-  : exprs { $1 }
+path
+  : path SEP exprs { $1 @ [Node.Dir] @ $3 }
+  | exprs { $1 }
   ;
 
 exprs
@@ -24,8 +27,8 @@ expr
   ;
 
 patterns
-  : patterns COMMA body { $1 @ [$3] }
-  | body { [$1] }
+  : patterns COMMA path { $1 @ [$3] }
+  | path { [$1] }
   ;
 
 /**
