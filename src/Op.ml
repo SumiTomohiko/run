@@ -7,6 +7,7 @@ type kind =
   | DivDiv
   | Equal
   | Exec
+  | ExecAndPush
   | Expand of Matching.Main.pattern
   | ExpandParam of Matching.Main.pattern
   | GetAttr of string
@@ -51,6 +52,7 @@ let name_of_op = function
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"
   | Exec -> "Exec"
+  | ExecAndPush -> "ExecAndPush"
   | Expand _ -> "Expand"
   | ExpandParam _ -> "ExpandParam"
   | GetAttr _ -> "GetAttr"

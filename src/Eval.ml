@@ -149,11 +149,11 @@ let exec_command cmd (pipe1, pipe2) =
       exec cmd
   | pid -> pid
 
-let rec close_pipes = function
+let rec close_second_pipes = function
     (_, pair) :: tl ->
       close (fst pair);
       close (snd pair);
-      close_pipes tl
+      close_second_pipes tl
   | [] -> ()
 
 let add_command frame = DynArray.add (Stack.top frame.pipelines).pl_commands
@@ -166,6 +166,38 @@ let close_all_pipes = function
   | _ -> failwith "Invalid pipes"
 
 let files_of_cwd pattern = Matching.Main.find (Unix.getcwd ()) pattern
+
+let exec_pipeline pipeline last_stdout_pair read_last_stdout =
+  let cmds = pipeline.pl_commands in
+  let cmd = DynArray.get cmds 0 in
+  if (DynArray.get cmd.cmd_params 0) = "cd" then begin
+    Unix.chdir (DynArray.get cmd.cmd_params 1);
+    close (fst last_stdout_pair);
+    close (snd last_stdout_pair);
+    ""
+  end else
+    let first_stdin_fd = match pipeline.pl_first_stdin with
+      Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
+    | None -> None in
+    let first_pair = (first_stdin_fd, None) in
+    let num_cmds = DynArray.length cmds in
+    let pipes = make_pipes [] first_pair last_stdout_pair num_cmds in
+    let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
+    close_second_pipes (List.tl (List.rev pipes));
+    close (snd last_stdout_pair);
+    let fd = fst last_stdout_pair in
+    let stdout = read_last_stdout (List.hd (List.rev pids)) fd in
+    close fd;
+    close first_stdin_fd;
+    wait_children (List.tl (List.rev pids));
+    stdout
+
+let rec trim s =
+  let size = String.length s in
+  match String.get s (size - 1) with
+    ' '
+  | '\n' -> trim (String.sub s 0 (size - 1))
+  | _ -> s
 
 let eval_op env frame op =
   let stack = frame.stack in
@@ -211,25 +243,29 @@ let eval_op env frame op =
   | Op.Equal -> eval_equality stack ((=) 0)
   | Op.Exec ->
       let pipeline = Stack.pop frame.pipelines in
-      let cmds = pipeline.pl_commands in
-      let cmd = DynArray.get cmds 0 in
-      if (DynArray.get cmd.cmd_params 0) = "cd" then
-        Unix.chdir (DynArray.get cmd.cmd_params 1)
-      else
-        let first_stdin_fd = match pipeline.pl_first_stdin with
-          Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
-        | None -> None in
-        let first_pair = (first_stdin_fd, None) in
-        let last_stdout_fd = match pipeline.pl_last_stdout with
-          Some (path, flags) -> Some (Unix.openfile path flags 0o644)
-        | None -> None in
-        let last_pair = (None, last_stdout_fd) in
-        let num_cmds = DynArray.length cmds in
-        let pipes = make_pipes [] first_pair last_pair num_cmds in
-        let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
-        close_pipes pipes;
-        close first_stdin_fd;
-        wait_children pids
+      let last_stdout_fd = match pipeline.pl_last_stdout with
+        Some (path, flags) -> Some (Unix.openfile path flags 0o644)
+      | None -> None in
+      let read_last_stdout pid _ =
+        ignore (Unix.waitpid [] pid);
+        "" in
+      ignore (exec_pipeline pipeline (None, last_stdout_fd) read_last_stdout)
+  | Op.ExecAndPush ->
+      let rfd, wfd = Unix.pipe () in
+      let pair = (Some rfd, Some wfd) in
+      let read_last_stdout pid = function
+        Some fd ->
+          let rec loop s pid fd =
+            let i = IO.input_channel (Unix.in_channel_of_descr fd) in
+            match Unix.waitpid [Unix.WNOHANG] pid with
+              0, _ ->
+                let t = try IO.nread i 1024 with IO.No_more_input -> "" in
+                loop (s ^ t) pid fd
+            | _, _ -> s in
+          loop "" pid fd
+      | None -> failwith "Invalid stdout file descriptor" in
+      let s = exec_pipeline (Stack.pop frame.pipelines) pair read_last_stdout in
+      Stack.push (Value.String (trim s)) stack
   | Op.Expand pattern ->
       let f path = Stack.push (Value.String path) stack in
       List.iter f (files_of_cwd pattern)

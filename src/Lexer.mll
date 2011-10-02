@@ -25,6 +25,7 @@ rule script_token lexer = parse
     Parser.HEREDOC buf
   }
   | "!=" { Parser.NOT_EQUAL }
+  | "$(" { Parser.DOLLER_LPAR }
   | "(:" { comment lexer 1 lexbuf }
   | "//" { Parser.DIV_DIV }
   | "<=" { Parser.LESS_EQUAL }
@@ -78,8 +79,9 @@ and command_token lexer = parse
   | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
   | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
   | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
-  | '"' { Parser.PATTERN [Matching.Main.Static (string_token "" lexbuf)] }
   | ' '+ { command_token lexer lexbuf }
+  | '"' { Parser.PATTERN [Matching.Main.Static (string_token "" lexbuf)] }
+  | ')' { Parser.RPAR }
   | '@' { Parser.AT }
   | '\n' { Parser.NEWLINE }
   | "" { Parser.PATTERN (Matching.Main.compile lexbuf) }
@@ -123,10 +125,25 @@ let make_lexer () = {
   mode=Script;
   heredoc_queue=Queue.create () }
 
+let next_token_of_lexbuf lexer lexbuf =
+  let tok = match lexer.mode with
+    Script -> script_token lexer lexbuf
+  | Command -> command_token lexer lexbuf
+  | _ -> comment lexer 0 lexbuf in
+  lexer.top_of_line <- (match tok with Parser.NEWLINE -> true | _ -> false);
+  lexer.mode <- (match tok with
+    Parser.AS
+  | Parser.NEWLINE
+  | Parser.RPAR -> Script
+  | Parser.DOLLER_LPAR
+  | Parser.EVERY -> Command
+  | _ -> lexer.mode);
+  tok
+
 let try_expr line =
-  let lexer = make_lexer () in
+  let f = next_token_of_lexbuf (make_lexer ()) in
   try
-    ignore (Parser.program (script_token lexer) (Lexing.from_string line));
+    ignore (Parser.program f (Lexing.from_string line));
     true
   with
     Failure _
@@ -194,17 +211,7 @@ let make_tokenizer ch =
       read_heredoc lexer.heredoc_queue lexbuf;
       token lexbuf
     end else if not lexer.top_of_line then begin
-      let tok = match lexer.mode with
-        Script -> script_token lexer lexbuf
-      | Command -> command_token lexer lexbuf
-      | _ -> comment lexer 0 lexbuf in
-      lexer.top_of_line <- (match tok with Parser.NEWLINE -> true | _ -> false);
-      (match tok with
-        Parser.AS
-      | Parser.NEWLINE -> lexer.mode <- Script
-      | Parser.EVERY -> lexer.mode <- Command
-      | _ -> ());
-      tok
+      next_token_of_lexbuf lexer lexbuf
     end else begin
       lexer.buffer <- (try
         (input_line ch) ^ "\n"

@@ -1,0 +1,4 @@
+SRC:
+puts($(echo foo))
+OUT:
+foo

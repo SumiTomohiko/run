@@ -1,6 +1,49 @@
 
 let while_stack = Stack.create ()
 
+let compile_params oplist =
+  let f = function
+      Matching.Main.Static s ->
+        OpList.add oplist (Op.PushConst (Value.String s));
+        OpList.add oplist Op.MoveParam
+    | Matching.Main.Dynamic pattern ->
+        OpList.add oplist (Op.ExpandParam pattern) in
+  List.iter f
+
+let add_command oplist params path flags =
+  OpList.add oplist (Op.PushConst path);
+  OpList.add oplist (Op.PushCommand flags);
+  compile_params oplist params
+
+let rec compile_commands oplist = function
+    (params, _, _, Some Node.Dup) :: tl ->
+      OpList.add oplist Op.PushCommandE2O;
+      compile_params oplist params;
+      compile_commands oplist tl
+  | (params, _, _, Some (Node.File (path, flags))) :: tl ->
+      add_command oplist params (Value.String path) flags;
+      compile_commands oplist tl
+  | (params, _, _, None) :: tl ->
+      add_command oplist params Value.Nil [];
+      compile_commands oplist tl
+  | [] -> ()
+
+let compile_pipeline oplist commands last_op =
+  let _, first_stdin, _, _ = List.hd commands in
+  let stdin_path = match first_stdin with
+    Some path -> Value.String path
+  | None -> Value.Nil in
+  OpList.add oplist (Op.PushConst stdin_path);
+  let _, _, last_stdout, _ = List.hd (List.rev commands) in
+  let stdout_path, flags = match last_stdout with
+    Some (Node.File (path, flags)) -> Value.String path, flags
+  | None -> Value.Nil, []
+  | Some _ -> failwith "Invalid stdout redirect" in
+  OpList.add oplist (Op.PushConst stdout_path);
+  OpList.add oplist (Op.PushPipeline flags);
+  compile_commands oplist commands;
+  OpList.add oplist last_op
+
 let rec compile_expr oplist = function
     Node.Add operands -> compile_binop oplist operands Op.Add
   | Node.Array exprs ->
@@ -39,6 +82,8 @@ let rec compile_expr oplist = function
   | Node.Heredoc buf ->
       let s = Buffer.contents buf in
       OpList.add oplist (Op.PushConst (Value.String s))
+  | Node.InlinePipeline commands ->
+      compile_pipeline oplist commands Op.ExecAndPush
   | Node.Less operands -> compile_binop oplist operands Op.Less
   | Node.LessEqual operands -> compile_binop oplist operands Op.LessEqual
   | Node.Mul operands -> compile_binop oplist operands Op.Mul
@@ -56,20 +101,6 @@ and compile_binop oplist { Node.left; Node.right } op =
 and compile_exprs oplist = function
     expr :: exprs -> (compile_expr oplist expr; compile_exprs oplist exprs)
   | [] -> ()
-
-let compile_params oplist =
-  let f = function
-      Matching.Main.Static s ->
-        OpList.add oplist (Op.PushConst (Value.String s));
-        OpList.add oplist Op.MoveParam
-    | Matching.Main.Dynamic pattern ->
-        OpList.add oplist (Op.ExpandParam pattern) in
-  List.iter f
-
-let add_command oplist params path flags =
-  OpList.add oplist (Op.PushConst path);
-  OpList.add oplist (Op.PushCommand flags);
-  compile_params oplist params
 
 let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
@@ -89,18 +120,6 @@ let rec compile_every oplist { Node.patterns; Node.names; Node.stmts } =
   compile_stmts oplist stmts;
   OpList.add oplist (Op.Jump top);
   OpList.add_op oplist last
-and compile_commands oplist = function
-    (params, _, _, Some Node.Dup) :: tl ->
-      OpList.add oplist Op.PushCommandE2O;
-      compile_params oplist params;
-      compile_commands oplist tl
-  | (params, _, _, Some (Node.File (path, flags))) :: tl ->
-      add_command oplist params (Value.String path) flags;
-      compile_commands oplist tl
-  | (params, _, _, None) :: tl ->
-      add_command oplist params Value.Nil [];
-      compile_commands oplist tl
-  | [] -> ()
 and compile_stmt oplist = function
     Node.Break ->
       let _, label = Stack.top while_stack in
@@ -133,21 +152,7 @@ and compile_stmt oplist = function
   | Node.Next ->
       let label, _ = Stack.top while_stack in
       OpList.add oplist (Op.Jump label)
-  | Node.Pipeline commands ->
-      let (_, first_stdin, _, _) = List.hd commands in
-      let stdin_path = match first_stdin with
-        Some path -> Value.String path
-      | None -> Value.Nil in
-      OpList.add oplist (Op.PushConst stdin_path);
-      let (_, _, last_stdout, _) = List.hd (List.rev commands) in
-      let stdout_path, flags = match last_stdout with
-        Some (Node.File (path, flags)) -> Value.String path, flags
-      | None -> Value.Nil, []
-      | Some _ -> failwith "Invalid stdout redirect" in
-      OpList.add oplist (Op.PushConst stdout_path);
-      OpList.add oplist (Op.PushPipeline flags);
-      compile_commands oplist commands;
-      OpList.add oplist Op.Exec
+  | Node.Pipeline commands -> compile_pipeline oplist commands Op.Exec
   | Node.Return expr ->
       compile_expr oplist expr;
       OpList.add oplist Op.Return

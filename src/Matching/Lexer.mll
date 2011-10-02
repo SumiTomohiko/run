@@ -6,7 +6,7 @@ rule token = parse
   | '}' { Parser.RBRACE }
   | ',' { Parser.COMMA }
   | '/' { Parser.SEP }
-  | [^'\n' ' '] as c { Parser.CHAR c }
+  | [^'\n' ' ' ')'] as c { Parser.CHAR c }
   | eof | ' ' | "" { Parser.EOF }
 
 (**
