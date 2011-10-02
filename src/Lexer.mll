@@ -26,6 +26,7 @@ rule script_token lexer = parse
   }
   | "!=" { Parser.NOT_EQUAL }
   | "$(" { Parser.DOLLER_LPAR }
+  | "$?" { Parser.DOLLER_QUESTION }
   | "(:" { comment lexer 1 lexbuf }
   | "//" { Parser.DIV_DIV }
   | "<=" { Parser.LESS_EQUAL }

@@ -20,7 +20,8 @@ type frame = {
 
 type env = {
   globals: Symboltbl.t;
-  frames: frame Stack.t
+  frames: frame Stack.t;
+  mutable last_status: int
 }
 
 let rec pop_args stack = function
@@ -167,14 +168,14 @@ let close_all_pipes = function
 
 let files_of_cwd pattern = Matching.Main.find (Unix.getcwd ()) pattern
 
-let exec_pipeline pipeline last_stdout_pair read_last_stdout =
+let exec_pipeline pipeline last_stdout_pair read_last_output =
   let cmds = pipeline.pl_commands in
   let cmd = DynArray.get cmds 0 in
   if (DynArray.get cmd.cmd_params 0) = "cd" then begin
     Unix.chdir (DynArray.get cmd.cmd_params 1);
     close (fst last_stdout_pair);
     close (snd last_stdout_pair);
-    ""
+    0, ""
   end else
     let first_stdin_fd = match pipeline.pl_first_stdin with
       Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
@@ -186,11 +187,11 @@ let exec_pipeline pipeline last_stdout_pair read_last_stdout =
     close_second_pipes (List.tl (List.rev pipes));
     close (snd last_stdout_pair);
     let fd = fst last_stdout_pair in
-    let stdout = read_last_stdout (List.hd (List.rev pids)) fd in
+    let output = read_last_output (List.hd (List.rev pids)) fd in
     close fd;
     close first_stdin_fd;
     wait_children (List.tl (List.rev pids));
-    stdout
+    output
 
 let rec trim s =
   let size = String.length s in
@@ -246,14 +247,18 @@ let eval_op env frame op =
       let last_stdout_fd = match pipeline.pl_last_stdout with
         Some (path, flags) -> Some (Unix.openfile path flags 0o644)
       | None -> None in
-      let read_last_stdout pid _ =
-        ignore (Unix.waitpid [] pid);
-        "" in
-      ignore (exec_pipeline pipeline (None, last_stdout_fd) read_last_stdout)
+      let last_pair = (None, last_stdout_fd) in
+      let read_last_output pid _ =
+        let status = match snd (Unix.waitpid [] pid) with
+          Unix.WEXITED status -> status
+        | _ -> -1 in
+        status, "" in
+      let status, _ = exec_pipeline pipeline last_pair read_last_output in
+      env.last_status <- status
   | Op.ExecAndPush ->
       let rfd, wfd = Unix.pipe () in
       let pair = (Some rfd, Some wfd) in
-      let read_last_stdout pid = function
+      let read_last_output pid = function
         Some fd ->
           let rec loop s pid fd =
             let i = IO.input_channel (Unix.in_channel_of_descr fd) in
@@ -261,11 +266,14 @@ let eval_op env frame op =
               0, _ ->
                 let t = try IO.nread i 1024 with IO.No_more_input -> "" in
                 loop (s ^ t) pid fd
-            | _, _ -> s in
+            | _, Unix.WEXITED status -> status, s
+            | _, _ -> -1, s in
           loop "" pid fd
       | None -> failwith "Invalid stdout file descriptor" in
-      let s = exec_pipeline (Stack.pop frame.pipelines) pair read_last_stdout in
-      Stack.push (Value.String (trim s)) stack
+      let pipeline = Stack.pop frame.pipelines in
+      let status, stdout = exec_pipeline pipeline pair read_last_output in
+      env.last_status <- status;
+      Stack.push (Value.String (trim stdout)) stack
   | Op.Expand pattern ->
       let f path = Stack.push (Value.String path) stack in
       List.iter f (files_of_cwd pattern)
@@ -336,6 +344,8 @@ let eval_op env frame op =
         cmd_stderr_redirect=Some Redirect.Dup } in
       add_command frame cmd
   | Op.PushConst v -> Stack.push v stack
+  | Op.PushLastStatus ->
+      Stack.push (Value.Int (Num.num_of_int env.last_status)) stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
   | Op.PushPipeline flags ->
       let stdout = match Stack.pop stack with
@@ -400,7 +410,7 @@ let eval ops =
     pipelines=Stack.create () } in
   let stack = Stack.create () in
   Stack.push frame stack;
-  eval_env { globals=Builtins.create (); frames=stack }
+  eval_env { globals=Builtins.create (); frames=stack; last_status=0 }
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

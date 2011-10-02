@@ -27,6 +27,7 @@ type kind =
   | PushCommand of Unix.open_flag list
   | PushCommandE2O
   | PushConst of Value.t
+  | PushLastStatus
   | PushLocal of string
   | PushPipeline of Unix.open_flag list
   | Return
@@ -72,6 +73,7 @@ let name_of_op = function
   | PushCommand _ -> "PushCommand"
   | PushCommandE2O -> "PushCommandE2O"
   | PushConst _ -> "PushConst"
+  | PushLastStatus -> "PushLastStatus"
   | PushLocal _ -> "PushLocal"
   | PushPipeline _ -> "PushPipeline"
   | Return -> "Return"

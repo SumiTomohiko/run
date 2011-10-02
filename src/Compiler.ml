@@ -84,6 +84,7 @@ let rec compile_expr oplist = function
       OpList.add oplist (Op.PushConst (Value.String s))
   | Node.InlinePipeline commands ->
       compile_pipeline oplist commands Op.ExecAndPush
+  | Node.LastStatus -> OpList.add oplist Op.PushLastStatus
   | Node.Less operands -> compile_binop oplist operands Op.Less
   | Node.LessEqual operands -> compile_binop oplist operands Op.LessEqual
   | Node.Mul operands -> compile_binop oplist operands Op.Mul

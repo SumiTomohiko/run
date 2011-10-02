@@ -1,0 +1,5 @@
+SRC:
+true
+puts($?)
+OUT:
+0

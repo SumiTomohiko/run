@@ -19,6 +19,7 @@ and expr =
   | GreaterEqual of binop
   | Heredoc of Buffer.t
   | InlinePipeline of command list
+  | LastStatus
   | Less of binop
   | LessEqual of binop
   | Mul of binop
