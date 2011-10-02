@@ -2,13 +2,7 @@
 type mode = Script | Command | Comment
 type lexer = {
   mutable buffer: string;
-  (**
-   * If top_of_line is true, it indicates both of:
-   * 1. Current position is top of a line.
-   * 2. We don't still know that this line is Script or Command.
-   *)
-  mutable top_of_line: bool;
-  mutable mode: mode;
+  mode_stack: mode Stack.t;
   heredoc_queue: (string * Buffer.t) Queue.t
 }
 }
@@ -70,7 +64,7 @@ rule script_token lexer = parse
   | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token lexer = parse
-  | "${" (name as name) '}' { Parser.EXPR_PATTERN name }
+  | "${" { Parser.DOLLER_LBRACE }
   | "->" { Parser.RIGHT_ARROW }
   | "->>" { Parser.RIGHT_RIGHT_ARROW }
   | "<-" { Parser.LEFT_ARROW }
@@ -124,29 +118,41 @@ let read_heredoc heredoc_queue lexbuf =
   let name, buf = Queue.take heredoc_queue in
   heredoc name buf lexbuf
 
-let make_lexer () = {
-  buffer="";
-  top_of_line=true;
-  mode=Script;
-  heredoc_queue=Queue.create () }
+let make_lexer () =
+  let lexer = {
+    buffer="";
+    mode_stack=Stack.create ();
+    heredoc_queue=Queue.create () } in
+  (* Script at bottom of a stack is a sentinel to detect eof *)
+  Stack.push Script lexer.mode_stack;
+  lexer
+
+let drop_top stack = ignore (Stack.pop stack)
 
 let next_token_of_lexbuf lexer lexbuf =
-  let tok = match lexer.mode with
+  let stack = lexer.mode_stack in
+  let mode = Stack.top stack in
+  let tok = match mode with
     Script -> script_token lexer lexbuf
   | Command -> command_token lexer lexbuf
   | _ -> comment lexer 0 lexbuf in
-  lexer.top_of_line <- (match tok with Parser.NEWLINE -> true | _ -> false);
-  lexer.mode <- (match tok with
-    Parser.AS
-  | Parser.NEWLINE
-  | Parser.RPAR -> Script
+  (match tok with
+  | Parser.DOLLER_LBRACE
+  | Parser.LBRACE
+  | Parser.LPAR -> Stack.push Script stack
   | Parser.DOLLER_LPAR
-  | Parser.EVERY -> Command
-  | _ -> lexer.mode);
+  | Parser.EVERY -> Stack.push Command stack
+  | Parser.AS
+  | Parser.NEWLINE
+  | Parser.RBRACE
+  | Parser.RPAR -> drop_top stack
+  | _ -> ());
   tok
 
 let try_expr line =
-  let f = next_token_of_lexbuf (make_lexer ()) in
+  let lexer = make_lexer () in
+  Stack.push Script lexer.mode_stack;
+  let f = next_token_of_lexbuf lexer in
   try
     ignore (Parser.program f (Lexing.from_string line));
     true
@@ -212,18 +218,19 @@ let make_tokenizer ch =
     loop s size 0 in
 
   let rec token lexbuf =
-    if lexer.top_of_line && not (Queue.is_empty lexer.heredoc_queue) then begin
+    let mode_stack = lexer.mode_stack in
+    let top_of_line = (Stack.length mode_stack) = 1 in
+    if top_of_line && not (Queue.is_empty lexer.heredoc_queue) then begin
       read_heredoc lexer.heredoc_queue lexbuf;
       token lexbuf
-    end else if not lexer.top_of_line then begin
+    end else if not top_of_line then
       next_token_of_lexbuf lexer lexbuf
-    end else begin
+    else begin
       lexer.buffer <- (try
         (input_line ch) ^ "\n"
       with
         End_of_file -> "");
-      lexer.mode <- determine_mode lexer.buffer;
-      lexer.top_of_line <- false;
+      Stack.push (determine_mode lexer.buffer) mode_stack;
       token lexbuf
     end in
   token, Lexing.from_function fill
