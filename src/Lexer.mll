@@ -16,10 +16,11 @@ type lexer = {
 let digit = ['0'-'9']
 let alpha = ['A'-'Z' 'a'-'z' '_']
 let alnum = alpha | digit
+let name = alpha alnum*
 
 rule script_token lexer = parse
     eof { Parser.EOF }
-  | "<<" (alpha alnum* as name) {
+  | "<<" (name as name) {
     let buf = Buffer.create 16 in
     Queue.add (name, buf) lexer.heredoc_queue;
     Parser.HEREDOC buf
@@ -65,11 +66,12 @@ rule script_token lexer = parse
   | ']' { Parser.RBRACKET }
   | '{' { Parser.LBRACE }
   | '}' { Parser.RBRACE }
-  | alpha alnum* as s { Parser.NAME s }
+  | name as s { Parser.NAME s }
   | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token lexer = parse
-    "->" { Parser.RIGHT_ARROW }
+  | "${" (name as name) '}' { Parser.EXPR_PATTERN name }
+  | "->" { Parser.RIGHT_ARROW }
   | "->>" { Parser.RIGHT_RIGHT_ARROW }
   | "<-" { Parser.LEFT_ARROW }
   | "<->" { Parser.LEFT_RIGHT_ARROW }
@@ -81,11 +83,13 @@ and command_token lexer = parse
   | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
   | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
   | ' '+ { command_token lexer lexbuf }
-  | '"' { Parser.PATTERN [Matching.Main.Static (string_token "" lexbuf)] }
+  | '"' {
+    Parser.MATCHING_PATTERN [Matching.Main.Static (string_token "" lexbuf)]
+  }
   | ')' { Parser.RPAR }
   | '@' { Parser.AT }
   | '\n' { Parser.NEWLINE }
-  | "" { Parser.PATTERN (Matching.Main.compile lexbuf) }
+  | "" { Parser.MATCHING_PATTERN (Matching.Main.compile lexbuf) }
 and string_token s = parse
     '"' { s }
   | [^'"']* as t { string_token (s ^ t) lexbuf }

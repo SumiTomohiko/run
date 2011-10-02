@@ -22,9 +22,9 @@ let stderr_redirect = Some Node.Dup
 %token RIGHT_RIGHT_ARROW2 RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
-%token <string> NAME STRING
+%token <string> EXPR_PATTERN NAME STRING
 %token <Buffer.t> HEREDOC
-%token <Matching.Main.t list> PATTERN
+%token <Matching.Main.t list> MATCHING_PATTERN
 %start program
 %type <Node.stmt list> program
 %%
@@ -48,8 +48,8 @@ stmt
     let stmts = $5 @ (make_default_return $5) in
     Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts }
   }
-  | EVERY patterns AS names stmts END {
-    Node.Every { Node.patterns=$2; Node.names=$4; Node.stmts=$5 }
+  | EVERY params AS names stmts END {
+    Node.Every { Node.params=$2; Node.names=$4; Node.stmts=$5 }
   }
   | IF expr NEWLINE stmts END { Node.If ($2, $4, []) }
   | IF expr NEWLINE stmts ELSE stmts END { Node.If ($2, $4, $6) }
@@ -59,7 +59,7 @@ stmt
   | BREAK { Node.Break }
   | RETURN expr { Node.Return $2 }
   | pipeline { Node.Pipeline $1 }
-  | patterns LEFT_RIGHT_ARROW patterns { Node.Communication ($1, $3) }
+  | params LEFT_RIGHT_ARROW params { Node.Communication ($1, $3) }
   | /* empty */ { Node.Empty }
   ;
 
@@ -70,19 +70,19 @@ pipeline
   ;
 
 single_command
-  : patterns stdin_opt stderr_opt stdout_opt {
+  : params stdin_opt stderr_opt stdout_opt {
     ($1, $2, $4, $3)
   }
-  | patterns stdin_opt RIGHT_ARROW2 AT redirect_dest {
+  | params stdin_opt RIGHT_ARROW2 AT redirect_dest {
     ($1, $2, make_write_redirect $5, stderr_redirect)
   }
-  | patterns stdin_opt RIGHT_RIGHT_ARROW2 AT redirect_dest {
+  | params stdin_opt RIGHT_RIGHT_ARROW2 AT redirect_dest {
     ($1, $2, make_append_redirect $5, stderr_redirect)
   }
   ;
 
 redirect_dest
-  : PATTERN {
+  : MATCHING_PATTERN {
     match $1 with
       Matching.Main.Static path :: [] -> path
     | _ -> failwith "Sorry, redirect destination must be static string."
@@ -111,16 +111,16 @@ stdout_opt
   ;
 
 first_command
-  : patterns stdin_opt stderr_opt RIGHT_ARROW { ($1, $2, None, $3) }
-  | patterns stdin_opt RIGHT_ARROW2 { ($1, $2, None, stderr_redirect) }
+  : params stdin_opt stderr_opt RIGHT_ARROW { ($1, $2, None, $3) }
+  | params stdin_opt RIGHT_ARROW2 { ($1, $2, None, stderr_redirect) }
   ;
 
 last_command
-  : patterns stderr_opt stdout_opt { ($1, None, $3, $2) }
-  | patterns RIGHT_ARROW2 AT redirect_dest {
+  : params stderr_opt stdout_opt { ($1, None, $3, $2) }
+  | params RIGHT_ARROW2 AT redirect_dest {
     ($1, None, make_write_redirect $4, None)
   }
-  | patterns RIGHT_RIGHT_ARROW2 redirect_dest {
+  | params RIGHT_RIGHT_ARROW2 redirect_dest {
     ($1, None, make_write_redirect $3, stderr_redirect)
   }
   ;
@@ -131,8 +131,8 @@ commands
   ;
 
 command
-  : patterns stderr_opt RIGHT_ARROW { ($1, None, None, $2) }
-  | patterns RIGHT_ARROW2 { ($1, None, None, stderr_redirect) }
+  : params stderr_opt RIGHT_ARROW { ($1, None, None, $2) }
+  | params RIGHT_ARROW2 { ($1, None, None, stderr_redirect) }
   ;
 
 elif
@@ -146,9 +146,14 @@ names
   | names COMMA NAME { $1 @ [$3] }
   ;
 
-patterns
-  : patterns PATTERN { $1 @ $2 }
-  | PATTERN { $1 }
+params
+  : params param { $1 @ $2 }
+  | param { $1 }
+  ;
+
+param
+  : MATCHING_PATTERN { List.map (fun param -> Node.MatchingParam param) $1 }
+  | EXPR_PATTERN { [Node.ExprParam (Node.Var $1)] }
   ;
 
 expr
