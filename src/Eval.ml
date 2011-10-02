@@ -312,13 +312,9 @@ let eval_op env frame op =
   | Op.MakeUserFunction (args, ops_index) ->
       Stack.push (Value.UserFunction (args, ops_index)) stack
   | Op.MoveParam ->
-      (match Stack.pop stack with
-        Value.String param ->
-          let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
-          DynArray.add cmd.cmd_params param
-      | value ->
-          let header = "Unsupported parameter type: " in
-          failwith (header ^ (Builtins.string_of_value value)))
+      let s = Builtins.string_of_value (Stack.pop stack) in
+      let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
+      DynArray.add cmd.cmd_params s
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in
