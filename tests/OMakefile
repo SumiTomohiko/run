@@ -36,7 +36,8 @@
 FILES[] = Test Parser Lexer Main
 #
 PROGRAM = run_test
-OCAML_OTHER_LIBS += unix ensure
+OCAML_LIBS += $(LIB_DIR)/ensure
+OCAML_OTHER_LIBS += unix
 #
 PING_EXE = ping
 PONG_EXE = pong

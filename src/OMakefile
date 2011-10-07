@@ -59,7 +59,8 @@ FILES[] =
 PROGRAM = run
 MENHIR_ENABLED = true
 MENHIR_FLAGS = --comment --dump --explain --infer
-OCAML_OTHER_LIBS += unix nums ensure
+OCAML_LIBS += $(LIB_DIR)/ensure
+OCAML_OTHER_LIBS += unix nums
 #
 .DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
 
