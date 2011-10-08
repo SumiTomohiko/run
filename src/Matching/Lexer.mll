@@ -7,7 +7,7 @@ rule token = parse
   | ',' { Parser.COMMA }
   | '/' { Parser.SEP }
   | [^'\n' ' ' ')'] as c { Parser.CHAR c }
-  | eof | ' ' | "" { Parser.EOF }
+  | eof | ' ' { Parser.EOF }
 
 (**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

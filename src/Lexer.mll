@@ -64,6 +64,7 @@ rule script_token lexer = parse
   | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token lexer = parse
+  | eof { Parser.EOF }
   | "${" { Parser.DOLLER_LBRACE }
   | "->" { Parser.RIGHT_ARROW }
   | "->>" { Parser.RIGHT_RIGHT_ARROW }
