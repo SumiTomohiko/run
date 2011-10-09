@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Syntax sugar for redirection to file using > and <.
+desc: ->@ is >, <- is <. =>@ is what?
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-09 17:54:10.203680 Z
+references: []
+
+id: 7f83578c1efc3246f05496f65a66965a089c72e9
+log_events: 
+- - 2011-10-09 17:54:10.923517 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

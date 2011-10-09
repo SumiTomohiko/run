@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Redirection from/to a same file.
+desc: Use temporary file.
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-09 18:01:28.244111 Z
+references: []
+
+id: a8fb24609f17be8f5cbf26abb36d0aeffc4be0f3
+log_events: 
+- - 2011-10-09 18:01:28.664290 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

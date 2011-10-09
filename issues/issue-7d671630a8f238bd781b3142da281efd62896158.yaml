@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: source builtins function
+desc: ""
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-09 18:00:47.397153 Z
+references: []
+
+id: 7d671630a8f238bd781b3142da281efd62896158
+log_events: 
+- - 2011-10-09 18:00:48.045625 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

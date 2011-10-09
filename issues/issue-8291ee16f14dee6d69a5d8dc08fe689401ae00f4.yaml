@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Subshell
+desc: subshell ... end syntax or (...).
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-09 18:00:20.987456 Z
+references: []
+
+id: 8291ee16f14dee6d69a5d8dc08fe689401ae00f4
+log_events: 
+- - 2011-10-09 18:00:21.597544 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Regexp filename pattern
+desc: Shell's wildcard is cheap, I want regexp.
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-09 17:59:55.662421 Z
+references: []
+
+id: 6d24576bfaf3e17494301527e43d2bf7bd3c1e60
+log_events: 
+- - 2011-10-09 17:59:56.698062 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
