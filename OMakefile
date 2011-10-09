@@ -44,7 +44,8 @@ test:
     cd tests && ./run_tests
 
 clean:
-    rm -f **/*.{cmi,cmx,o,annot,automaton,a,omc}
+    rm -f **/*.{cmi,cmx,cmxa,o,annot,automaton,a,omc}
+    rm -f src/run src/run.opt
 
 html:
     cd doc && ./rst2html index.rst

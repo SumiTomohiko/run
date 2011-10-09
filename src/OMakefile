@@ -54,13 +54,27 @@ FILES[] =
     Builtins
     Redirect
     Eval
-    Main
-#
+EXE_FILES = $(FILES) Main
+OBJ_FILES = $(FILES) Stub
+
 PROGRAM = run
 MENHIR_ENABLED = true
 MENHIR_FLAGS = --comment --dump --explain --infer
-OCAML_OTHER_LIBS += unix nums ensure
-#
-.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES))
+OCAML_LIBS += $(LIB_DIR)/ensure
+OCAML_OTHER_LIBS += unix nums
+
+Object(name, files) =
+    protected.name = $(file $(name))
+    protected.CMXFILES = $(addsuffix .cmx, $(files))
+    protected.NATIVELIB = $(file $(name).o)
+    protected.EXTLIB_PATH = $(shell ocamlfind query extlib)
+    $(NATIVELIB): $(CMXFILES)
+        $(OCAMLOPTLINK) -I $(EXTLIB_PATH) $(OCAMLFLAGS) $(OCAMLOPTFLAGS) \
+            $(OCAML_LIB_FLAGS) -g -output-obj -o $(NATIVELIB) nums.cmxa \
+            unix.cmxa extLib.cmxa $(OCamlLinkSort $(CMXFILES))
+    return $(NATIVELIB)
+
+.DEFAULT: \
+    $(OCamlProgram $(PROGRAM), $(EXE_FILES)) $(Object $(PROGRAM), $(OBJ_FILES))
 
 # vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4

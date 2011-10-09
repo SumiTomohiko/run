@@ -64,6 +64,7 @@ rule script_token lexer = parse
   | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and command_token lexer = parse
+  | eof { Parser.EOF }
   | "${" { Parser.DOLLER_LBRACE }
   | "->" { Parser.RIGHT_ARROW }
   | "->>" { Parser.RIGHT_RIGHT_ARROW }
@@ -196,7 +197,14 @@ let determine_mode line =
   else
     Command
 
-let make_tokenizer ch =
+let tokenizer_of_string src =
+  let f = match determine_mode src with
+    Script -> script_token
+  | Command -> command_token
+  | _ -> failwith "Comment is unsupported." in
+  f (make_lexer ()), (Lexing.from_string src)
+
+let tokenizer_of_channel ch =
   let lexer = make_lexer () in
   let fill s size =
     if lexer.buffer = "" then
