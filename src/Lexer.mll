@@ -197,7 +197,14 @@ let determine_mode line =
   else
     Command
 
-let make_tokenizer ch =
+let tokenizer_of_string src =
+  let f = match determine_mode src with
+    Script -> script_token
+  | Command -> command_token
+  | _ -> failwith "Comment is unsupported." in
+  f (make_lexer ()), (Lexing.from_string src)
+
+let tokenizer_of_channel ch =
   let lexer = make_lexer () in
   let fill s size =
     if lexer.buffer = "" then

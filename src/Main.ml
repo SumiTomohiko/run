@@ -1,6 +1,6 @@
 
 let parse ch =
-  let tokenizer, lexbuf = Lexer.make_tokenizer ch in
+  let tokenizer, lexbuf = Lexer.tokenizer_of_channel ch in
   Parser.program tokenizer lexbuf
 
 let main () =
