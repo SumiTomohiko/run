@@ -1,4 +1,4 @@
 SRC:
-cat list -> grep foo
+cat list | grep foo
 OUT:
 foo

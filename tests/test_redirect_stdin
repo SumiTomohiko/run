@@ -1,5 +1,5 @@
 SRC:
-cat <- @list
+cat < list
 OUT:
 foo
 bar

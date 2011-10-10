@@ -1,6 +1,6 @@
 SRC:
 cd matching_star2
-ls * -> sort
+ls * | sort
 OUT:
 expected
 expected2

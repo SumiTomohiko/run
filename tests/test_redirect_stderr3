@@ -1,5 +1,5 @@
 SRC:
-sh -c "echo foo 1>&2 && echo bar" => cat
+sh -c "echo foo 1>&2 && echo bar" => | cat
 OUT:
 foo
 bar

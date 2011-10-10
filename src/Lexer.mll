@@ -66,12 +66,10 @@ rule script_token lexer = parse
 and command_token lexer = parse
   | eof { Parser.EOF }
   | "${" { Parser.DOLLER_LBRACE }
-  | "->" { Parser.RIGHT_ARROW }
-  | "->>" { Parser.RIGHT_RIGHT_ARROW }
-  | "<-" { Parser.LEFT_ARROW }
   | "<->" { Parser.LEFT_RIGHT_ARROW }
   | "=>" { Parser.RIGHT_ARROW2 }
   | "=>>" { Parser.RIGHT_RIGHT_ARROW2 }
+  | ">>" { Parser.GREATER2 }
   | "as" { Parser.AS }
   | "err->" { Parser.ERR_RIGHT_ARROW }
   | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
@@ -82,8 +80,10 @@ and command_token lexer = parse
     Parser.MATCHING_PATTERN [Matching.Main.Static (string_token "" lexbuf)]
   }
   | ')' { Parser.RPAR }
-  | '@' { Parser.AT }
+  | '<' { Parser.LESS }
+  | '>' { Parser.GREATER }
   | '\n' { Parser.NEWLINE }
+  | '|' { Parser.BAR }
   | "" { Parser.MATCHING_PATTERN (Matching.Main.compile lexbuf) }
 and string_token s = parse
     '"' { s }

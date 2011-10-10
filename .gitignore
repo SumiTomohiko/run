@@ -23,6 +23,7 @@ src/Matching/Parser.ml
 src/Matching/Parser.mli
 src/Matching/Parser.output
 src/Parser.automaton
+src/Parser.conflicts
 src/Parser.ml
 src/Parser.mli
 src/run

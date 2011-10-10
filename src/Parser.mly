@@ -13,14 +13,13 @@ let make_append_redirect path =
 
 let stderr_redirect = Some Node.Dup
 %}
-%token AS AT BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
+%token AS BAR BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
 %token DOLLER_QUESTION DOT ELIF ELSE END EOF EQUAL EQUAL_EQUAL ERR_RIGHT_ARROW
-%token ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW EVERY FALSE GREATER
-%token GREATER_EQUAL IF LBRACE LBRACKET LEFT_ARROW LEFT_RIGHT_ARROW LESS
-%token LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW
-%token OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN
-%token RIGHT_ARROW RIGHT_ARROW2 RIGHT_RIGHT_ARROW RIGHT_RIGHT_ARROW2 RPAR STAR
-%token TRUE WHILE
+%token ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW EVERY FALSE GREATER GREATER2
+%token GREATER_EQUAL IF LBRACE LBRACKET LEFT_RIGHT_ARROW LESS LESS_EQUAL LPAR
+%token MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW OUT_RIGHT_ARROW_ERR
+%token OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN RIGHT_ARROW2
+%token RIGHT_RIGHT_ARROW2 RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <float> FLOAT
 %token <string> NAME STRING
@@ -67,18 +66,18 @@ stmt
 pipeline
   : single_command { [$1] }
   | first_command last_command { [$1; $2] }
-  | first_command commands last_command { $1 :: ($2 @ [$3]) }
+  | first_command middle_commands last_command { $1 :: ($2 @ [$3]) }
   ;
 
 single_command
   : params stdin_opt stderr_opt stdout_opt {
     ($1, $2, $4, $3)
   }
-  | params stdin_opt RIGHT_ARROW2 AT redirect_dest {
-    ($1, $2, make_write_redirect $5, stderr_redirect)
+  | params stdin_opt RIGHT_ARROW2 redirect_dest {
+    ($1, $2, make_write_redirect $4, stderr_redirect)
   }
-  | params stdin_opt RIGHT_RIGHT_ARROW2 AT redirect_dest {
-    ($1, $2, make_append_redirect $5, stderr_redirect)
+  | params stdin_opt RIGHT_RIGHT_ARROW2 redirect_dest {
+    ($1, $2, make_append_redirect $4, stderr_redirect)
   }
   ;
 
@@ -92,48 +91,48 @@ redirect_dest
 
 stdin_opt
   : /* empty */ { None }
-  | LEFT_ARROW AT redirect_dest { Some $3 }
+  | LESS redirect_dest { Some $2 }
   ;
 
 stderr_opt
   : /* empty */ { None }
-  | ERR_RIGHT_ARROW AT redirect_dest { make_write_redirect $3 }
-  | ERR_RIGHT_RIGHT_ARROW AT redirect_dest { make_append_redirect $3 }
+  | ERR_RIGHT_ARROW redirect_dest { make_write_redirect $2 }
+  | ERR_RIGHT_RIGHT_ARROW redirect_dest { make_append_redirect $2 }
   | ERR_RIGHT_ARROW_OUT { stderr_redirect }
   ;
 
 stdout_opt
   : /* empty */ { None }
-  | RIGHT_ARROW AT redirect_dest { make_write_redirect $3 }
-  | RIGHT_RIGHT_ARROW AT redirect_dest { make_append_redirect $3 }
+  | GREATER redirect_dest { make_write_redirect $2 }
+  | GREATER2 redirect_dest { make_append_redirect $2 }
   | OUT_RIGHT_ARROW_ERR { Some Node.Dup }
-  | OUT_RIGHT_ARROW AT redirect_dest { make_write_redirect $3 }
-  | OUT_RIGHT_RIGHT_ARROW AT redirect_dest { make_append_redirect $3 }
+  | OUT_RIGHT_ARROW redirect_dest { make_write_redirect $2 }
+  | OUT_RIGHT_RIGHT_ARROW redirect_dest { make_append_redirect $2 }
   ;
 
 first_command
-  : params stdin_opt stderr_opt RIGHT_ARROW { ($1, $2, None, $3) }
-  | params stdin_opt RIGHT_ARROW2 { ($1, $2, None, stderr_redirect) }
+  : params stdin_opt stderr_opt BAR { ($1, $2, None, $3) }
+  | params stdin_opt RIGHT_ARROW2 BAR { ($1, $2, None, stderr_redirect) }
   ;
 
 last_command
   : params stderr_opt stdout_opt { ($1, None, $3, $2) }
-  | params RIGHT_ARROW2 AT redirect_dest {
-    ($1, None, make_write_redirect $4, None)
-  }
-  | params RIGHT_RIGHT_ARROW2 redirect_dest {
+  | params RIGHT_ARROW2 redirect_dest {
     ($1, None, make_write_redirect $3, stderr_redirect)
   }
+  | params RIGHT_RIGHT_ARROW2 redirect_dest {
+    ($1, None, make_append_redirect $3, stderr_redirect)
+  }
   ;
 
-commands
-  : commands command { $1 @ [$2] }
-  | command { [$1] }
+middle_commands
+  : middle_commands middle_command { $1 @ [$2] }
+  | middle_command { [$1] }
   ;
 
-command
-  : params stderr_opt RIGHT_ARROW { ($1, None, None, $2) }
-  | params RIGHT_ARROW2 { ($1, None, None, stderr_redirect) }
+middle_command
+  : params stderr_opt BAR { ($1, None, None, $2) }
+  | params RIGHT_ARROW2 BAR { ($1, None, None, stderr_redirect) }
   ;
 
 elif

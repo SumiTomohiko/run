@@ -1,6 +1,6 @@
 SRC:
-cat list -> @list.tmp
-cat list ->> @list.tmp
+cat list > list.tmp
+cat list >> list.tmp
 cat list.tmp
 OUT:
 foo

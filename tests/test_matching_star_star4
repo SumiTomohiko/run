@@ -1,6 +1,6 @@
 SRC:
 cd matching_star_star4
-ls **/expected -> sort
+ls **/expected | sort
 OUT:
 foo/bar/expected
 foo/baz/expected
