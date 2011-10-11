@@ -15,6 +15,14 @@ type t =
    * indicates index of Op.user_function_ops.
    *)
   | UserFunction of string list * int
+  | ProcessStatus of int
+
+let bool_of_value = function
+  | Nil -> false
+  | Bool b -> b
+  | ProcessStatus 0 -> true
+  | ProcessStatus _ -> false
+  | _ -> true
 
 let rec string_of_value = function
     Nil -> "nil"
@@ -37,6 +45,7 @@ let rec string_of_value = function
   | Function _ -> "Function"
   | Method _ -> "Method"
   | UserFunction _ -> "UserFunction"
+  | ProcessStatus stat -> string_of_int stat
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

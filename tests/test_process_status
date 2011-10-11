@@ -1,0 +1,7 @@
+SRC:
+true
+if $?
+  puts("OK")
+end
+OUT:
+OK

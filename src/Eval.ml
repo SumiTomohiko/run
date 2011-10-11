@@ -295,9 +295,10 @@ let eval_op env frame op =
       Stack.push attr stack
   | Op.Jump label -> frame.pc <- Some label
   | Op.JumpIfFalse label ->
-      (match Stack.top stack with
-        Value.Bool false -> ignore (Stack.pop stack); frame.pc <- Some label
-      | _ -> ())
+      if not (Value.bool_of_value (Stack.top stack)) then begin
+        ignore (Stack.pop stack);
+        frame.pc <- Some label
+      end
   | Op.Less -> eval_comparison stack ((>) 0)
   | Op.LessEqual -> eval_comparison stack ((>=) 0)
   | Op.MakeArray size ->
@@ -345,7 +346,7 @@ let eval_op env frame op =
       add_command frame cmd
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLastStatus ->
-      Stack.push (Value.Int (Num.num_of_int env.last_status)) stack
+      Stack.push (Value.ProcessStatus env.last_status) stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
   | Op.PushPipeline flags ->
       let stdout = match Stack.pop stack with
