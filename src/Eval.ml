@@ -20,6 +20,7 @@ type frame = {
 
 type env = {
   globals: Symboltbl.t;
+  builtins: Builtins.Command.t;
   frames: frame Stack.t;
   mutable last_status: int
 }
@@ -60,7 +61,7 @@ let eval_binop stack intf floatf stringf string_intf =
 let array_expand self _ =
   match self with
     Value.Array a ->
-      let strings = Array.to_list (Array.map Builtins.string_of_value a) in
+      let strings = Array.to_list (Array.map Value.string_of_value a) in
       Value.String (String.concat " " strings)
   | _ -> failwith "self must be Array"
 
@@ -68,8 +69,8 @@ let dict_expand self _ =
   match self with
     Value.Dict h ->
       let f key value init =
-        let s = Builtins.string_of_value key in
-        let t = Builtins.string_of_value value in
+        let s = Value.string_of_value key in
+        let t = Value.string_of_value value in
         (s ^ " " ^ t) :: init in
       Value.String (String.concat " " (Hashtbl.fold f h []))
   | _ -> failwith "self must be Dict"
@@ -168,30 +169,33 @@ let close_all_pipes = function
 
 let files_of_cwd pattern = Matching.Main.find (Unix.getcwd ()) pattern
 
-let exec_pipeline pipeline last_stdout_pair read_last_output =
+let exec_pipeline env pipeline last_stdout_pair read_last_output =
   let cmds = pipeline.pl_commands in
   let cmd = DynArray.get cmds 0 in
-  if (DynArray.get cmd.cmd_params 0) = "cd" then begin
-    Unix.chdir (DynArray.get cmd.cmd_params 1);
+  let name = DynArray.get cmd.cmd_params 0 in
+  try
+    let f = Builtins.Command.find env.builtins name in
+    let ret = f (List.tl (DynArray.to_list cmd.cmd_params)) in
     close (fst last_stdout_pair);
     close (snd last_stdout_pair);
-    0, ""
-  end else
-    let first_stdin_fd = match pipeline.pl_first_stdin with
-      Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
-    | None -> None in
-    let first_pair = (first_stdin_fd, None) in
-    let num_cmds = DynArray.length cmds in
-    let pipes = make_pipes [] first_pair last_stdout_pair num_cmds in
-    let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
-    close_second_pipes (List.tl (List.rev pipes));
-    close (snd last_stdout_pair);
-    let fd = fst last_stdout_pair in
-    let output = read_last_output (List.hd (List.rev pids)) fd in
-    close fd;
-    close first_stdin_fd;
-    wait_children (List.tl (List.rev pids));
-    output
+    ret
+  with
+    Not_found ->
+      let first_stdin_fd = match pipeline.pl_first_stdin with
+        Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
+      | None -> None in
+      let first_pair = (first_stdin_fd, None) in
+      let num_cmds = DynArray.length cmds in
+      let pipes = make_pipes [] first_pair last_stdout_pair num_cmds in
+      let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
+      close_second_pipes (List.tl (List.rev pipes));
+      close (snd last_stdout_pair);
+      let fd = fst last_stdout_pair in
+      let output = read_last_output (List.hd (List.rev pids)) fd in
+      close fd;
+      close first_stdin_fd;
+      wait_children (List.tl (List.rev pids));
+      output
 
 let rec trim s =
   let size = String.length s in
@@ -253,7 +257,7 @@ let eval_op env frame op =
           Unix.WEXITED status -> status
         | _ -> -1 in
         status, "" in
-      let status, _ = exec_pipeline pipeline last_pair read_last_output in
+      let status, _ = exec_pipeline env pipeline last_pair read_last_output in
       env.last_status <- status
   | Op.ExecAndPush ->
       let rfd, wfd = Unix.pipe () in
@@ -271,7 +275,7 @@ let eval_op env frame op =
           loop "" pid fd
       | None -> failwith "Invalid stdout file descriptor" in
       let pipeline = Stack.pop frame.pipelines in
-      let status, stdout = exec_pipeline pipeline pair read_last_output in
+      let status, stdout = exec_pipeline env pipeline pair read_last_output in
       env.last_status <- status;
       Stack.push (Value.String (trim stdout)) stack
   | Op.Expand pattern ->
@@ -312,7 +316,7 @@ let eval_op env frame op =
   | Op.MakeUserFunction (args, ops_index) ->
       Stack.push (Value.UserFunction (args, ops_index)) stack
   | Op.MoveParam ->
-      let s = Builtins.string_of_value (Stack.pop stack) in
+      let s = Value.string_of_value (Stack.pop stack) in
       let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
       DynArray.add cmd.cmd_params s
   | Op.Mul ->
@@ -406,7 +410,11 @@ let eval ops =
     pipelines=Stack.create () } in
   let stack = Stack.create () in
   Stack.push frame stack;
-  eval_env { globals=Builtins.create (); frames=stack; last_status=0 }
+  eval_env {
+    globals=Builtins.Function.create ();
+    builtins=Builtins.Command.create ();
+    frames=stack;
+    last_status=0 }
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
