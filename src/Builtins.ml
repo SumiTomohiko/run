@@ -21,16 +21,13 @@ let rec string_of_value = function
   | Value.Method _ -> "Method"
   | Value.UserFunction _ -> "UserFunction"
 
-let output args f =
-  List.fold_left (fun init v -> print_string (f v); init) Value.Nil args
-
-let print args = output args string_of_value
-
-let puts args = output args (fun v -> (string_of_value v) ^ "\n")
+let output f args =
+  List.iter (fun v -> print_string (f v)) args;
+  Value.Nil
 
 let builtins = [
-  ("print", print);
-  ("puts", puts)]
+  ("print", output string_of_value);
+  ("puts", output (fun v -> (string_of_value v) ^ "\n"))]
 
 let create () =
   let tbl = Symboltbl.create () in
