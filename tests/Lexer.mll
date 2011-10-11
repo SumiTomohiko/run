@@ -6,6 +6,7 @@ rule token = parse
     | "OUT:\n" -> Parser.OUT
     | "ERR:\n" -> Parser.ERR
     | "STAT:\n" -> Parser.STAT
+    | "PARAMS:\n" -> Parser.PARAMS
     | _ -> Parser.CONTENT (s)
   }
   | eof { Parser.EOF }

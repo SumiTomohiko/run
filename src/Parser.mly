@@ -21,6 +21,7 @@ let stderr_redirect = Some Node.Dup
 %token OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN RIGHT_ARROW2
 %token RIGHT_RIGHT_ARROW2 RPAR STAR TRUE WHILE
 %token <Num.num> INT
+%token <int> DOLLER_NUMBER
 %token <float> FLOAT
 %token <string> NAME STRING
 %token <Buffer.t> HEREDOC
@@ -154,6 +155,11 @@ params
 param
   : MATCHING_PATTERN { List.map (fun param -> Node.MatchingParam param) $1 }
   | DOLLER_LBRACE expr RBRACE { [Node.ExprParam $2] }
+  | doller_number { [Node.MatchingParam (Matching.Main.Static $1)] }
+  ;
+
+doller_number
+  : DOLLER_NUMBER { Array.get Sys.argv ($1 + 1) }
   ;
 
 expr
@@ -273,6 +279,7 @@ atom
   | NAME { Node.Var $1 }
   | DOLLER_LPAR pipeline RPAR { Node.InlinePipeline $2 }
   | DOLLER_QUESTION { Node.LastStatus }
+  | doller_number { Node.Const (Value.String $1) }
   ;
 
 dict_pairs

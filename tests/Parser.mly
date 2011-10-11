@@ -1,14 +1,22 @@
 %token <string> CONTENT
-%token EOF ERR OUT SRC STAT
+%token EOF ERR OUT PARAMS SRC STAT
 %start test
 %type <Test.t> test
 %%
 test
-  : src out_opt err_opt stat_opt EOF { Test.make $1 $2 $3 $4 }
+  : src params_opt out_opt err_opt stat_opt EOF { Test.make $1 $2 $3 $4 $5 }
   ;
 
 src
   : SRC contents { $2 }
+  ;
+
+params_opt
+  : { None }
+  | PARAMS contents {
+    let s = $2 in
+    Some (String.sub s 0 ((String.length s) - 1))
+  }
   ;
 
 out_opt

@@ -1,0 +1,6 @@
+SRC:
+echo $1
+PARAMS:
+foo
+OUT:
+foo

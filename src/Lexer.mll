@@ -43,6 +43,7 @@ rule script_token lexer = parse
   | ' '+ { script_token lexer lexbuf }
   | '"' { Parser.STRING (string_token "" lexbuf) }
   | '#' [^'\n']* { script_token lexer lexbuf }
+  | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
   | '(' { Parser.LPAR }
   | ')' { Parser.RPAR }
   | '*' { Parser.STAR }
@@ -84,6 +85,7 @@ and command_token lexer = parse
   | '>' { Parser.GREATER }
   | '\n' { Parser.NEWLINE }
   | '|' { Parser.BAR }
+  | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
   | "" { Parser.MATCHING_PATTERN (Matching.Main.compile lexbuf) }
 and string_token s = parse
     '"' { s }

@@ -4,8 +4,11 @@ dir=`dirname $0`
 
 find "${dir}" -name "test_*" -type f | while read t
 do
-  echo "${t}"
-  "${dir}/run_test" "${t}" 2>&1
+  log=$("${dir}/run_test" "${t}" 2>&1)
+  if [ $? != 0 ]; then
+    echo "${t} failed"
+    echo "${log}"
+  fi
 done
 
 # vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

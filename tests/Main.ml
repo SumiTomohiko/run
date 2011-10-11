@@ -10,15 +10,18 @@ let parse_test path =
     Parser.test Lexer.token (Lexing.from_channel ch))
 
 let open_temp_file f g =
-  let (path, ch) = Filename.open_temp_file "test_run." ".run" in
+  let path, ch = Filename.open_temp_file "test_run." ".run" in
   let close () = close_out ch in
   let body () =
     Std.finally close f ch;
     g path in
   Std.finally (fun () -> Unix.unlink path) body ()
 
-let exec_run path =
-  let cmd = "../src/run " ^ path in
+let exec_run path params =
+  let s = match params with
+  | Some params -> [params]
+  | None -> [] in
+  let cmd = String.concat " " (["../src/run"; path] @ s) in
   let stdout, stdin, stderr = Unix.open_process_full cmd [||] in
   let out = input_all stdout "" in
   let err = input_all stderr "" in
@@ -36,7 +39,8 @@ let do_test expected actual =
 
 let main path =
   let test = parse_test path in
-  let out, err, stat = write_src (Test.src_of_test test) exec_run in
+  let f path = exec_run path (Test.params_of_test test) in
+  let out, err, stat = write_src (Test.src_of_test test) f in
   do_test (Test.out_of_test test) out;
   do_test (Test.err_of_test test) err;
   match Test.stat_of_test test with

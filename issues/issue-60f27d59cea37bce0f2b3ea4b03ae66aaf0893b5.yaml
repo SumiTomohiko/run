@@ -1,0 +1,22 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: $0, $1 and $N special variables.
+desc: ""
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :closed
+disposition: :fixed
+creation_time: 2011-10-11 17:19:07.624991 Z
+references: []
+
+id: 60f27d59cea37bce0f2b3ea4b03ae66aaf0893b5
+log_events: 
+- - 2011-10-11 17:19:07.969560 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
+- - 2011-10-11 18:09:46.165757 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - closed with disposition fixed
+  - ""
