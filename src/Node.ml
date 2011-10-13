@@ -24,6 +24,7 @@ and expr =
   | LessEqual of binop
   | Mul of binop
   | NotEqual of binop
+  | String of expr list
   | Sub of binop
   | Subscript of subscript
   | Var of string

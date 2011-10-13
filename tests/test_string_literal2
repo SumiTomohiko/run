@@ -1,0 +1,5 @@
+SRC:
+foo = 42
+puts("${foo}")
+OUT:
+42

@@ -91,6 +91,9 @@ and compile_expr oplist = function
   | Node.LessEqual operands -> compile_binop oplist operands Op.LessEqual
   | Node.Mul operands -> compile_binop oplist operands Op.Mul
   | Node.NotEqual operands -> compile_binop oplist operands Op.NotEqual
+  | Node.String contents ->
+      List.iter (compile_expr oplist) contents;
+      OpList.add oplist (Op.Concat (List.length contents))
   | Node.Sub operands -> compile_binop oplist operands Op.Sub
   | Node.Subscript { Node.prefix; Node.index } ->
       compile_expr oplist prefix;

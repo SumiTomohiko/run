@@ -1,9 +1,10 @@
 {
-type mode = Script | Command | Comment
+type mode = Command | Comment | Script | String
 type lexer = {
   mutable buffer: string;
   mode_stack: mode Stack.t;
-  heredoc_queue: (string * Buffer.t) Queue.t
+  heredoc_queue: (string * Buffer.t) Queue.t;
+  ahead_tokens: Parser.token Queue.t
 }
 }
 
@@ -41,7 +42,7 @@ rule script_token lexer = parse
   | "true" { Parser.TRUE }
   | "while" { Parser.WHILE }
   | ' '+ { script_token lexer lexbuf }
-  | '"' { Parser.STRING (string_token "" lexbuf) }
+  | '"' { Parser.DOUBLE_QUOTE }
   | '#' [^'\n']* { script_token lexer lexbuf }
   | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
   | '(' { Parser.LPAR }
@@ -78,7 +79,7 @@ and command_token lexer = parse
   | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
   | ' '+ { command_token lexer lexbuf }
   | '"' {
-    Parser.MATCHING_PATTERN [Matching.Main.Static (string_token "" lexbuf)]
+    Parser.MATCHING_PATTERN [Matching.Main.Static (string_param "" lexbuf)]
   }
   | ')' { Parser.RPAR }
   | '<' { Parser.LESS }
@@ -87,9 +88,17 @@ and command_token lexer = parse
   | '|' { Parser.BAR }
   | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
   | "" { Parser.MATCHING_PATTERN (Matching.Main.compile lexbuf) }
-and string_token s = parse
-    '"' { s }
-  | [^'"']* as t { string_token (s ^ t) lexbuf }
+and string_param s = parse
+  | '"' { s }
+  | _ as c { string_param (s ^ (String.make 1 c)) lexbuf }
+and string_token lexer s = parse
+    '"' {
+    Queue.add Parser.DOUBLE_QUOTE lexer.ahead_tokens;
+    Parser.STRING s }
+  | "${" {
+    Queue.add Parser.DOLLER_LBRACE lexer.ahead_tokens;
+    Parser.STRING s }
+  | _ as c { string_token lexer (s ^ (String.make 1 c)) lexbuf }
 and comment lexer depth = parse
     ":)" {
       match depth with
@@ -125,7 +134,8 @@ let make_lexer () =
   let lexer = {
     buffer="";
     mode_stack=Stack.create ();
-    heredoc_queue=Queue.create () } in
+    heredoc_queue=Queue.create ();
+    ahead_tokens=Queue.create () } in
   (* Script at bottom of a stack is a sentinel to detect eof *)
   Stack.push Script lexer.mode_stack;
   lexer
@@ -133,22 +143,29 @@ let make_lexer () =
 let drop_top stack = ignore (Stack.pop stack)
 
 let next_token_of_lexbuf lexer lexbuf =
-  let stack = lexer.mode_stack in
-  let mode = Stack.top stack in
-  let tok = match mode with
-    Script -> script_token lexer lexbuf
-  | Command -> command_token lexer lexbuf
-  | _ -> comment lexer 0 lexbuf in
+  let mode_stack = lexer.mode_stack in
+  let tok = if not (Queue.is_empty lexer.ahead_tokens) then
+    Queue.take lexer.ahead_tokens
+  else
+    match Stack.top mode_stack with
+    | Script -> script_token lexer lexbuf
+    | Command -> command_token lexer lexbuf
+    | String -> string_token lexer "" lexbuf
+    | Comment -> comment lexer 0 lexbuf in
   (match tok with
   | Parser.DOLLER_LBRACE
   | Parser.LBRACE
-  | Parser.LPAR -> Stack.push Script stack
+  | Parser.LPAR -> Stack.push Script mode_stack
   | Parser.DOLLER_LPAR
-  | Parser.EVERY -> Stack.push Command stack
+  | Parser.EVERY -> Stack.push Command mode_stack
+  | Parser.DOUBLE_QUOTE ->
+      (match Stack.top mode_stack with
+      | String -> drop_top mode_stack
+      | _ -> Stack.push String mode_stack)
   | Parser.AS
   | Parser.NEWLINE
   | Parser.RBRACE
-  | Parser.RPAR -> drop_top stack
+  | Parser.RPAR -> drop_top mode_stack
   | _ -> ());
   tok
 

@@ -204,6 +204,13 @@ let rec trim s =
   | '\n' -> trim (String.sub s 0 (size - 1))
   | _ -> s
 
+let rec concat stack size s =
+  if size = 0 then
+    s
+  else
+    let v = Stack.pop stack in
+    concat stack (size - 1) ((Value.string_of_value v) ^ s)
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -237,6 +244,7 @@ let eval_op env frame op =
       let pids = List.map2 exec_communicate cmds [pipes; (List.rev pipes)] in
       close_all_pipes pipes;
       wait_children pids
+  | Op.Concat size -> Stack.push (Value.String (concat stack size "")) stack
   | Op.Div ->
       let intf n m = Value.Float (Num.float_of_num (Num.div_num n m)) in
       let floatf x y = Value.Float (x /. y) in

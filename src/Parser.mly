@@ -14,12 +14,12 @@ let make_append_redirect path =
 let stderr_redirect = Some Node.Dup
 %}
 %token AS BAR BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
-%token DOLLER_QUESTION DOT ELIF ELSE END EOF EQUAL EQUAL_EQUAL ERR_RIGHT_ARROW
-%token ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW EVERY FALSE GREATER GREATER2
-%token GREATER_EQUAL IF LBRACE LBRACKET LEFT_RIGHT_ARROW LESS LESS_EQUAL LPAR
-%token MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW OUT_RIGHT_ARROW_ERR
-%token OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN RIGHT_ARROW2
-%token RIGHT_RIGHT_ARROW2 RPAR STAR TRUE WHILE
+%token DOLLER_QUESTION DOT DOUBLE_QUOTE ELIF ELSE END EOF EQUAL EQUAL_EQUAL
+%token ERR_RIGHT_ARROW ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW EVERY FALSE
+%token GREATER GREATER2 GREATER_EQUAL IF LBRACE LBRACKET LEFT_RIGHT_ARROW LESS
+%token LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW
+%token OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN
+%token RIGHT_ARROW2 RIGHT_RIGHT_ARROW2 RPAR STAR TRUE WHILE
 %token <Num.num> INT
 %token <int> DOLLER_NUMBER
 %token <float> FLOAT
@@ -270,7 +270,7 @@ atom
   | FALSE { Node.Const (Value.Bool false) }
   | INT { Node.Const (Value.Int $1) }
   | FLOAT { Node.Const (Value.Float $1) }
-  | STRING { Node.Const (Value.String $1) }
+  | DOUBLE_QUOTE string_contents_opt DOUBLE_QUOTE { Node.String $2 }
   | HEREDOC { Node.Heredoc $1 }
   | LBRACKET exprs RBRACKET { Node.Array $2 }
   | LBRACKET RBRACKET { Node.Array [] }
@@ -280,6 +280,21 @@ atom
   | DOLLER_LPAR pipeline RPAR { Node.InlinePipeline $2 }
   | DOLLER_QUESTION { Node.LastStatus }
   | doller_number { Node.Const (Value.String $1) }
+  ;
+
+string_contents_opt
+  : /* empty */ { [] }
+  | string_contents { $1 }
+  ;
+
+string_contents
+  : string_contents string_content { $1 @ [$2] }
+  | string_content { [$1] }
+  ;
+
+string_content
+  : STRING { Node.Const (Value.String $1) }
+  | DOLLER_LBRACE expr RBRACE { $2 }
   ;
 
 dict_pairs
