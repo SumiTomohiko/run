@@ -5,7 +5,7 @@ let exit = function
   | [] -> exit 0
   | [stat] -> exit (int_of_string stat)
   (* TODO: raise ArgumentError *)
-  | _ -> failwith "exit accept one positional parameter."
+  | _ -> failwith "exit accepts one optional parameter."
 
 let cd = function
   | [dir] ->
