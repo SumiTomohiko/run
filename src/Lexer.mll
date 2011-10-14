@@ -1,5 +1,5 @@
 {
-type mode = Command | Comment | Script | String
+type mode = Pipeline | Comment | Script | String
 type lexer = {
   mutable buffer: string;
   mode_stack: mode Stack.t;
@@ -65,7 +65,7 @@ rule script_token lexer = parse
   | name as s { Parser.NAME s }
   | digit+ '.' digit+ as s { Parser.FLOAT (float_of_string s) }
   | digit+ as s { Parser.INT (Num.num_of_string s) }
-and command_token lexer = parse
+and pipeline_token lexer = parse
   | eof { Parser.EOF }
   | "${" { Parser.DOLLER_LBRACE }
   | "<->" { Parser.LEFT_RIGHT_ARROW }
@@ -77,7 +77,7 @@ and command_token lexer = parse
   | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
   | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
   | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
-  | ' '+ { command_token lexer lexbuf }
+  | ' '+ { pipeline_token lexer lexbuf }
   | '"' {
     Parser.MATCHING_PATTERN [Matching.Main.Static (string_param "" lexbuf)]
   }
@@ -149,7 +149,7 @@ let next_token_of_lexbuf lexer lexbuf =
   else
     match Stack.top mode_stack with
     | Script -> script_token lexer lexbuf
-    | Command -> command_token lexer lexbuf
+    | Pipeline -> pipeline_token lexer lexbuf
     | String -> string_token lexer "" lexbuf
     | Comment -> comment lexer 0 lexbuf in
   (match tok with
@@ -157,7 +157,7 @@ let next_token_of_lexbuf lexer lexbuf =
   | Parser.LBRACE
   | Parser.LPAR -> Stack.push Script mode_stack
   | Parser.DOLLER_LPAR
-  | Parser.EVERY -> Stack.push Command mode_stack
+  | Parser.EVERY -> Stack.push Pipeline mode_stack
   | Parser.DOUBLE_QUOTE ->
       (match Stack.top mode_stack with
       | String -> drop_top mode_stack
@@ -214,12 +214,12 @@ let determine_mode line =
   else if try_comment line then
     Comment
   else
-    Command
+    Pipeline
 
 let tokenizer_of_string src =
   let f = match determine_mode src with
     Script -> script_token
-  | Command -> command_token
+  | Pipeline -> pipeline_token
   | _ -> failwith "Comment is unsupported." in
   f (make_lexer ()), (Lexing.from_string src)
 
