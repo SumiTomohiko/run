@@ -69,9 +69,9 @@ and pipeline_token lexer = parse
   | eof { Parser.EOF }
   | "${" { Parser.DOLLER_LBRACE }
   | "<->" { Parser.LEFT_RIGHT_ARROW }
-  | "=>" { Parser.RIGHT_ARROW2 }
-  | "=>>" { Parser.RIGHT_RIGHT_ARROW2 }
-  | ">>" { Parser.GREATER2 }
+  | "=>" { Parser.RIGHT_ARROW }
+  | "=>>" { Parser.RIGHT_RIGHT_ARROW }
+  | ">>" { Parser.GREATER_GREATER }
   | "as" { Parser.AS }
   | "err->" { Parser.ERR_RIGHT_ARROW }
   | "err->>" { Parser.ERR_RIGHT_RIGHT_ARROW }
