@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Compiler module uses a global variable such as while_stack.
+desc: Remove it.
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-14 20:22:53.949704 Z
+references: []
+
+id: 6d170eb18ffcb2bc53e3a590b21ee4ada0fcac2f
+log_events: 
+- - 2011-10-14 20:22:54.778761 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
