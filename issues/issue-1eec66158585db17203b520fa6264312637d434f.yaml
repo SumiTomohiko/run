@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Remove $n etc. Use ARGV[n].
+desc: ""
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-14 18:14:38.505881 Z
+references: []
+
+id: 1eec66158585db17203b520fa6264312637d434f
+log_events: 
+- - 2011-10-14 18:14:38.877743 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
