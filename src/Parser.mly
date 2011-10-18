@@ -12,20 +12,27 @@ let make_append_redirect path =
   make_file_redirect path (Unix.O_APPEND :: write_flags)
 
 let stderr_redirect = Some Node.Dup
+
+let rec nodes_of_string result s index =
+  if (String.length s) = index then
+    result
+  else
+    nodes_of_string (result @ [Node.Char (String.get s index)]) s (index + 1)
 %}
 %token AS BAR BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
 %token DOLLER_QUESTION DOT DOUBLE_QUOTE ELIF ELSE END EOF EQUAL EQUAL_EQUAL
 %token ERR_RIGHT_ARROW ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW EVERY FALSE
 %token GREATER GREATER_GREATER GREATER_EQUAL IF LBRACE LBRACKET LEFT_RIGHT_ARROW
 %token LESS LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW
-%token OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW PLUS RBRACE RBRACKET RETURN
-%token RIGHT_ARROW RIGHT_RIGHT_ARROW RPAR STAR TRUE WHILE
+%token OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW PARAM_BEGIN PARAM_END PLUS
+%token RBRACE RBRACKET RETURN RIGHT_ARROW RIGHT_RIGHT_ARROW RPAR SEP STAR
+%token STAR_STAR TRUE WHILE
+%token <char> CHAR
 %token <Num.num> INT
 %token <int> DOLLER_NUMBER
 %token <float> FLOAT
 %token <string> NAME STRING
 %token <Buffer.t> HEREDOC
-%token <Matching.Main.t list> MATCHING_PATTERN
 %start program
 %type <Node.stmt list> program
 %%
@@ -83,10 +90,10 @@ single_command
   ;
 
 redirect_dest
-  : MATCHING_PATTERN {
-    match $1 with
-      Matching.Main.Static path :: [] -> path
-    | _ -> failwith "Sorry, redirect destination must be static string."
+  : PARAM_BEGIN path PARAM_END {
+    let s, l = Param.chain_static_chars "" $2 in
+    assert ((List.length l) = 0);
+    s
   }
   ;
 
@@ -148,14 +155,49 @@ names
   ;
 
 params
-  : params param { $1 @ $2 }
-  | param { $1 }
+  : params param { $1 @ [$2] }
+  | param { [$1] }
   ;
 
 param
-  : MATCHING_PATTERN { List.map (fun param -> Node.MatchingParam param) $1 }
-  | DOLLER_LBRACE expr RBRACE { [Node.ExprParam $2] }
-  | doller_number { [Node.MatchingParam (Matching.Main.Static $1)] }
+  : PARAM_BEGIN param_body PARAM_END { $2 }
+  | PARAM_BEGIN STRING PARAM_END { nodes_of_string [] $2 0 }
+  ;
+
+param_body
+  : path { $1 }
+  | SEP path { [Node.Dir] @ $2 }
+  | SEP { [Node.Dir] }
+  ;
+
+path
+  : path SEP name { $1 @ [Node.Dir] @ $3 }
+  | name { $1 }
+  ;
+
+name
+  : STAR_STAR { [Node.StarStar] }
+  | param_atoms { $1 }
+  | doller_number { nodes_of_string [] $1 0 }
+  ;
+
+param_atoms
+  : param_atoms param_atom { $1 @ [$2] }
+  | param_atom { [$1] }
+  ;
+
+param_atom
+  : CHAR { Node.Char $1 }
+  | STAR { Node.Star }
+  | LBRACE param_bodies RBRACE { Node.Branch $2 }
+  | DOLLER_LBRACE expr RBRACE {
+    Node.ExprParam { Node.ep_index=0; Node.ep_expr=$2 }
+  }
+  ;
+
+param_bodies
+  : param_bodies COMMA param_body { $1 @ [$3] }
+  | param_body { [$1] }
   ;
 
 doller_number

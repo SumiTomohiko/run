@@ -9,8 +9,6 @@ type kind =
   | Equal
   | Exec
   | ExecAndPush
-  | Expand of Matching.Main.pattern
-  | ExpandParam of Matching.Main.pattern
   | GetAttr of string
   | Greater
   | GreaterEqual
@@ -27,9 +25,11 @@ type kind =
   | Pop
   | PushCommand of Unix.open_flag list
   | PushCommandE2O
+  | PushCommandParams of int * Param.t list
   | PushConst of Value.t
   | PushLastStatus
   | PushLocal of string
+  | PushParams of int * Param.t list
   | PushPipeline of Unix.open_flag list
   | Return
   | StoreLocal of string
@@ -56,8 +56,6 @@ let name_of_op = function
   | Equal -> "Equal"
   | Exec -> "Exec"
   | ExecAndPush -> "ExecAndPush"
-  | Expand _ -> "Expand"
-  | ExpandParam _ -> "ExpandParam"
   | GetAttr _ -> "GetAttr"
   | Greater -> "Greater"
   | GreaterEqual -> "GreaterEqual"
@@ -74,9 +72,11 @@ let name_of_op = function
   | Pop -> "Pop"
   | PushCommand _ -> "PushCommand"
   | PushCommandE2O -> "PushCommandE2O"
+  | PushCommandParams _ -> "PushCommandParams"
   | PushConst _ -> "PushConst"
   | PushLastStatus -> "PushLastStatus"
   | PushLocal _ -> "PushLocal"
+  | PushParams _ -> "PushParams"
   | PushPipeline _ -> "PushPipeline"
   | Return -> "Return"
   | StoreLocal _ -> "StoreLocal"

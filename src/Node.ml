@@ -34,7 +34,15 @@ and user_function = {
   uf_args: string list;
   uf_stmts: stmt list }
 and redirect = Dup | File of string * Unix.open_flag list
-and param = ExprParam of expr | MatchingParam of Matching.Main.t
+and param = param_atom list
+and expr_param = { mutable ep_index: int; ep_expr: expr }
+and param_atom =
+  | Branch of param list
+  | Char of char
+  | Dir
+  | ExprParam of expr_param
+  | Star
+  | StarStar
 and command = param list * string option * redirect option * redirect option
 and stmt =
     Break

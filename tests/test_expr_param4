@@ -1,0 +1,5 @@
+SRC:
+foo = 42
+echo ${foo}bar
+OUT:
+42bar

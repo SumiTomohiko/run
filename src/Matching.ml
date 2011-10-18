@@ -1,6 +1,26 @@
 
-type pattern = Op.t list
-type t = Static of string | Dynamic of pattern
+module Op = struct
+  type t = Char of char | Dir | NotDot | Star | StarStar
+end
+
+module Compiler = struct
+  let compile_node = function
+    | Node.Char c -> Op.Char c
+    | Node.Dir -> Op.Dir
+    | Node.ExprParam _ -> failwith "TODO: Implement here"
+    | Node.Star -> Op.Star
+    | Node.StarStar -> Op.StarStar
+    | _ -> failwith "Invalid node"
+
+  let compile_first_node = function
+    | Node.Star -> [Op.NotDot]
+    | _ -> []
+
+  let compile nodes =
+    (compile_first_node (List.hd nodes)) @ (List.map compile_node nodes)
+end
+
+type t = Op.t list
 
 let rec try_star pattern name index star_end =
   if star_end < index then
@@ -18,7 +38,7 @@ and try_pattern pattern name index =
     | _ -> false, []
   else
     match pattern with
-      (Op.Char c) :: tl ->
+    | (Op.Char c) :: tl ->
         if (String.get name index) = c then
           try_pattern tl name (index + 1)
         else
@@ -58,7 +78,7 @@ let rec traverse dir pattern =
 and find_at dirp dir pattern founds =
   try
     let matched = match Unix.readdir dirp with
-      "."
+    | "."
     | ".." -> []
     | name ->
         let path = Printf.sprintf "%s/%s" dir name in
@@ -68,7 +88,7 @@ and find_at dirp dir pattern founds =
         | false, _ -> [] in
     find_at dirp dir pattern (founds @ matched)
   with
-    End_of_file -> founds
+  | End_of_file -> founds
 and find_abs dir = function
   | Op.StarStar :: Op.Dir :: tl -> traverse dir tl
   | pattern ->
@@ -85,10 +105,11 @@ let find dir pattern =
   List.map remove_dir (find_abs dir pattern)
 
 let rec expand_branch pattern = function
-    hd :: tl ->
+  | hd :: tl ->
       (match hd with
-        Node.Char _
+      | Node.Char _
       | Node.Dir
+      | Node.ExprParam _
       | Node.Star
       | Node.StarStar -> expand_branch (pattern @ [hd]) tl
       | Node.Branch branches ->
@@ -97,26 +118,18 @@ let rec expand_branch pattern = function
   | [] -> [pattern]
 
 let rec is_static = function
-    (Node.Char _) :: tl -> is_static tl
+  | (Node.Char _) :: tl -> is_static tl
   | Node.Dir :: tl -> is_static tl
   | _ :: _ -> false
   | [] -> true
 
 let rec join_chars s = function
-    (Node.Char c) :: tl -> join_chars (s ^ (String.make 1 c)) tl
+  | (Node.Char c) :: tl -> join_chars (s ^ (String.make 1 c)) tl
   | Node.Dir :: tl -> join_chars (s ^ "/") tl
   | [] -> s
   | _ -> failwith "Invalid Node"
 
-let compile_pattern pattern =
-  if is_static pattern then
-    Static (join_chars "" pattern)
-  else
-    Dynamic (Compiler.compile pattern)
-
-let compile lexbuf =
-  let branches = expand_branch [] (Parser.pattern Lexer.token lexbuf) in
-  List.map compile_pattern branches
+let compile = Compiler.compile
 
 (**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

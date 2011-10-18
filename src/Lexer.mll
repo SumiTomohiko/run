@@ -1,11 +1,13 @@
 {
-type mode = Pipeline | Comment | Script | String
+type mode = Comment | Param | Pipeline | Script | String
 type lexer = {
   mutable buffer: string;
   mode_stack: mode Stack.t;
   heredoc_queue: (string * Buffer.t) Queue.t;
   ahead_tokens: Parser.token Queue.t
 }
+
+let enqueue_ahead_token lexer tk = Queue.add tk lexer.ahead_tokens
 }
 
 let digit = ['0'-'9']
@@ -23,7 +25,7 @@ rule script_token lexer = parse
   | "!=" { Parser.NOT_EQUAL }
   | "$(" { Parser.DOLLER_LPAR }
   | "$?" { Parser.DOLLER_QUESTION }
-  | "(:" { comment lexer 1 lexbuf }
+  | "(:" { comment 1 lexer lexbuf }
   | "//" { Parser.DIV_DIV }
   | "<=" { Parser.LESS_EQUAL }
   | "==" { Parser.EQUAL_EQUAL }
@@ -67,7 +69,6 @@ rule script_token lexer = parse
   | digit+ as s { Parser.INT (Num.num_of_string s) }
 and pipeline_token lexer = parse
   | eof { Parser.EOF }
-  | "${" { Parser.DOLLER_LBRACE }
   | "<->" { Parser.LEFT_RIGHT_ARROW }
   | "=>" { Parser.RIGHT_ARROW }
   | "=>>" { Parser.RIGHT_RIGHT_ARROW }
@@ -78,35 +79,43 @@ and pipeline_token lexer = parse
   | "err->out" { Parser.ERR_RIGHT_ARROW_OUT }
   | "out->err" { Parser.OUT_RIGHT_ARROW_ERR }
   | ' '+ { pipeline_token lexer lexbuf }
-  | '"' {
-    Parser.MATCHING_PATTERN [Matching.Main.Static (string_param "" lexbuf)]
-  }
   | ')' { Parser.RPAR }
   | '<' { Parser.LESS }
   | '>' { Parser.GREATER }
   | '\n' { Parser.NEWLINE }
   | '|' { Parser.BAR }
+  | "" { Parser.PARAM_BEGIN }
+and param_token lexer = parse
+  | "${" { Parser.DOLLER_LBRACE }
+  | "**" { Parser.STAR_STAR }
   | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
-  | "" { Parser.MATCHING_PATTERN (Matching.Main.compile lexbuf) }
+  | '*' { Parser.STAR }
+  | ',' { Parser.COMMA }
+  | '/' { Parser.SEP }
+  | '{' { Parser.LBRACE }
+  | '}' { Parser.RBRACE }
+  | '"' { Parser.STRING (string_param "" lexbuf) }
+  | [^'\n' ' ' ')'] as c { Parser.CHAR c }
+  | "" { Parser.PARAM_END }
 and string_param s = parse
   | '"' { s }
   | _ as c { string_param (s ^ (String.make 1 c)) lexbuf }
-and string_token lexer s = parse
+and string_token s lexer = parse
     '"' {
-    Queue.add Parser.DOUBLE_QUOTE lexer.ahead_tokens;
+    enqueue_ahead_token lexer Parser.DOUBLE_QUOTE;
     Parser.STRING s }
   | "${" {
-    Queue.add Parser.DOLLER_LBRACE lexer.ahead_tokens;
+    enqueue_ahead_token lexer Parser.DOLLER_LBRACE;
     Parser.STRING s }
-  | _ as c { string_token lexer (s ^ (String.make 1 c)) lexbuf }
-and comment lexer depth = parse
+  | _ as c { string_token (s ^ (String.make 1 c)) lexer lexbuf }
+and comment depth lexer = parse
     ":)" {
       match depth with
         1 -> script_token lexer lexbuf
-      | _ -> comment lexer (depth - 1) lexbuf
+      | _ -> comment (depth - 1) lexer lexbuf
   }
-  | "(:" { comment lexer (depth + 1) lexbuf }
-  | _ { comment lexer depth lexbuf }
+  | "(:" { comment (depth + 1) lexer lexbuf }
+  | _ { comment depth lexer lexbuf }
 and heredoc name buf = parse
     ([^'\n']* as s) '\n' {
       if s = name then
@@ -147,17 +156,21 @@ let next_token_of_lexbuf lexer lexbuf =
   let tok = if not (Queue.is_empty lexer.ahead_tokens) then
     Queue.take lexer.ahead_tokens
   else
-    match Stack.top mode_stack with
-    | Script -> script_token lexer lexbuf
-    | Pipeline -> pipeline_token lexer lexbuf
-    | String -> string_token lexer "" lexbuf
-    | Comment -> comment lexer 0 lexbuf in
+    let f = match Stack.top mode_stack with
+    | Script -> script_token
+    | Param -> param_token
+    | Pipeline -> pipeline_token
+    | String -> string_token ""
+    | Comment -> comment 0 in
+    f lexer lexbuf in
   (match tok with
+  | Parser.LBRACE -> Stack.push (Stack.top mode_stack) mode_stack
   | Parser.DOLLER_LBRACE
-  | Parser.LBRACE
   | Parser.LPAR -> Stack.push Script mode_stack
   | Parser.DOLLER_LPAR
   | Parser.EVERY -> Stack.push Pipeline mode_stack
+  | Parser.PARAM_BEGIN -> Stack.push Param mode_stack
+  | Parser.PARAM_END -> drop_top mode_stack
   | Parser.DOUBLE_QUOTE ->
       (match Stack.top mode_stack with
       | String -> drop_top mode_stack
@@ -220,7 +233,7 @@ let tokenizer_of_string src =
   let f = match determine_mode src with
     Script -> script_token
   | Pipeline -> pipeline_token
-  | _ -> failwith "Comment is unsupported." in
+  | _ -> failwith "Invalid source" in
   f (make_lexer ()), (Lexing.from_string src)
 
 let tokenizer_of_channel ch =

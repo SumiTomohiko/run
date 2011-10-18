@@ -31,7 +31,7 @@
 #
 
 SRC_DIR = $(dir .)
-.SUBDIRS: Builtins Matching
+.SUBDIRS: Builtins
 
 ########################################################################
 # OCaml configuration.
@@ -46,6 +46,7 @@ FILES[] =
     Value
     Node
     Matching
+    Param
     Parser
     Lexer
     Op

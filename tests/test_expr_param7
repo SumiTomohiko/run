@@ -1,0 +1,6 @@
+SRC:
+foo = 42
+bar = 26
+echo ${foo}baz${bar}
+OUT:
+42baz26

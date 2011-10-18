@@ -167,8 +167,6 @@ let close_all_pipes = function
       List.iter Unix.close [rfd1; wfd1; rfd2; wfd2]
   | _ -> failwith "Invalid pipes"
 
-let files_of_cwd pattern = Matching.Main.find (Unix.getcwd ()) pattern
-
 let exec_pipeline env pipeline last_stdout_pair read_last_output =
   let cmds = pipeline.pl_commands in
   let cmd = DynArray.get cmds 0 in
@@ -210,6 +208,10 @@ let rec concat stack size s =
   else
     let v = Stack.pop stack in
     concat stack (size - 1) ((Value.string_of_value v) ^ s)
+
+let eval_params stack n params =
+  let vals = Array.of_list (pop_args stack n) in
+  List.concat (List.map (Param.eval vals) params)
 
 let eval_op env frame op =
   let stack = frame.stack in
@@ -286,13 +288,6 @@ let eval_op env frame op =
       let status, stdout = exec_pipeline env pipeline pair read_last_output in
       env.last_status <- status;
       Stack.push (Value.String (trim stdout)) stack
-  | Op.Expand pattern ->
-      let f path = Stack.push (Value.String path) stack in
-      List.iter f (files_of_cwd pattern)
-  | Op.ExpandParam pattern ->
-      let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
-      let params = cmd.cmd_params in
-      List.iter (DynArray.add params) (files_of_cwd pattern)
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
   | Op.GetAttr name ->
@@ -352,10 +347,16 @@ let eval_op env frame op =
         cmd_params=DynArray.create ();
         cmd_stderr_redirect=Some Redirect.Dup } in
       add_command frame cmd
+  | Op.PushCommandParams (n, params) ->
+      let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
+      List.iter (DynArray.add cmd.cmd_params) (eval_params stack n params)
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLastStatus ->
       Stack.push (Value.ProcessStatus env.last_status) stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
+  | Op.PushParams (n, params) ->
+      let actuals = eval_params stack n params in
+      List.iter (fun s -> Stack.push (Value.String s) stack) actuals
   | Op.PushPipeline flags ->
       let stdout = match Stack.pop stack with
         Value.String path -> Some (path, flags)

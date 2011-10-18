@@ -2,27 +2,54 @@
 (* FIXME: This is global *)
 let while_stack = Stack.create ()
 
-let rec compile_params oplist =
-  let f = function
-      Node.ExprParam expr ->
-        compile_expr oplist expr;
-        OpList.add oplist Op.MoveParam
-    | Node.MatchingParam m ->
-        match m with
-          Matching.Main.Static s ->
-            OpList.add oplist (Op.PushConst (Value.String s));
-            OpList.add oplist Op.MoveParam
-        | Matching.Main.Dynamic pattern ->
-            OpList.add oplist (Op.ExpandParam pattern) in
-  List.iter f
+let rec find_expr_param founds = function
+  | (Node.Branch patterns) :: tl ->
+      let exprs = List.fold_left find_expr_param founds patterns in
+      find_expr_param exprs tl
+  | (Node.ExprParam expr) :: tl -> find_expr_param (founds @ [expr]) tl
+  | _ :: tl -> find_expr_param founds tl
+  | [] -> founds
+
+let rec number_expr_params num = function
+  | hd :: tl ->
+      hd.Node.ep_index <- num;
+      number_expr_params (num + 1) tl
+  | [] -> ()
+
+let rec expand_branch params = function
+  | hd :: tl ->
+      (match hd with
+      | Node.Char _
+      | Node.Dir
+      | Node.ExprParam _
+      | Node.Star
+      | Node.StarStar -> expand_branch (params @ [hd]) tl
+      | Node.Branch branches ->
+          let heads = List.concat (List.map (expand_branch params) branches) in
+          List.concat (List.map (fun pat -> expand_branch pat tl) heads))
+  | [] -> [params]
+
+let rec compile_params oplist make_op = function
+  | hd :: tl ->
+      let expr_params = find_expr_param [] hd in
+      number_expr_params 0 expr_params;
+      compile_exprs oplist (List.map (fun p -> p.Node.ep_expr) expr_params);
+      let params = List.map Param.create (expand_branch [] hd) in
+      OpList.add oplist (make_op (List.length expr_params) params);
+      compile_params oplist make_op tl
+  | [] -> ()
+and compile_command_params oplist =
+  compile_params oplist (fun n l -> Op.PushCommandParams (n, l))
+and compile_every_params oplist =
+  compile_params oplist (fun n l -> Op.PushParams (n, l))
 and add_command oplist params path flags =
   OpList.add oplist (Op.PushConst path);
   OpList.add oplist (Op.PushCommand flags);
-  compile_params oplist params
+  compile_command_params oplist params
 and compile_commands oplist = function
     (params, _, _, Some Node.Dup) :: tl ->
       OpList.add oplist Op.PushCommandE2O;
-      compile_params oplist params;
+      compile_command_params oplist params;
       compile_commands oplist tl
   | (params, _, _, Some (Node.File (path, flags))) :: tl ->
       add_command oplist params (Value.String path) flags;
@@ -111,14 +138,7 @@ and compile_exprs oplist = function
 let rec compile_every oplist { Node.params; Node.names; Node.stmts } =
   let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
   List.iter push_false names;
-  let f = function
-    Node.ExprParam expr -> compile_expr oplist expr
-  | Node.MatchingParam m ->
-      let op = match m with
-        Matching.Main.Static s -> Op.PushConst (Value.String s)
-      | Matching.Main.Dynamic pat -> Op.Expand pat in
-      OpList.add oplist op in
-  List.iter f (List.rev params);
+  compile_every_params oplist (List.rev params);
   let last = Op.make_label () in
   let top = Op.make_label () in
   OpList.add_op oplist top;
@@ -138,10 +158,10 @@ and compile_stmt oplist = function
       OpList.add oplist (Op.PushPipeline []);
       OpList.add oplist (Op.PushConst Value.Nil);
       OpList.add oplist (Op.PushCommand []);
-      compile_params oplist left;
+      compile_command_params oplist left;
       OpList.add oplist (Op.PushConst Value.Nil);
       OpList.add oplist (Op.PushCommand []);
-      compile_params oplist right;
+      compile_command_params oplist right;
       OpList.add oplist Op.Communicate
   | Node.Expr expr ->
       compile_expr oplist expr;
