@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: tests/test_inline_pipeline failed sometimes.
+desc: Reproductivity is low.
+type: :bugfix
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-19 05:20:02.685341 Z
+references: []
+
+id: ba596548a7ff1be35121ee510cdbaf08cb8afa90
+log_events: 
+- - 2011-10-19 05:20:03.713552 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
