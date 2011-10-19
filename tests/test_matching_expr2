@@ -1,0 +1,6 @@
+SRC:
+foo = "ed"
+cd matching_expr2
+ls *${foo}
+OUT:
+expected

@@ -1,0 +1,6 @@
+SRC:
+foo = "pec"
+cd matching_expr3
+ls *${foo}*
+OUT:
+expected

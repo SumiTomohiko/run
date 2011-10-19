@@ -1,13 +1,13 @@
 
 module Op = struct
-  type t = Char of char | Dir | NotDot | Star | StarStar
+  type t = Char of char | Dir | Expr of int | NotDot | Star | StarStar
 end
 
 module Compiler = struct
   let compile_node = function
     | Node.Char c -> Op.Char c
     | Node.Dir -> Op.Dir
-    | Node.ExprParam _ -> failwith "TODO: Implement here"
+    | Node.ExprParam { Node.ep_index } -> Op.Expr ep_index
     | Node.Star -> Op.Star
     | Node.StarStar -> Op.StarStar
     | _ -> failwith "Invalid node"
@@ -22,14 +22,14 @@ end
 
 type t = Op.t list
 
-let rec try_star pattern name index star_end =
+let rec try_star pattern vals name index star_end =
   if star_end < index then
     false, []
   else
-    match try_pattern pattern name star_end with
+    match try_pattern pattern vals name star_end with
     | true, next -> true, next
-    | false, _ -> try_star pattern name index (star_end - 1)
-and try_pattern pattern name index =
+    | false, _ -> try_star pattern vals name index (star_end - 1)
+and try_pattern pattern vals name index =
   let size = String.length name in
   if index = size then
     match pattern with
@@ -40,20 +40,27 @@ and try_pattern pattern name index =
     match pattern with
     | (Op.Char c) :: tl ->
         if (String.get name index) = c then
-          try_pattern tl name (index + 1)
+          try_pattern tl vals name (index + 1)
         else
           false, []
+    | (Op.Expr n) :: tl ->
+        let v = Array.get vals n in
+        let len = String.length v in
+        if ((size - index) < len) || ((String.sub name index len) <> v) then
+          false, []
+        else
+          try_pattern tl vals name (index + (String.length v))
     | Op.NotDot :: tl ->
         if (String.get name index) = '.' then
           false, []
         else
-          try_pattern tl name index
-    | Op.Star :: tl -> try_star tl name index size
+          try_pattern tl vals name index
+    | Op.Star :: tl -> try_star tl vals name index size
     | Op.StarStar :: _ -> true, pattern
     | [] -> false, []
     | _ -> failwith "Invalid operation"
 
-let rec traverse dir pattern =
+let rec traverse dir pattern vals =
   try
     let dirp = Unix.opendir dir in
     let cleanup () = Unix.closedir dirp in
@@ -64,9 +71,9 @@ let rec traverse dir pattern =
         | ".." -> loop founds
         | name ->
             let path = Printf.sprintf "%s/%s" dir name in
-            let matched = find_abs path pattern in
+            let matched = find_abs path vals pattern in
             let matched2 = if (Unix.stat path).Unix.st_kind = Unix.S_DIR then
-              traverse path pattern
+              traverse path pattern vals
             else
               [] in
             loop (founds @ matched @ matched2)
@@ -75,34 +82,35 @@ let rec traverse dir pattern =
     Std.finally cleanup loop []
   with
   | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
-and find_at dirp dir pattern founds =
+and find_at dirp dir pattern vals founds =
   try
     let matched = match Unix.readdir dirp with
     | "."
     | ".." -> []
     | name ->
         let path = Printf.sprintf "%s/%s" dir name in
-        match try_pattern pattern name 0 with
+        match try_pattern pattern vals name 0 with
         | true, [] -> [path]
-        | true, child -> find_abs path child
+        | true, child -> find_abs path vals child
         | false, _ -> [] in
-    find_at dirp dir pattern (founds @ matched)
+    find_at dirp dir pattern vals (founds @ matched)
   with
   | End_of_file -> founds
-and find_abs dir = function
-  | Op.StarStar :: Op.Dir :: tl -> traverse dir tl
+and find_abs dir vals = function
+  | Op.StarStar :: Op.Dir :: tl -> traverse dir tl vals
   | pattern ->
       try
         let dirp = Unix.opendir dir in
         let cleanup () = Unix.closedir dirp in
-        Std.finally cleanup (fun () -> find_at dirp dir pattern []) ()
+        Std.finally cleanup (fun () -> find_at dirp dir pattern vals []) ()
       with
       | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
 
-let find dir pattern =
+let find dir pattern vals =
   let size = (String.length dir) + 1 in
   let remove_dir path = String.sub path size ((String.length path) - size) in
-  List.map remove_dir (find_abs dir pattern)
+  let pathes = find_abs dir (Array.map Value.string_of_value vals) pattern in
+  List.map remove_dir pathes
 
 let rec expand_branch pattern = function
   | hd :: tl ->

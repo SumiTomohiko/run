@@ -32,7 +32,7 @@ let rec eval_single s vals = function
   | [] -> s
 
 let eval vals = function
-  | Matching ops -> Matching.find (Unix.getcwd ()) ops
+  | Matching ops -> Matching.find (Unix.getcwd ()) ops vals
   | Single parts -> [eval_single "" vals parts]
 
 let create nodes =
