@@ -1,6 +1,7 @@
 
-(* FIXME: This is global *)
-let while_stack = Stack.create ()
+type compiler = { oplist: OpList.t; while_stack: (Op.t * Op.t) Stack.t }
+
+let add_op compiler = OpList.add compiler.oplist
 
 let rec find_expr_param founds = function
   | (Node.Branch patterns) :: tl ->
@@ -29,188 +30,192 @@ let rec expand_branch params = function
           List.concat (List.map (fun pat -> expand_branch pat tl) heads))
   | [] -> [params]
 
-let rec compile_params oplist make_op = function
+let rec compile_params compiler make_op = function
   | hd :: tl ->
       let expr_params = find_expr_param [] hd in
       number_expr_params 0 expr_params;
-      compile_exprs oplist (List.map (fun p -> p.Node.ep_expr) expr_params);
+      compile_exprs compiler (List.map (fun p -> p.Node.ep_expr) expr_params);
       let params = List.map Param.create (expand_branch [] hd) in
-      OpList.add oplist (make_op (List.length expr_params) params);
-      compile_params oplist make_op tl
+      add_op compiler (make_op (List.length expr_params) params);
+      compile_params compiler make_op tl
   | [] -> ()
-and compile_command_params oplist =
-  compile_params oplist (fun n l -> Op.PushCommandParams (n, l))
-and compile_every_params oplist =
-  compile_params oplist (fun n l -> Op.PushParams (n, l))
-and add_command oplist params path flags =
-  OpList.add oplist (Op.PushConst path);
-  OpList.add oplist (Op.PushCommand flags);
-  compile_command_params oplist params
-and compile_commands oplist = function
+and compile_command_params compiler =
+  compile_params compiler (fun n l -> Op.PushCommandParams (n, l))
+and compile_every_params compiler =
+  compile_params compiler (fun n l -> Op.PushParams (n, l))
+and add_command compiler params path flags =
+  add_op compiler (Op.PushConst path);
+  add_op compiler (Op.PushCommand flags);
+  compile_command_params compiler params
+and compile_commands compiler = function
     (params, _, _, Some Node.Dup) :: tl ->
-      OpList.add oplist Op.PushCommandE2O;
-      compile_command_params oplist params;
-      compile_commands oplist tl
+      add_op compiler Op.PushCommandE2O;
+      compile_command_params compiler params;
+      compile_commands compiler tl
   | (params, _, _, Some (Node.File (path, flags))) :: tl ->
-      add_command oplist params (Value.String path) flags;
-      compile_commands oplist tl
+      add_command compiler params (Value.String path) flags;
+      compile_commands compiler tl
   | (params, _, _, None) :: tl ->
-      add_command oplist params Value.Nil [];
-      compile_commands oplist tl
+      add_command compiler params Value.Nil [];
+      compile_commands compiler tl
   | [] -> ()
-and compile_pipeline oplist commands last_op =
+and compile_pipeline compiler commands last_op =
   let _, first_stdin, _, _ = List.hd commands in
   let stdin_path = match first_stdin with
     Some path -> Value.String path
   | None -> Value.Nil in
-  OpList.add oplist (Op.PushConst stdin_path);
+  add_op compiler (Op.PushConst stdin_path);
   let _, _, last_stdout, _ = List.hd (List.rev commands) in
   let stdout_path, flags = match last_stdout with
     Some (Node.File (path, flags)) -> Value.String path, flags
   | None -> Value.Nil, []
   | Some _ -> failwith "Invalid stdout redirect" in
-  OpList.add oplist (Op.PushConst stdout_path);
-  OpList.add oplist (Op.PushPipeline flags);
-  compile_commands oplist commands;
-  OpList.add oplist last_op
-and compile_expr oplist = function
-    Node.Add operands -> compile_binop oplist operands Op.Add
+  add_op compiler (Op.PushConst stdout_path);
+  add_op compiler (Op.PushPipeline flags);
+  compile_commands compiler commands;
+  add_op compiler last_op
+and compile_expr compiler = function
+    Node.Add operands -> compile_binop compiler operands Op.Add
   | Node.Array exprs ->
-      (compile_exprs oplist exprs;
-      OpList.add oplist (Op.MakeArray (List.length exprs)))
+      compile_exprs compiler exprs;
+      add_op compiler (Op.MakeArray (List.length exprs))
   | Node.Assign { Node.left; Node.right } ->
-      (compile_expr oplist right;
-      match left with
+      compile_expr compiler right;
+      (match left with
         Node.Subscript { Node.prefix; Node.index } ->
-          (compile_expr oplist prefix;
-          compile_expr oplist index;
-          OpList.add oplist Op.StoreSubscript)
+          compile_expr compiler prefix;
+          compile_expr compiler index;
+          add_op compiler Op.StoreSubscript
       | Node.Var name ->
-          (OpList.add oplist (Op.StoreLocal name);
-          OpList.add oplist (Op.PushLocal name))
+          add_op compiler (Op.StoreLocal name);
+          add_op compiler (Op.PushLocal name)
       | _ -> failwith "Unsupported assign expression")
   | Node.Attr { Node.attr_prefix; Node.attr_name } ->
-      (compile_expr oplist attr_prefix;
-      OpList.add oplist (Op.GetAttr attr_name))
+      compile_expr compiler attr_prefix;
+      add_op compiler (Op.GetAttr attr_name)
   | Node.Call { Node.callee; Node.args } ->
-      (compile_expr oplist callee;
-      compile_exprs oplist args;
-      OpList.add oplist (Op.Call (List.length args)))
-  | Node.Const v -> OpList.add oplist (Op.PushConst v)
+      compile_expr compiler callee;
+      compile_exprs compiler args;
+      add_op compiler (Op.Call (List.length args))
+  | Node.Const v -> add_op compiler (Op.PushConst v)
   | Node.Dict pairs ->
       let compile_pair { Node.key; Node.value } =
-        compile_expr oplist key;
-        compile_expr oplist value in
+        compile_expr compiler key;
+        compile_expr compiler value in
       List.iter compile_pair pairs;
-      OpList.add oplist (Op.MakeDict (List.length pairs))
-  | Node.Div operands -> compile_binop oplist operands Op.Div
-  | Node.DivDiv operands -> compile_binop oplist operands Op.DivDiv
-  | Node.EqualEqual operands -> compile_binop oplist operands Op.Equal
-  | Node.Greater operands -> compile_binop oplist operands Op.Greater
-  | Node.GreaterEqual operands -> compile_binop oplist operands Op.GreaterEqual
+      add_op compiler (Op.MakeDict (List.length pairs))
+  | Node.Div operands -> compile_binop compiler operands Op.Div
+  | Node.DivDiv operands -> compile_binop compiler operands Op.DivDiv
+  | Node.EqualEqual operands -> compile_binop compiler operands Op.Equal
+  | Node.Greater operands -> compile_binop compiler operands Op.Greater
+  | Node.GreaterEqual operands ->
+      compile_binop compiler operands Op.GreaterEqual
   | Node.Heredoc buf ->
       let s = Buffer.contents buf in
-      OpList.add oplist (Op.PushConst (Value.String s))
+      add_op compiler (Op.PushConst (Value.String s))
   | Node.InlinePipeline commands ->
-      compile_pipeline oplist commands Op.ExecAndPush
-  | Node.LastStatus -> OpList.add oplist Op.PushLastStatus
-  | Node.Less operands -> compile_binop oplist operands Op.Less
-  | Node.LessEqual operands -> compile_binop oplist operands Op.LessEqual
-  | Node.Mul operands -> compile_binop oplist operands Op.Mul
-  | Node.NotEqual operands -> compile_binop oplist operands Op.NotEqual
+      compile_pipeline compiler commands Op.ExecAndPush
+  | Node.LastStatus -> add_op compiler Op.PushLastStatus
+  | Node.Less operands -> compile_binop compiler operands Op.Less
+  | Node.LessEqual operands -> compile_binop compiler operands Op.LessEqual
+  | Node.Mul operands -> compile_binop compiler operands Op.Mul
+  | Node.NotEqual operands -> compile_binop compiler operands Op.NotEqual
   | Node.String contents ->
-      List.iter (compile_expr oplist) contents;
-      OpList.add oplist (Op.Concat (List.length contents))
-  | Node.Sub operands -> compile_binop oplist operands Op.Sub
+      List.iter (compile_expr compiler) contents;
+      add_op compiler (Op.Concat (List.length contents))
+  | Node.Sub operands -> compile_binop compiler operands Op.Sub
   | Node.Subscript { Node.prefix; Node.index } ->
-      compile_expr oplist prefix;
-      compile_expr oplist index;
-      OpList.add oplist Op.Subscript
-  | Node.Var name -> OpList.add oplist (Op.PushLocal name)
-and compile_binop oplist { Node.left; Node.right } op =
-  compile_expr oplist left;
-  compile_expr oplist right;
-  OpList.add oplist op
-and compile_exprs oplist = function
-    expr :: exprs -> (compile_expr oplist expr; compile_exprs oplist exprs)
+      compile_expr compiler prefix;
+      compile_expr compiler index;
+      add_op compiler Op.Subscript
+  | Node.Var name -> add_op compiler (Op.PushLocal name)
+and compile_binop compiler { Node.left; Node.right } op =
+  compile_expr compiler left;
+  compile_expr compiler right;
+  add_op compiler op
+and compile_exprs compiler = function
+  | expr :: exprs ->
+      compile_expr compiler expr;
+      compile_exprs compiler exprs
   | [] -> ()
 
-let rec compile_every oplist { Node.params; Node.names; Node.stmts } =
-  let push_false _ = OpList.add oplist (Op.PushConst (Value.Bool false)) in
+let rec compile_every compiler { Node.params; Node.names; Node.stmts } =
+  let push_false _ = add_op compiler (Op.PushConst (Value.Bool false)) in
   List.iter push_false names;
-  compile_every_params oplist (List.rev params);
+  compile_every_params compiler (List.rev params);
   let last = Op.make_label () in
   let top = Op.make_label () in
-  OpList.add_op oplist top;
-  OpList.add oplist (Op.JumpIfFalse last);
-  let store name = OpList.add oplist (Op.StoreLocal name) in
+  OpList.add_op compiler.oplist top;
+  add_op compiler (Op.JumpIfFalse last);
+  let store name = add_op compiler (Op.StoreLocal name) in
   List.iter store names;
-  compile_stmts oplist stmts;
-  OpList.add oplist (Op.Jump top);
-  OpList.add_op oplist last
-and compile_stmt oplist = function
-    Node.Break ->
-      let _, label = Stack.top while_stack in
-      OpList.add oplist (Op.Jump label)
+  compile_stmts compiler stmts;
+  add_op compiler (Op.Jump top);
+  OpList.add_op compiler.oplist last
+and compile_stmt compiler = function
+  | Node.Break ->
+      let _, label = Stack.top compiler.while_stack in
+      add_op compiler (Op.Jump label)
   | Node.Communication (left, right) ->
-      OpList.add oplist (Op.PushConst Value.Nil);
-      OpList.add oplist (Op.PushConst Value.Nil);
-      OpList.add oplist (Op.PushPipeline []);
-      OpList.add oplist (Op.PushConst Value.Nil);
-      OpList.add oplist (Op.PushCommand []);
-      compile_command_params oplist left;
-      OpList.add oplist (Op.PushConst Value.Nil);
-      OpList.add oplist (Op.PushCommand []);
-      compile_command_params oplist right;
-      OpList.add oplist Op.Communicate
+      add_op compiler (Op.PushConst Value.Nil);
+      add_op compiler (Op.PushConst Value.Nil);
+      add_op compiler (Op.PushPipeline []);
+      add_op compiler (Op.PushConst Value.Nil);
+      add_op compiler (Op.PushCommand []);
+      compile_command_params compiler left;
+      add_op compiler (Op.PushConst Value.Nil);
+      add_op compiler (Op.PushCommand []);
+      compile_command_params compiler right;
+      add_op compiler Op.Communicate
   | Node.Expr expr ->
-      compile_expr oplist expr;
-      OpList.add oplist Op.Pop
-  | Node.Every every -> compile_every oplist every
+      compile_expr compiler expr;
+      add_op compiler Op.Pop
+  | Node.Every every -> compile_every compiler every
   | Node.If (expr, stmts1, stmts2) ->
       let else_begin = Op.make_label () in
       let else_end = Op.make_label () in
-      compile_expr oplist expr;
-      OpList.add oplist (Op.JumpIfFalse else_begin);
-      compile_stmts oplist stmts1;
-      OpList.add oplist (Op.Jump else_end);
-      OpList.add_op oplist else_begin;
-      compile_stmts oplist stmts2;
-      OpList.add_op oplist else_end
+      compile_expr compiler expr;
+      add_op compiler (Op.JumpIfFalse else_begin);
+      compile_stmts compiler stmts1;
+      add_op compiler (Op.Jump else_end);
+      OpList.add_op compiler.oplist else_begin;
+      compile_stmts compiler stmts2;
+      OpList.add_op compiler.oplist else_end
   | Node.Next ->
-      let label, _ = Stack.top while_stack in
-      OpList.add oplist (Op.Jump label)
-  | Node.Pipeline commands -> compile_pipeline oplist commands Op.Exec
+      let label, _ = Stack.top compiler.while_stack in
+      add_op compiler (Op.Jump label)
+  | Node.Pipeline commands -> compile_pipeline compiler commands Op.Exec
   | Node.Return expr ->
-      compile_expr oplist expr;
-      OpList.add oplist Op.Return
+      compile_expr compiler expr;
+      add_op compiler Op.Return
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
-      let func_ops = OpList.make () in
-      compile_stmts func_ops uf_stmts;
-      let func_ops_index = Op.register_ops (OpList.top func_ops) in
-      let op = Op.MakeUserFunction (uf_args, func_ops_index) in
-      OpList.add oplist op;
-      OpList.add oplist (Op.StoreLocal uf_name)
+      let child = { oplist=OpList.make (); while_stack=Stack.create () } in
+      compile_stmts child uf_stmts;
+      let func_ops_index = Op.register_ops (OpList.top child.oplist) in
+      add_op compiler (Op.MakeUserFunction (uf_args, func_ops_index));
+      add_op compiler (Op.StoreLocal uf_name)
   | Node.While (expr, stmts) ->
       let while_begin = Op.make_label () in
       let while_end = Op.make_label () in
-      Stack.push (while_begin, while_end) while_stack;
-      OpList.add_op oplist while_begin;
-      compile_expr oplist expr;
-      OpList.add oplist (Op.JumpIfFalse while_end);
-      compile_stmts oplist stmts;
-      OpList.add oplist (Op.Jump while_begin);
-      OpList.add_op oplist while_end;
-      ignore (Stack.pop while_stack)
+      Stack.push (while_begin, while_end) compiler.while_stack;
+      OpList.add_op compiler.oplist while_begin;
+      compile_expr compiler expr;
+      add_op compiler (Op.JumpIfFalse while_end);
+      compile_stmts compiler stmts;
+      add_op compiler (Op.Jump while_begin);
+      OpList.add_op compiler.oplist while_end;
+      ignore (Stack.pop compiler.while_stack)
   | Node.Empty -> ()
-and compile_stmts oplist = function
-    hd :: tl -> (compile_stmt oplist hd; compile_stmts oplist tl)
+and compile_stmts compiler = function
+  | hd :: tl ->
+      compile_stmt compiler hd;
+      compile_stmts compiler tl
   | [] -> ()
 
 let compile stmts =
-  let oplist = OpList.make () in
-    compile_stmts oplist stmts;
-    OpList.top oplist
+  let compiler = { oplist=OpList.make (); while_stack=Stack.create () } in
+  compile_stmts compiler stmts;
+  OpList.top compiler.oplist
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
