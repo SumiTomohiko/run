@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Use functors of Hashtbl in Symboltbl etc.
+desc: ""
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-20 19:22:11.488967 Z
+references: []
+
+id: 521de0210b1e7ca27eabd92edb7192ebd036da29
+log_events: 
+- - 2011-10-20 19:22:11.980777 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
