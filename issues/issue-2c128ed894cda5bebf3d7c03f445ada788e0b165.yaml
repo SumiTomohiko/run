@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Value.string_of_value must be Value.to_string.
+desc: Value.to_string is more simple.
+type: :task
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-10-20 19:38:51.887189 Z
+references: []
+
+id: 2c128ed894cda5bebf3d7c03f445ada788e0b165
+log_events: 
+- - 2011-10-20 19:38:52.380660 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
