@@ -1,8 +1,15 @@
 %{
-let make_default_return stmts =
+let make_expr body pos = (pos.Lexing.pos_fname, pos.Lexing.pos_lnum, body)
+let make_const v = make_expr (Node.Const v)
+let make_array exprs = make_expr (Node.Array exprs)
+let make_dict pairs = make_expr (Node.Dict pairs)
+let make_call callee args =
+  make_expr (Node.Call { Node.callee=callee; Node.args=args })
+
+let make_default_return stmts pos =
   match (List.hd (List.rev stmts)) with
     Node.Return _ -> []
-  | _ -> [Node.Return (Node.Const Value.Nil)]
+  | _ -> [Node.Return (make_const Value.Nil pos)]
 
 let make_file_redirect path flags = Some (Node.File (path, flags))
 let write_flags = [Unix.O_CREAT; Unix.O_WRONLY]
@@ -20,13 +27,13 @@ let rec nodes_of_string result s index =
     nodes_of_string (result @ [Node.Char (String.get s index)]) s (index + 1)
 %}
 %token AS BAR BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
-%token DOLLER_QUESTION DOT DOUBLE_QUOTE ELIF ELSE END EOF EQUAL EQUAL_EQUAL
-%token ERR_RIGHT_ARROW ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW EVERY FALSE
-%token GREATER GREATER_GREATER GREATER_EQUAL IF LBRACE LBRACKET LEFT_RIGHT_ARROW
-%token LESS LESS_EQUAL LPAR MINUS NEWLINE NEXT NOT_EQUAL OUT_RIGHT_ARROW
-%token OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW PARAM_BEGIN PARAM_END PLUS
-%token RBRACE RBRACKET RETURN RIGHT_ARROW RIGHT_RIGHT_ARROW RPAR SEP STAR
-%token STAR_STAR TRUE WHILE
+%token DOLLER_QUESTION DOT DOUBLE_QUOTE EXCEPT ELIF ELSE END EOF EQUAL
+%token EQUAL_EQUAL ERR_RIGHT_ARROW ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW
+%token EVERY FALSE FINALLY GREATER GREATER_GREATER GREATER_EQUAL IF LBRACE
+%token LBRACKET LEFT_RIGHT_ARROW LESS LESS_EQUAL LPAR MINUS NEWLINE NEXT
+%token NOT_EQUAL OUT_RIGHT_ARROW OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW
+%token PARAM_BEGIN PARAM_END PLUS RAISE RBRACE RBRACKET RETURN RIGHT_ARROW
+%token RIGHT_RIGHT_ARROW RPAR SEP STAR STAR_STAR TRUE TRY WHILE
 %token <char> CHAR
 %token <Num.num> INT
 %token <int> DOLLER_NUMBER
@@ -49,11 +56,11 @@ stmt
   : assign_expr { Node.Expr $1 }
   | call_expr { Node.Expr $1 }
   | DEF NAME LPAR names RPAR stmts END {
-    let stmts = $6 @ (make_default_return $6) in
+    let stmts = $6 @ (make_default_return $6 $startpos($7)) in
     Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts }
   }
   | DEF NAME LPAR RPAR stmts END {
-    let stmts = $5 @ (make_default_return $5) in
+    let stmts = $5 @ (make_default_return $5 $startpos($6)) in
     Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts }
   }
   | EVERY params AS names stmts END {
@@ -66,9 +73,28 @@ stmt
   | NEXT { Node.Next }
   | BREAK { Node.Break }
   | RETURN expr { Node.Return $2 }
+  | TRY stmts excepts END { Node.Try ($2, $3, []) }
+  | TRY stmts FINALLY stmts END { Node.Try ($2, [], $4) }
+  | TRY stmts excepts FINALLY stmts END { Node.Try ($2, $3, $5) }
+  | RAISE expr { Node.Raise (Some $2) }
+  | RAISE { Node.Raise None }
   | pipeline { Node.Pipeline $1 }
   | params LEFT_RIGHT_ARROW params { Node.Communication ($1, $3) }
   | /* empty */ { Node.Empty }
+  ;
+
+excepts
+  : excepts except { $1 @ [$2] }
+  | except { [$1] }
+  ;
+
+except
+  : EXCEPT names as_opt stmts { ($2, $3, $4) }
+  ;
+
+as_opt
+  : /* empty */ { None }
+  | AS NAME { Some $2 }
   ;
 
 pipeline
@@ -211,7 +237,7 @@ expr
 
 assign_expr
   : postfix_expr EQUAL conditional_expr {
-    Node.Assign { Node.left=$1; Node.right=$3 }
+    make_expr (Node.Assign { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   ;
 
@@ -232,19 +258,23 @@ not_expr
   ;
 
 comparison
-  : xor_expr LESS xor_expr { Node.Less { Node.left=$1; Node.right=$3 } }
-  | xor_expr LESS_EQUAL xor_expr {
-    Node.LessEqual { Node.left=$1; Node.right=$3 }
+  : xor_expr LESS xor_expr {
+    make_expr (Node.Less { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
-  | xor_expr GREATER xor_expr { Node.Greater { Node.left=$1; Node.right=$3 } }
+  | xor_expr LESS_EQUAL xor_expr {
+    make_expr (Node.LessEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
+  | xor_expr GREATER xor_expr {
+    make_expr (Node.Greater { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
   | xor_expr GREATER_EQUAL xor_expr {
-    Node.GreaterEqual { Node.left=$1; Node.right=$3 }
+    make_expr (Node.GreaterEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr EQUAL_EQUAL xor_expr {
-    Node.EqualEqual { Node.left=$1; Node.right=$3 }
+    make_expr (Node.EqualEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr NOT_EQUAL xor_expr {
-    Node.NotEqual { Node.left=$1; Node.right=$3 }
+    make_expr (Node.NotEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr { $1 }
   ;
@@ -266,15 +296,25 @@ shift_expr
   ;
 
 arith_expr
-  : arith_expr PLUS term { Node.Add { Node.left=$1; Node.right=$3 } }
-  | arith_expr MINUS term { Node.Sub { Node.left=$1; Node.right=$3 } }
+  : arith_expr PLUS term {
+    make_expr (Node.Add { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
+  | arith_expr MINUS term {
+    make_expr (Node.Sub { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
   | term { $1 }
   ;
 
 term
-  : term STAR factor { Node.Mul { Node.left=$1; Node.right=$3 } }
-  | term DIV factor { Node.Div { Node.left=$1; Node.right=$3 } }
-  | term DIV_DIV factor { Node.DivDiv { Node.left=$1; Node.right=$3 } }
+  : term STAR factor {
+    make_expr (Node.Mul { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
+  | term DIV factor {
+    make_expr (Node.Div { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
+  | term DIV_DIV factor {
+    make_expr (Node.DivDiv { Node.left=$1; Node.right=$3 }) $startpos($1)
+  }
   | factor { $1 }
   ;
 
@@ -287,17 +327,18 @@ power
   ;
 
 call_expr
-  : postfix_expr LPAR exprs RPAR { Node.Call { Node.callee=$1; Node.args=$3 } }
-  | postfix_expr LPAR RPAR { Node.Call { Node.callee=$1; Node.args=[] } }
+  : postfix_expr LPAR exprs RPAR { make_call $1 $3 $startpos($2) }
+  | postfix_expr LPAR RPAR { make_call $1 [] $startpos($2) }
   ;
 
 postfix_expr
   : call_expr { $1 }
   | postfix_expr LBRACKET expr RBRACKET {
-    Node.Subscript { Node.prefix=$1; Node.index=$3 }
+    make_expr (Node.Subscript { Node.prefix=$1; Node.index=$3 }) $startpos($1)
   }
   | postfix_expr DOT NAME {
-    Node.Attr { Node.attr_prefix=$1; Node.attr_name=$3 }
+    let pos = $startpos($1) in
+    make_expr (Node.Attr { Node.attr_prefix=$1; Node.attr_name=$3 }) pos
   }
   | atom { $1 }
   ;
@@ -308,20 +349,24 @@ exprs
   ;
 
 atom
-  : TRUE { Node.Const (Value.Bool true) }
-  | FALSE { Node.Const (Value.Bool false) }
-  | INT { Node.Const (Value.Int $1) }
-  | FLOAT { Node.Const (Value.Float $1) }
-  | DOUBLE_QUOTE string_contents_opt DOUBLE_QUOTE { Node.String $2 }
-  | HEREDOC { Node.Heredoc $1 }
-  | LBRACKET exprs RBRACKET { Node.Array $2 }
-  | LBRACKET RBRACKET { Node.Array [] }
-  | LBRACE dict_pairs RBRACE { Node.Dict $2 }
-  | LBRACE RBRACE { Node.Dict [] }
-  | NAME { Node.Var $1 }
-  | DOLLER_LPAR pipeline RPAR { Node.InlinePipeline $2 }
-  | DOLLER_QUESTION { Node.LastStatus }
-  | doller_number { Node.Const (Value.String $1) }
+  : TRUE { make_const (Value.Bool true) $startpos($1) }
+  | FALSE { make_const (Value.Bool false) $startpos($1) }
+  | INT { make_const (Value.Int $1) $startpos($1) }
+  | FLOAT { make_const (Value.Float $1) $startpos($1) }
+  | DOUBLE_QUOTE string_contents_opt DOUBLE_QUOTE {
+    make_expr (Node.String $2) $startpos($1)
+  }
+  | HEREDOC { make_expr (Node.Heredoc $1) $startpos($1) }
+  | LBRACKET exprs RBRACKET { make_array $2 $startpos($1) }
+  | LBRACKET RBRACKET { make_array [] $startpos($1) }
+  | LBRACE dict_pairs RBRACE { make_dict $2 $startpos($1) }
+  | LBRACE RBRACE { make_dict [] $startpos($1) }
+  | NAME { make_expr (Node.Var $1) $startpos($1) }
+  | DOLLER_LPAR pipeline RPAR {
+    make_expr (Node.InlinePipeline $2) $startpos($1)
+  }
+  | DOLLER_QUESTION { make_expr Node.LastStatus $startpos($1) }
+  | doller_number { make_const (Value.String $1) $startpos($1) }
   ;
 
 string_contents_opt
@@ -335,7 +380,7 @@ string_contents
   ;
 
 string_content
-  : STRING { Node.Const (Value.String $1) }
+  : STRING { make_const (Value.String $1) $startpos($1) }
   | DOLLER_LBRACE expr RBRACE { $2 }
   ;
 

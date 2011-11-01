@@ -74,7 +74,9 @@ and compile_pipeline compiler commands last_op =
   add_op compiler (Op.PushPipeline flags);
   compile_commands compiler commands;
   add_op compiler last_op
-and compile_expr compiler = function
+and compile_expr compiler expr =
+  let _, _, body = expr in
+  match body with
     Node.Add operands -> compile_binop compiler operands Op.Add
   | Node.Array exprs ->
       compile_exprs compiler exprs;
@@ -82,11 +84,11 @@ and compile_expr compiler = function
   | Node.Assign { Node.left; Node.right } ->
       compile_expr compiler right;
       (match left with
-        Node.Subscript { Node.prefix; Node.index } ->
+      | _, _, Node.Subscript { Node.prefix; Node.index } ->
           compile_expr compiler prefix;
           compile_expr compiler index;
           add_op compiler Op.StoreSubscript
-      | Node.Var name ->
+      | _, _, Node.Var name ->
           add_op compiler (Op.StoreLocal name);
           add_op compiler (Op.PushLocal name)
       | _ -> failwith "Unsupported assign expression")
@@ -185,9 +187,11 @@ and compile_stmt compiler = function
       let label, _ = Stack.top compiler.while_stack in
       add_op compiler (Op.Jump label)
   | Node.Pipeline commands -> compile_pipeline compiler commands Op.Exec
+  | Node.Raise _ -> failwith "TODO: Implement here"
   | Node.Return expr ->
       compile_expr compiler expr;
       add_op compiler Op.Return
+  | Node.Try (_, _, _) -> failwith "TODO: Implement here"
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
       let child = { oplist=OpList.make (); while_stack=Stack.create () } in
       compile_stmts child uf_stmts;

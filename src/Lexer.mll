@@ -37,11 +37,15 @@ rule script_token lexer = parse
   | "else" { Parser.ELSE }
   | "end" { Parser.END }
   | "every" { Parser.EVERY }
+  | "except" { Parser.EXCEPT }
   | "false" { Parser.FALSE }
+  | "finally" { Parser.FINALLY }
   | "if" { Parser.IF }
   | "next" { Parser.NEXT }
+  | "raise" { Parser.RAISE }
   | "return" { Parser.RETURN }
   | "true" { Parser.TRUE }
+  | "try" { Parser.TRY }
   | "while" { Parser.WHILE }
   | ' '+ { script_token lexer lexbuf }
   | '"' { Parser.DOUBLE_QUOTE }
