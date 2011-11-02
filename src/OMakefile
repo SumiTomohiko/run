@@ -49,6 +49,7 @@ FILES[] =
     Param
     Parser
     Lexer
+    Code
     Op
     OpList
     Compiler

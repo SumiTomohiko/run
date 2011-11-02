@@ -4,8 +4,11 @@ let parse ch =
   Parser.program tokenizer lexbuf
 
 let main () =
-  let stmts = Ensure.open_in (Array.get Sys.argv 1) parse in
-  Eval.eval (Compiler.compile stmts)
+  let src = Array.get Sys.argv 1 in
+  let stmts = Ensure.open_in src parse in
+  let codes = DynArray.create () in
+  let index = Compiler.compile src codes stmts in
+  Eval.eval (DynArray.to_array codes) index
 
 let _ = main ()
 

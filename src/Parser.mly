@@ -1,15 +1,15 @@
 %{
-let make_expr body pos = (pos.Lexing.pos_fname, pos.Lexing.pos_lnum, body)
-let make_const v = make_expr (Node.Const v)
-let make_array exprs = make_expr (Node.Array exprs)
-let make_dict pairs = make_expr (Node.Dict pairs)
+let make_node body pos = ((pos.Lexing.pos_fname, pos.Lexing.pos_lnum), body)
+let make_const v = make_node (Node.Const v)
+let make_array exprs = make_node (Node.Array exprs)
+let make_dict pairs = make_node (Node.Dict pairs)
 let make_call callee args =
-  make_expr (Node.Call { Node.callee=callee; Node.args=args })
+  make_node (Node.Call { Node.callee=callee; Node.args=args })
 
 let make_default_return stmts pos =
-  match (List.hd (List.rev stmts)) with
+  match (snd (List.hd (List.rev stmts))) with
     Node.Return _ -> []
-  | _ -> [Node.Return (make_const Value.Nil pos)]
+  | _ -> [make_node (Node.Return (make_const Value.Nil pos)) pos]
 
 let make_file_redirect path flags = Some (Node.File (path, flags))
 let write_flags = [Unix.O_CREAT; Unix.O_WRONLY]
@@ -53,34 +53,53 @@ stmts
   ;
 
 stmt
-  : assign_expr { Node.Expr $1 }
-  | call_expr { Node.Expr $1 }
+  : assign_expr { make_node (Node.Expr $1) $startpos($1) }
+  | call_expr { make_node (Node.Expr $1) $startpos($1) }
   | DEF NAME LPAR names RPAR stmts END {
     let stmts = $6 @ (make_default_return $6 $startpos($7)) in
-    Node.UserFunction { Node.uf_name=$2; Node.uf_args=$4; Node.uf_stmts=stmts }
+    make_node (Node.UserFunction {
+      Node.uf_name=$2;
+      Node.uf_args=$4;
+      Node.uf_stmts=stmts }) $startpos($1)
   }
   | DEF NAME LPAR RPAR stmts END {
     let stmts = $5 @ (make_default_return $5 $startpos($6)) in
-    Node.UserFunction { Node.uf_name=$2; Node.uf_args=[]; Node.uf_stmts=stmts }
+    make_node (Node.UserFunction {
+      Node.uf_name=$2;
+      Node.uf_args=[];
+      Node.uf_stmts=stmts }) $startpos($1)
   }
   | EVERY params AS names stmts END {
-    Node.Every { Node.params=$2; Node.names=$4; Node.stmts=$5 }
+    let body = Node.Every { Node.params=$2; Node.names=$4; Node.stmts=$5 } in
+    make_node body $startpos($1)
   }
-  | IF expr NEWLINE stmts END { Node.If ($2, $4, []) }
-  | IF expr NEWLINE stmts ELSE stmts END { Node.If ($2, $4, $6) }
-  | IF expr NEWLINE stmts elif END { Node.If ($2, $4, [$5]) }
-  | WHILE expr NEWLINE stmts END { Node.While ($2, $4) }
-  | NEXT { Node.Next }
-  | BREAK { Node.Break }
-  | RETURN expr { Node.Return $2 }
-  | TRY stmts excepts END { Node.Try ($2, $3, []) }
-  | TRY stmts FINALLY stmts END { Node.Try ($2, [], $4) }
-  | TRY stmts excepts FINALLY stmts END { Node.Try ($2, $3, $5) }
-  | RAISE expr { Node.Raise (Some $2) }
-  | RAISE { Node.Raise None }
-  | pipeline { Node.Pipeline $1 }
-  | params LEFT_RIGHT_ARROW params { Node.Communication ($1, $3) }
-  | /* empty */ { Node.Empty }
+  | IF expr NEWLINE stmts END { make_node (Node.If ($2, $4, [])) $startpos($1) }
+  | IF expr NEWLINE stmts ELSE stmts END {
+    make_node (Node.If ($2, $4, $6)) $startpos($1)
+  }
+  | IF expr NEWLINE stmts elif END {
+    make_node (Node.If ($2, $4, [$5])) $startpos($1)
+  }
+  | WHILE expr NEWLINE stmts END {
+    make_node (Node.While ($2, $4)) $startpos($1)
+  }
+  | NEXT { make_node Node.Next $startpos($1) }
+  | BREAK { make_node Node.Break $startpos($1) }
+  | RETURN expr { make_node (Node.Return $2) $startpos($1) }
+  | TRY stmts excepts END { make_node (Node.Try ($2, $3, [])) $startpos($1) }
+  | TRY stmts FINALLY stmts END {
+    make_node (Node.Try ($2, [], $4)) $startpos($1)
+  }
+  | TRY stmts excepts FINALLY stmts END {
+    make_node (Node.Try ($2, $3, $5)) $startpos($1)
+  }
+  | RAISE expr { make_node (Node.Raise (Some $2)) $startpos($1) }
+  | RAISE { make_node (Node.Raise None) $startpos($1) }
+  | pipeline { make_node (Node.Pipeline $1) $startpos($1) }
+  | params LEFT_RIGHT_ARROW params {
+    make_node (Node.Communication ($1, $3)) $startpos($1)
+  }
+  | /* empty */ { (Node.dummy_pos, Node.Empty) }
   ;
 
 excepts
@@ -170,9 +189,13 @@ middle_command
   ;
 
 elif
-  : ELIF expr NEWLINE stmts { Node.If ($2, $4, []) }
-  | ELIF expr NEWLINE stmts ELSE stmts { Node.If ($2, $4, $6) }
-  | ELIF expr NEWLINE stmts elif { Node.If ($2, $4, [$5]) }
+  : ELIF expr NEWLINE stmts { make_node (Node.If ($2, $4, [])) $startpos($1) }
+  | ELIF expr NEWLINE stmts ELSE stmts {
+    make_node (Node.If ($2, $4, $6)) $startpos($1)
+  }
+  | ELIF expr NEWLINE stmts elif {
+    make_node (Node.If ($2, $4, [$5])) $startpos($1)
+  }
   ;
 
 names
@@ -237,7 +260,7 @@ expr
 
 assign_expr
   : postfix_expr EQUAL conditional_expr {
-    make_expr (Node.Assign { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Assign { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   ;
 
@@ -259,22 +282,22 @@ not_expr
 
 comparison
   : xor_expr LESS xor_expr {
-    make_expr (Node.Less { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Less { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr LESS_EQUAL xor_expr {
-    make_expr (Node.LessEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.LessEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr GREATER xor_expr {
-    make_expr (Node.Greater { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Greater { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr GREATER_EQUAL xor_expr {
-    make_expr (Node.GreaterEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.GreaterEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr EQUAL_EQUAL xor_expr {
-    make_expr (Node.EqualEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.EqualEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr NOT_EQUAL xor_expr {
-    make_expr (Node.NotEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.NotEqual { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | xor_expr { $1 }
   ;
@@ -297,23 +320,23 @@ shift_expr
 
 arith_expr
   : arith_expr PLUS term {
-    make_expr (Node.Add { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Add { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | arith_expr MINUS term {
-    make_expr (Node.Sub { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Sub { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | term { $1 }
   ;
 
 term
   : term STAR factor {
-    make_expr (Node.Mul { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Mul { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | term DIV factor {
-    make_expr (Node.Div { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.Div { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | term DIV_DIV factor {
-    make_expr (Node.DivDiv { Node.left=$1; Node.right=$3 }) $startpos($1)
+    make_node (Node.DivDiv { Node.left=$1; Node.right=$3 }) $startpos($1)
   }
   | factor { $1 }
   ;
@@ -334,11 +357,11 @@ call_expr
 postfix_expr
   : call_expr { $1 }
   | postfix_expr LBRACKET expr RBRACKET {
-    make_expr (Node.Subscript { Node.prefix=$1; Node.index=$3 }) $startpos($1)
+    make_node (Node.Subscript { Node.prefix=$1; Node.index=$3 }) $startpos($1)
   }
   | postfix_expr DOT NAME {
     let pos = $startpos($1) in
-    make_expr (Node.Attr { Node.attr_prefix=$1; Node.attr_name=$3 }) pos
+    make_node (Node.Attr { Node.attr_prefix=$1; Node.attr_name=$3 }) pos
   }
   | atom { $1 }
   ;
@@ -354,18 +377,18 @@ atom
   | INT { make_const (Value.Int $1) $startpos($1) }
   | FLOAT { make_const (Value.Float $1) $startpos($1) }
   | DOUBLE_QUOTE string_contents_opt DOUBLE_QUOTE {
-    make_expr (Node.String $2) $startpos($1)
+    make_node (Node.String $2) $startpos($1)
   }
-  | HEREDOC { make_expr (Node.Heredoc $1) $startpos($1) }
+  | HEREDOC { make_node (Node.Heredoc $1) $startpos($1) }
   | LBRACKET exprs RBRACKET { make_array $2 $startpos($1) }
   | LBRACKET RBRACKET { make_array [] $startpos($1) }
   | LBRACE dict_pairs RBRACE { make_dict $2 $startpos($1) }
   | LBRACE RBRACE { make_dict [] $startpos($1) }
-  | NAME { make_expr (Node.Var $1) $startpos($1) }
+  | NAME { make_node (Node.Var $1) $startpos($1) }
   | DOLLER_LPAR pipeline RPAR {
-    make_expr (Node.InlinePipeline $2) $startpos($1)
+    make_node (Node.InlinePipeline $2) $startpos($1)
   }
-  | DOLLER_QUESTION { make_expr Node.LastStatus $startpos($1) }
+  | DOLLER_QUESTION { make_node Node.LastStatus $startpos($1) }
   | doller_number { make_const (Value.String $1) $startpos($1) }
   ;
 

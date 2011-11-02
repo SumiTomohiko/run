@@ -1,5 +1,5 @@
 
-type kind =
+type 'a kind =
     Add
   | Call of int
   | Communicate
@@ -12,8 +12,8 @@ type kind =
   | GetAttr of string
   | Greater
   | GreaterEqual
-  | Jump of t
-  | JumpIfFalse of t
+  | Jump of 'a
+  | JumpIfFalse of 'a
   | Less
   | LessEqual
   | MakeArray of int
@@ -40,12 +40,15 @@ type kind =
   (* For compiler *)
   | Anchor
   | Label
-and t = { mutable next: t option; kind: kind }
+and t = {
+  mutable next: t option;
+  kind: t kind;
+  pos: Node.pos;
+  mutable index: int }
 
-let make kind = { next=None; kind=kind }
-let make_label () = make Label
-let next_of_op op = op.next
-let kind_of_op op = op.kind
+let make_label pos = { next=None; kind=Label; pos=pos; index=0 }
+
+(* For debugging *)
 let name_of_op = function
     Add -> "Add"
   | Call _ -> "Call"
@@ -86,12 +89,6 @@ let name_of_op = function
 
   | Anchor -> "Anchor"
   | Label -> "Label"
-
-let ops: t list ref = ref []
-
-let register_ops op =
-  ops := !ops @ [op];
-  (List.length (!ops)) - 1
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

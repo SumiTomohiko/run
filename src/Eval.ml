@@ -11,7 +11,8 @@ type pipeline = {
 }
 
 type frame = {
-  mutable pc: Op.t option;
+  code: Code.t;
+  mutable pc: int;
   locals: Symboltbl.t;
   outer_frame: frame option;
   stack: Value.t Stack.t;
@@ -19,6 +20,7 @@ type frame = {
 }
 
 type env = {
+  codes: Code.t array;
   globals: Symboltbl.t;
   builtins: Builtins.Command.t;
   frames: frame Stack.t;
@@ -213,6 +215,14 @@ let eval_params stack n params =
   let vals = Array.of_list (pop_args stack n) in
   List.concat (List.map (Param.eval vals) params)
 
+let make_frame code locals = {
+  code=code;
+  pc=0;
+  locals=locals;
+  outer_frame=None;
+  stack=Stack.create ();
+  pipelines=Stack.create () }
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -224,21 +234,14 @@ let eval_op env frame op =
       eval_binop stack intf floatf stringf error
   | Op.Call nargs ->
       let args = pop_args frame.stack nargs in
-      let f = Stack.pop stack in
-      (match f with
-        Value.UserFunction (params, index) ->
+      (match Stack.pop stack with
+      | Value.UserFunction (params, index) ->
           let locals = Symboltbl.create () in
           let store_param param arg = Symboltbl.add locals param arg in
           List.iter2 store_param params args;
-          let ops = List.nth !Op.ops index in
-          let frame = {
-            pc=Some ops;
-            locals=locals;
-            outer_frame=None;
-            stack=Stack.create ();
-            pipelines=Stack.create () } in
+          let frame = make_frame (Array.get env.codes index) locals in
           Stack.push frame env.frames
-      | _ -> Stack.push (call env f args) stack)
+      | f -> Stack.push (call env f args) stack)
   | Op.Communicate ->
       let pipeline = Stack.pop frame.pipelines in
       let pipes = [Unix.pipe (); Unix.pipe ()] in
@@ -296,11 +299,11 @@ let eval_op env frame op =
       | Value.Dict h -> get_dict_attr h name
       | _ -> failwith "Unknown object" in
       Stack.push attr stack
-  | Op.Jump label -> frame.pc <- Some label
-  | Op.JumpIfFalse label ->
+  | Op.Jump dest -> frame.pc <- dest
+  | Op.JumpIfFalse dest ->
       if not (Value.bool_of_value (Stack.top stack)) then begin
         ignore (Stack.pop stack);
-        frame.pc <- Some label
+        frame.pc <- dest
       end
   | Op.Less -> eval_comparison stack ((>) 0)
   | Op.LessEqual -> eval_comparison stack ((>=) 0)
@@ -317,8 +320,8 @@ let eval_op env frame op =
             iter (n - 1) in
       iter size;
       Stack.push (Value.Dict hash) stack
-  | Op.MakeUserFunction (args, ops_index) ->
-      Stack.push (Value.UserFunction (args, ops_index)) stack
+  | Op.MakeUserFunction (args, index) ->
+      Stack.push (Value.UserFunction (args, index)) stack
   | Op.MoveParam ->
       let s = Value.string_of_value (Stack.pop stack) in
       let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
@@ -404,26 +407,25 @@ let eval_op env frame op =
 
 let rec eval_env env =
   let frame = Stack.top env.frames in
-  match frame.pc with
-    Some op ->
-      frame.pc <- Op.next_of_op op;
-      eval_op env frame (Op.kind_of_op op);
-      eval_env env
-  | None -> ()
+  let pc = frame.pc in
+  let ops = Code.ops_of_code frame.code in
+  if (Array.length ops) <= pc then
+    ()
+  else begin
+    frame.pc <- pc + 1;
+    eval_op env frame (Array.get ops pc);
+    eval_env env
+  end
 
-let eval ops =
-  let frame = {
-    pc=Some ops;
-    locals=Symboltbl.create ();
-    outer_frame=None;
-    stack=Stack.create ();
-    pipelines=Stack.create () } in
-  let stack = Stack.create () in
-  Stack.push frame stack;
+let eval codes index =
+  let frame = make_frame (Array.get codes index) (Symboltbl.create ()) in
+  let frames = Stack.create () in
+  Stack.push frame frames;
   eval_env {
+    codes=codes;
     globals=Builtins.Function.create ();
     builtins=Builtins.Command.create ();
-    frames=stack;
+    frames=frames;
     last_status=0 }
 
 (*
