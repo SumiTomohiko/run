@@ -3,6 +3,7 @@
 *.cmi
 *.cmx
 *.cmxa
+*.log
 *.o
 *.omc
 .ditz-config
