@@ -64,7 +64,10 @@ rule script_token lexer = parse
   | '=' { Parser.EQUAL }
   | '>' { Parser.GREATER }
   | '[' { Parser.LBRACKET }
-  | '\n' { Parser.NEWLINE }
+  | '\n' {
+    Lexing.new_line lexbuf;
+    Parser.NEWLINE
+  }
   | ']' { Parser.RBRACKET }
   | '{' { Parser.LBRACE }
   | '}' { Parser.RBRACE }
@@ -86,7 +89,10 @@ and pipeline_token lexer = parse
   | ')' { Parser.RPAR }
   | '<' { Parser.LESS }
   | '>' { Parser.GREATER }
-  | '\n' { Parser.NEWLINE }
+  | '\n' {
+    Lexing.new_line lexbuf;
+    Parser.NEWLINE
+  }
   | '|' { Parser.BAR }
   | "" { Parser.PARAM_BEGIN }
 and param_token lexer = parse

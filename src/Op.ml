@@ -31,6 +31,7 @@ type 'a kind =
   | PushLocal of string
   | PushParams of int * Param.t list
   | PushPipeline of Unix.open_flag list
+  | Raise
   | Return
   | StoreLocal of string
   | StoreSubscript
@@ -81,6 +82,7 @@ let name_of_op = function
   | PushLocal _ -> "PushLocal"
   | PushParams _ -> "PushParams"
   | PushPipeline _ -> "PushPipeline"
+  | Raise -> "Raise"
   | Return -> "Return"
   | StoreLocal _ -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"

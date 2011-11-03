@@ -1,0 +1,8 @@
+SRC:
+raise 42
+FILENAME:
+foo.run
+ERR:
+Traceback (most recent call last):
+  File "/tmp/foo.run", line 1, in <module>
+Exception: 42
