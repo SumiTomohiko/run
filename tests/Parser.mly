@@ -1,14 +1,21 @@
 %token <string> CONTENT
-%token EOF ERR OUT PARAMS SRC STAT
+%token EOF ERR FILENAME OUT PARAMS SRC STAT
 %start test
 %type <Test.t> test
 %%
 test
-  : src params_opt out_opt err_opt stat_opt EOF { Test.make $1 $2 $3 $4 $5 }
+  : src filename_opt params_opt out_opt err_opt stat_opt EOF {
+    Test.make $1 $2 $3 $4 $5 $6
+  }
   ;
 
 src
   : SRC contents { $2 }
+  ;
+
+filename_opt
+  : { None }
+  | FILENAME CONTENT { Some (String.sub $2 0 ((String.length $2) - 1)) }
   ;
 
 params_opt

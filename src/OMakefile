@@ -44,6 +44,7 @@ SRC_DIR = $(dir .)
 
 FILES[] =
     Value
+    Exception
     Node
     Matching
     Param

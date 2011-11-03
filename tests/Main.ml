@@ -9,8 +9,12 @@ let parse_test path =
   Ensure.open_in path (fun ch ->
     Parser.test Lexer.token (Lexing.from_channel ch))
 
-let open_temp_file f g =
-  let path, ch = Filename.open_temp_file "test_run." ".run" in
+let open_temp_file filename f g =
+  let path, ch = match filename with
+  | Some s ->
+      let path = Printf.sprintf "/tmp/%s" s in
+      path, open_out path
+  | None -> Filename.open_temp_file "test_run." ".run" in
   let close () = close_out ch in
   let body () =
     Std.finally close f ch;
@@ -29,8 +33,8 @@ let exec_run path params =
     Unix.WEXITED stat -> out, err, stat
   | _ -> assert false
 
-let write_src src f =
-  open_temp_file (fun ch -> output_string ch src) f
+let write_src src filename f =
+  open_temp_file filename (fun ch -> output_string ch src) f
 
 let do_test expected actual =
   match expected with
@@ -40,7 +44,8 @@ let do_test expected actual =
 let main path =
   let test = parse_test path in
   let f path = exec_run path (Test.params_of_test test) in
-  let out, err, stat = write_src (Test.src_of_test test) f in
+  let src = Test.src_of_test test in
+  let out, err, stat = write_src src (Test.filename_of_test test) f in
   do_test (Test.out_of_test test) out;
   do_test (Test.err_of_test test) err;
   match Test.stat_of_test test with

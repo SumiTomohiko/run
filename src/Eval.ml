@@ -223,6 +223,17 @@ let make_frame code locals = {
   stack=Stack.create ();
   pipelines=Stack.create () }
 
+let rec make_traceback accum frames =
+  if Stack.is_empty frames then
+    accum
+  else
+    let frame = Stack.pop frames in
+    let code = frame.code in
+    let path = Code.path_of_code code in
+    let name = Code.name_of_code code in
+    let lineno = Code.lineno_of_pc code (frame.pc - 1) in
+    make_traceback ((path, name, lineno) :: accum) frames
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -374,6 +385,9 @@ let eval_op env frame op =
         pl_first_stdin=stdin;
         pl_last_stdout=stdout } in
       Stack.push pipeline frame.pipelines
+  | Op.Raise ->
+      let tb = make_traceback [] env.frames in
+      raise (Exception.Run_exception (tb, (Stack.pop stack)))
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);

@@ -67,6 +67,7 @@ let conv_kind = function
   | Op.PushLocal name -> Op.PushLocal name
   | Op.PushParams (n, params) -> Op.PushParams (n, params)
   | Op.PushPipeline flags -> Op.PushPipeline flags
+  | Op.Raise -> Op.Raise
   | Op.Return -> Op.Return
   | Op.StoreLocal name -> Op.StoreLocal name
   | Op.StoreSubscript -> Op.StoreSubscript
@@ -96,10 +97,10 @@ let rec make_lineno_table tbl from_index = function
       make_lineno_table (tbl @ [(from_index, index1 + 1, lineno)]) index2 next
   | None -> assert false
 
-let code_of_ops path ops =
+let make_code path name ops =
   let tbl = Array.of_list (make_lineno_table [] 0 ops) in
   let opseq = Array.of_list (ops_to_list [] ops) in
-  path, tbl, opseq
+  path, name, tbl, opseq
 
 let rec compile_params compiler pos make_op = function
   | hd :: tl ->
@@ -261,13 +262,16 @@ and compile_stmt compiler (pos, stmt) =
       let label, _ = Stack.top compiler.while_stack in
       add_op compiler (Op.Jump label) pos
   | Node.Pipeline commands -> compile_pipeline compiler pos commands Op.Exec
-  | Node.Raise _ -> failwith "TODO: Implement here"
+  | Node.Raise (Some expr) ->
+      compile_expr compiler expr;
+      add_op compiler Op.Raise pos
+  | Node.Raise None -> failwith "TODO: Implement here"
   | Node.Return expr ->
       compile_expr compiler expr;
       add_op compiler Op.Return pos
   | Node.Try (_, _, _) -> failwith "TODO: Implement here"
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
-      let index = compile compiler.path compiler.codes uf_stmts in
+      let index = compile compiler.path uf_name compiler.codes uf_stmts in
       add_op compiler (Op.MakeUserFunction (uf_args, index)) pos;
       add_op compiler (Op.StoreLocal uf_name) pos
   | Node.While (expr, stmts) ->
@@ -287,14 +291,15 @@ and compile_stmts compiler = function
       compile_stmt compiler hd;
       compile_stmts compiler tl
   | [] -> ()
-and compile path codes stmts =
+and compile path name codes stmts =
   let compiler = {
     path=path;
     codes=codes;
     oplist=OpList.make ();
     while_stack=Stack.create () } in
   compile_stmts compiler stmts;
-  DynArray.add codes (code_of_ops path (Some (OpList.top compiler.oplist)));
+  let head = Some (OpList.top compiler.oplist) in
+  DynArray.add codes (make_code path name head);
   (DynArray.length codes) - 1
 
 (*

@@ -1,0 +1,12 @@
+SRC:
+def foo()
+  raise 42
+end
+foo()
+FILENAME:
+foo.run
+ERR:
+Traceback (most recent call last):
+  File "/tmp/foo.run", line 4, in <module>
+  File "/tmp/foo.run", line 2, in foo
+Exception: 42
