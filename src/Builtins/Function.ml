@@ -9,8 +9,8 @@ let builtins = [
 
 let create () =
   let tbl = Symboltbl.create () in
-  let f = fun init (name, f) -> Symboltbl.add tbl name (Value.Function f) in
-  List.fold_left f () builtins;
+  let add (name, f) = Symboltbl.add tbl name (Value.Function f) in
+  List.iter add builtins;
   tbl
 
 (*
