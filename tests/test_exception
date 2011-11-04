@@ -1,4 +1,4 @@
 SRC:
-raise Exception.new()
-EXCEPTION:
-Exception: nil
+puts(Exception.new(42).message)
+OUT:
+42

@@ -1,0 +1,4 @@
+SRC:
+raise Exception.new()
+EXCEPTION:
+Exception: nil

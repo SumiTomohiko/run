@@ -81,6 +81,13 @@ let get_dict_attr v = function
   | "expand" -> Value.Method (v, dict_expand)
   | name -> failwith ("AttributeError: " ^ name)
 
+let get_exception_attr v = function
+  | "message" ->
+      (match v with
+      | Value.Exception (_, msg) -> msg
+      | _ -> assert false)
+  | name -> failwith (Printf.sprintf "TODO: Raise AttributeError of %s" name)
+
 let get_class_attr v = function
   | "new" ->
       (match v with
@@ -319,6 +326,7 @@ let eval_op env frame op =
       let getter = match v with
       | Value.Array _ -> get_array_attr
       | Value.Class _ -> get_class_attr
+      | Value.Exception _ -> get_exception_attr
       | Value.Dict _ -> get_dict_attr
       | _ -> failwith "Unknown object" in
       Stack.push (getter v name) stack
