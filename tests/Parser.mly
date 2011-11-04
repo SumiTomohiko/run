@@ -1,11 +1,14 @@
+%{
+let trim = ExtString.String.strip
+%}
 %token <string> CONTENT
-%token EOF ERR FILENAME OUT PARAMS SRC STAT
+%token EOF ERR EXCEPTION FILENAME OUT PARAMS SRC STAT
 %start test
 %type <Test.t> test
 %%
 test
-  : src filename_opt params_opt out_opt err_opt stat_opt EOF {
-    Test.make $1 $2 $3 $4 $5 $6
+  : src filename_opt params_opt out_opt err_opt exception_opt stat_opt EOF {
+    Test.make $1 $2 $3 $4 $5 $6 $7
   }
   ;
 
@@ -20,10 +23,7 @@ filename_opt
 
 params_opt
   : { None }
-  | PARAMS contents {
-    let s = $2 in
-    Some (String.sub s 0 ((String.length s) - 1))
-  }
+  | PARAMS CONTENT { Some (trim $2) }
   ;
 
 out_opt
@@ -36,11 +36,14 @@ err_opt
   | ERR contents { Some $2 }
   ;
 
+exception_opt
+  : { None }
+  | EXCEPTION CONTENT { Some (trim $2) }
+  ;
+
 stat_opt
   : { None }
-  | STAT contents {
-    Some (int_of_string (String.sub $2 0 ((String.length $2) - 1)))
-  }
+  | STAT CONTENT { Some (int_of_string (trim $2)) }
   ;
 
 contents

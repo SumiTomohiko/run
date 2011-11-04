@@ -1,0 +1,4 @@
+SRC:
+raise IndexError.new(42)
+EXCEPTION:
+IndexError: 42

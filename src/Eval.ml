@@ -81,6 +81,13 @@ let get_dict_attr h = function
     "expand" -> Value.Method ((Value.Dict h), dict_expand)
   | name -> failwith ("AttributeError: " ^ name)
 
+let get_class_attr v = function
+  | "new" ->
+      (match v with
+      | Value.Class (_, f) -> Value.Method (v, f)
+      | _ -> assert false)
+  | _ -> failwith "TODO: Raise AttributeError"
+
 let get_array_attr a = function
     "size" -> Value.Int (Num.num_of_int (Array.length a))
   | "expand" -> Value.Method (Value.Array a, array_expand)
@@ -307,6 +314,7 @@ let eval_op env frame op =
   | Op.GetAttr name ->
       let attr = match Stack.pop stack with
         Value.Array a -> get_array_attr a name
+      | Value.Class _ as v -> get_class_attr v name
       | Value.Dict h -> get_dict_attr h name
       | _ -> failwith "Unknown object" in
       Stack.push attr stack
@@ -387,7 +395,10 @@ let eval_op env frame op =
       Stack.push pipeline frame.pipelines
   | Op.Raise ->
       let tb = make_traceback [] env.frames in
-      raise (Exception.Run_exception (tb, (Stack.pop stack)))
+      let e = match Stack.pop stack with
+      | Value.Exception _ as e -> e
+      | e -> Value.Exception (Symboltbl.find env.globals "Exception", e) in
+      raise (Exception.Run_exception (tb, e))
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);
@@ -431,13 +442,26 @@ let rec eval_env env =
     eval_env env
   end
 
+let make_exception self = function
+  | [] -> Value.Exception (self, Value.Nil)
+  | [msg] -> Value.Exception (self, msg)
+  | _ -> failwith "TODO: Raise ArgumentError"
+
+let add_exception tbl name =
+  Symboltbl.add tbl name (Value.Class (name, make_exception))
+
+let make_globals () =
+  let tbl = Builtins.Function.create () in
+  List.iter (add_exception tbl) ["Exception"; "ArgumentError"; "IndexError"];
+  tbl
+
 let eval codes index =
   let frame = make_frame (Array.get codes index) (Symboltbl.create ()) in
   let frames = Stack.create () in
   Stack.push frame frames;
   eval_env {
     codes=codes;
-    globals=Builtins.Function.create ();
+    globals=make_globals ();
     builtins=Builtins.Command.create ();
     frames=frames;
     last_status=0 }

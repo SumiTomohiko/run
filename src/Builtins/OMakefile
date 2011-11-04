@@ -3,10 +3,9 @@ DEST_DIR = ..
 PKG = Builtins
 FILES[] = Command Function
 
-OCAMLOPTFLAGS += -I $(SRC_DIR)
 .DEFAULT: $(OCamlPackage $(DEST_DIR)/$(PKG), $(FILES))
 
 # See http://lists.metaprl.org/pipermail/omake/2007-February/001475.html
-OCAMLFLAGS = -for-pack $(PKG) -warn-error A
+OCAMLFLAGS = -for-pack $(PKG) -warn-error A -I $(SRC_DIR)
 
 # vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4

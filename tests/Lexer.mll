@@ -8,6 +8,7 @@ rule token = parse
     | "STAT:\n" -> Parser.STAT
     | "PARAMS:\n" -> Parser.PARAMS
     | "FILENAME:\n" -> Parser.FILENAME
+    | "EXCEPTION:\n" -> Parser.EXCEPTION
     | _ -> Parser.CONTENT (s)
   }
   | eof { Parser.EOF }

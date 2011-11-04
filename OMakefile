@@ -44,7 +44,7 @@ test:
     cd tests && ./run_tests
 
 clean:
-    rm -f **/*.{cmi,cmx,cmxa,o,annot,automaton,a,omc}
+    rm -f src/{,Builtins}/*.{cmi,cmx,cmxa,o,annot,automaton,a,omc}
     rm -f src/run src/run.opt
 
 html:
