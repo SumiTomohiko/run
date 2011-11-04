@@ -1,0 +1,10 @@
+SRC:
+try
+  raise IndexError.new()
+except ArgumentError as e
+  puts("foo")
+except IndexError as e
+  puts("bar")
+end
+OUT:
+bar

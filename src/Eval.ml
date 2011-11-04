@@ -24,8 +24,8 @@ type env = {
   globals: Symboltbl.t;
   builtins: Builtins.Command.t;
   frames: frame Stack.t;
-  mutable last_status: int
-}
+  mutable last_status: int;
+  mutable last_exception: Value.t }
 
 let rec pop_args stack = function
     0 -> []
@@ -251,6 +251,10 @@ let rec make_traceback accum frames =
     let lineno = Code.lineno_of_pc code (frame.pc - 1) in
     make_traceback ((path, name, lineno) :: accum) frames
 
+let jump frame dest = frame.pc <- dest
+
+let store_top_local frame = Symboltbl.add frame.locals
+
 let eval_op env frame op =
   let stack = frame.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -330,11 +334,19 @@ let eval_op env frame op =
       | Value.Dict _ -> get_dict_attr
       | _ -> failwith "Unknown object" in
       Stack.push (getter v name) stack
-  | Op.Jump dest -> frame.pc <- dest
+  | Op.Jump dest -> jump frame dest
+  | Op.JumpIfException dest ->
+      let expected = Stack.pop stack in
+      if expected == Symboltbl.find env.globals "Exception" then
+        jump frame dest
+      else
+        (match env.last_exception with
+        | Value.Exception (actual, _) when expected == actual -> jump frame dest
+        | _ -> ())
   | Op.JumpIfFalse dest ->
       if not (Value.bool_of_value (Stack.top stack)) then begin
         ignore (Stack.pop stack);
-        frame.pc <- dest
+        jump frame dest
       end
   | Op.Less -> eval_comparison stack ((>) 0)
   | Op.LessEqual -> eval_comparison stack ((>=) 0)
@@ -406,7 +418,7 @@ let eval_op env frame op =
         pl_last_stdout=stdout } in
       Stack.push pipeline frame.pipelines
   | Op.Raise ->
-      let tb = make_traceback [] env.frames in
+      let tb = make_traceback [] (Stack.copy env.frames) in
       let e = match Stack.pop stack with
       | Value.Exception _ as e -> e
       | e -> Value.Exception (Symboltbl.find env.globals "Exception", e) in
@@ -416,8 +428,10 @@ let eval_op env frame op =
       ignore (Stack.pop env.frames);
       let frame = Stack.top env.frames in
       Stack.push value frame.stack
-  | Op.StoreLocal name ->
-      Symboltbl.add frame.locals name (Stack.pop stack)
+  | Op.StoreLastException (Some name) ->
+      store_top_local frame name env.last_exception
+  | Op.StoreLastException None -> ()
+  | Op.StoreLocal name -> store_top_local frame name (Stack.pop stack)
   | Op.StoreSubscript ->
       let index = Stack.pop stack in
       let prefix = Stack.pop stack in
@@ -439,18 +453,36 @@ let eval_op env frame op =
       | _ -> failwith "Invalid subscript operation" in
       Stack.push value stack
 
-  | Op.Anchor -> ()
-  | Op.Label -> ()
+  | Op.Anchor
+  | Op.Label -> assert false
 
 let rec eval_env env =
-  let frame = Stack.top env.frames in
+  let frames = env.frames in
+  let frame = Stack.top frames in
   let pc = frame.pc in
   let ops = Code.ops_of_code frame.code in
   if (Array.length ops) <= pc then
     ()
   else begin
-    frame.pc <- pc + 1;
-    eval_op env frame (Array.get ops pc);
+    jump frame (pc + 1);
+    (try
+      let op = Array.get ops (frame.pc - 1) in
+      eval_op env frame op
+    with
+    | Exception.Run_exception (_, v) as e ->
+        env.last_exception <- v;
+        let rec jump_to_except () =
+          if Stack.is_empty frames then
+            raise e
+          else
+            let frame = Stack.top frames in
+            let dest = Code.dest_of_exception frame.code (frame.pc - 1) in
+            if dest < 0 then begin
+              ignore (Stack.pop frames);
+              jump_to_except ();
+            end else
+              jump frame dest in
+        jump_to_except ());
     eval_env env
   end
 
@@ -476,7 +508,8 @@ let eval codes index =
     globals=make_globals ();
     builtins=Builtins.Command.create ();
     frames=frames;
-    last_status=0 }
+    last_status=0;
+    last_exception=Value.Nil }
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

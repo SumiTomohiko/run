@@ -13,6 +13,7 @@ type 'a kind =
   | Greater
   | GreaterEqual
   | Jump of 'a
+  | JumpIfException of 'a
   | JumpIfFalse of 'a
   | Less
   | LessEqual
@@ -33,6 +34,7 @@ type 'a kind =
   | PushPipeline of Unix.open_flag list
   | Raise
   | Return
+  | StoreLastException of string option
   | StoreLocal of string
   | StoreSubscript
   | Sub
@@ -49,22 +51,25 @@ and t = {
 
 let make_label pos = { next=None; kind=Label; pos=pos; index=0 }
 
+let sprintf = Printf.sprintf
+
 (* For debugging *)
 let name_of_op = function
     Add -> "Add"
-  | Call _ -> "Call"
+  | Call nargs -> sprintf "Call (%d)" nargs
   | Communicate -> "Communicate"
-  | Concat _ -> "Concat"
+  | Concat n -> sprintf "Concat (%d)" n
   | Div _ -> "Div"
   | DivDiv -> "DivDiv"
   | Equal -> "Equal"
   | Exec -> "Exec"
   | ExecAndPush -> "ExecAndPush"
-  | GetAttr _ -> "GetAttr"
+  | GetAttr name -> sprintf "GetAttr (%s)" name
   | Greater -> "Greater"
   | GreaterEqual -> "GreaterEqual"
-  | Jump _ -> "Jump"
-  | JumpIfFalse _ -> "JumpIfFalse"
+  | Jump dest -> sprintf "Jump (%d)" dest
+  | JumpIfException dest -> sprintf "JumpIfException (%d)" dest
+  | JumpIfFalse dest -> sprintf "JumpIfFalse (%d)" dest
   | Less -> "Less"
   | LessEqual -> "LessEqual"
   | MakeArray _ -> "MakeArray"
@@ -77,13 +82,15 @@ let name_of_op = function
   | PushCommand _ -> "PushCommand"
   | PushCommandE2O -> "PushCommandE2O"
   | PushCommandParams _ -> "PushCommandParams"
-  | PushConst _ -> "PushConst"
+  | PushConst v -> sprintf "PushConst (%s)" (Value.string_of_value v)
   | PushLastStatus -> "PushLastStatus"
-  | PushLocal _ -> "PushLocal"
+  | PushLocal name -> sprintf "PushLocal (%s)" name
   | PushParams _ -> "PushParams"
   | PushPipeline _ -> "PushPipeline"
   | Raise -> "Raise"
   | Return -> "Return"
+  | StoreLastException (Some name) -> sprintf "StoreLastException (%s)" name
+  | StoreLastException None -> assert false
   | StoreLocal _ -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"
   | Sub -> "Sub"

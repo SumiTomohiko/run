@@ -3,7 +3,8 @@ type compiler = {
   path: string;
   codes: Code.t DynArray.t;
   oplist: OpList.t;
-  while_stack: (Op.t * Op.t) Stack.t }
+  while_stack: (Op.t * Op.t) Stack.t;
+  exception_table: (Op.t * Op.t * Op.t) DynArray.t }
 
 let add_op compiler = OpList.add_op compiler.oplist
 let add_label compiler = OpList.add_label compiler.oplist
@@ -49,6 +50,7 @@ let conv_kind = function
   | Op.Greater -> Op.Greater
   | Op.GreaterEqual -> Op.GreaterEqual
   | Op.Jump dest -> Op.Jump dest.Op.index
+  | Op.JumpIfException dest -> Op.JumpIfException dest.Op.index
   | Op.JumpIfFalse dest -> Op.JumpIfFalse dest.Op.index
   | Op.Less -> Op.Less
   | Op.LessEqual -> Op.LessEqual
@@ -69,11 +71,13 @@ let conv_kind = function
   | Op.PushPipeline flags -> Op.PushPipeline flags
   | Op.Raise -> Op.Raise
   | Op.Return -> Op.Return
+  | Op.StoreLastException name -> Op.StoreLastException name
   | Op.StoreLocal name -> Op.StoreLocal name
   | Op.StoreSubscript -> Op.StoreSubscript
   | Op.Sub -> Op.Sub
   | Op.Subscript -> Op.Subscript
-  | _ -> assert false
+  | Op.Anchor
+  | Op.Label -> assert false
 
 let rec ops_to_list accum = function
   | Some { Op.kind=Op.Anchor; Op.next }
@@ -97,10 +101,19 @@ let rec make_lineno_table tbl from_index = function
       make_lineno_table (tbl @ [(from_index, index1 + 1, lineno)]) index2 next
   | None -> assert false
 
-let make_code path name ops =
-  let tbl = Array.of_list (make_lineno_table [] 0 ops) in
+let rec make_excepion_table accum index exception_table =
+  if index = (DynArray.length exception_table) then
+    accum
+  else
+    let front, rear, dest = DynArray.get exception_table index in
+    let entry = (front.Op.index, rear.Op.index, dest.Op.index) in
+    make_excepion_table (accum @ [entry]) (index + 1) exception_table
+
+let make_code path name exception_table ops =
+  let lineno_table = Array.of_list (make_lineno_table [] 0 ops) in
+  let exception_table = make_excepion_table [] 0 exception_table in
   let opseq = Array.of_list (ops_to_list [] ops) in
-  path, name, tbl, opseq
+  Code.make path name lineno_table (Array.of_list exception_table) opseq
 
 let rec compile_params compiler pos make_op = function
   | hd :: tl ->
@@ -215,6 +228,9 @@ and compile_exprs compiler = function
       compile_exprs compiler exprs
   | [] -> ()
 
+let add_exception_table_entry compiler front rear dest =
+  DynArray.add compiler.exception_table (front, rear, dest)
+
 let rec compile_every compiler pos { Node.params; Node.names; Node.stmts } =
   let push_false _ = add_op compiler (Op.PushConst (Value.Bool false)) pos in
   List.iter push_false names;
@@ -228,6 +244,25 @@ let rec compile_every compiler pos { Node.params; Node.names; Node.stmts } =
   compile_stmts compiler stmts;
   add_op compiler (Op.Jump top) pos;
   add_label compiler last
+and compile_excepts compiler pos try_end = function
+  | (exprs, name, stmts) :: tl ->
+      let stmts_begin = Op.make_label pos in
+      let except_end = Op.make_label pos in
+      let rec compile_exprs compiler = function
+        | hd :: tl ->
+            compile_expr compiler hd;
+            add_op compiler (Op.JumpIfException stmts_begin) pos;
+            compile_exprs compiler tl
+        | [] -> () in
+      compile_exprs compiler exprs;
+      add_op compiler (Op.Jump except_end) pos;
+      add_label compiler stmts_begin;
+      add_op compiler (Op.StoreLastException name) pos;
+      compile_stmts compiler stmts;
+      add_op compiler (Op.Jump try_end) pos;
+      add_label compiler except_end;
+      compile_excepts compiler pos try_end tl
+  | [] -> ()
 and compile_stmt compiler (pos, stmt) =
   match stmt with
   | Node.Break ->
@@ -269,7 +304,19 @@ and compile_stmt compiler (pos, stmt) =
   | Node.Return expr ->
       compile_expr compiler expr;
       add_op compiler Op.Return pos
-  | Node.Try (_, _, _) -> failwith "TODO: Implement here"
+  | Node.Try (stmts, excepts, _) ->
+      let stmts_begin = Op.make_label pos in
+      let stmts_end = Op.make_label pos in
+      let excepts_begin = Op.make_label pos in
+      let try_end = Op.make_label pos in
+      add_label compiler stmts_begin;
+      compile_stmts compiler stmts;
+      add_label compiler stmts_end;
+      add_op compiler (Op.Jump try_end) pos;
+      add_label compiler excepts_begin;
+      compile_excepts compiler pos try_end excepts;
+      add_label compiler try_end;
+      add_exception_table_entry compiler stmts_begin stmts_end excepts_begin
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
       let index = compile compiler.path uf_name compiler.codes uf_stmts in
       add_op compiler (Op.MakeUserFunction (uf_args, index)) pos;
@@ -296,10 +343,12 @@ and compile path name codes stmts =
     path=path;
     codes=codes;
     oplist=OpList.make ();
-    while_stack=Stack.create () } in
+    while_stack=Stack.create ();
+    exception_table=DynArray.create () } in
   compile_stmts compiler stmts;
   let head = Some (OpList.top compiler.oplist) in
-  DynArray.add codes (make_code path name head);
+  let code = make_code path name compiler.exception_table head in
+  DynArray.add codes code;
   (DynArray.length codes) - 1
 
 (*

@@ -63,7 +63,7 @@ OBJ_FILES = $(FILES) Stub
 
 PROGRAM = run
 MENHIR_ENABLED = true
-MENHIR_FLAGS = --comment --dump --explain --infer
+MENHIR_FLAGS = --comment --dump --explain --infer #--trace
 OCAML_LIBS += $(LIB_DIR)/ensure
 OCAML_OTHER_LIBS += unix nums
 

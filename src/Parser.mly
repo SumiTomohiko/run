@@ -108,7 +108,7 @@ excepts
   ;
 
 except
-  : EXCEPT names as_opt stmts { ($2, $3, $4) }
+  : EXCEPT exprs as_opt NEWLINE stmts { ($2, $3, $5) }
   ;
 
 as_opt

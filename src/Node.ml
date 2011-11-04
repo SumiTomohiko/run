@@ -47,7 +47,7 @@ and param_atom =
   | Star
   | StarStar
 and command = param list * string option * redirect option * redirect option
-and except = string list * string option * stmt list
+and except = expr list * string option * stmt list
 and stmt_body =
     Break
   | Communication of param list * param list
@@ -67,6 +67,26 @@ and stmt_body =
 and stmt = pos * stmt_body
 
 let dummy_pos = ("", -1)
+
+let rec dump = function
+  | hd :: tl ->
+      let name = match hd with
+      | Break -> "Break"
+      | Communication _ -> "Communication"
+      | Every _ -> "Every"
+      | Expr _ -> "Expr"
+      | If _ -> "If"
+      | Next -> "Next"
+      | Pipeline _ -> "Pipeline"
+      | Raise _ -> "Raise"
+      | Return _ -> "Return"
+      | Try _ -> "Try"
+      | UserFunction _ -> "UserFunction"
+      | While _ -> "While"
+      | Empty -> "Empty" in
+      Printf.printf "%s\n" name;
+      dump tl
+  | [] -> ()
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

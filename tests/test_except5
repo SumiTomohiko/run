@@ -1,0 +1,11 @@
+SRC:
+def foo()
+  raise Exception.new(42)
+end
+try
+  foo()
+except Exception as e
+  puts("foo")
+end
+OUT:
+foo

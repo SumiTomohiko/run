@@ -176,6 +176,7 @@ let next_token_of_lexbuf lexer lexbuf =
   (match tok with
   | Parser.LBRACE -> Stack.push (Stack.top mode_stack) mode_stack
   | Parser.DOLLER_LBRACE
+  | Parser.EXCEPT
   | Parser.LPAR -> Stack.push Script mode_stack
   | Parser.DOLLER_LPAR
   | Parser.EVERY -> Stack.push Pipeline mode_stack
@@ -222,9 +223,11 @@ let try_keyword line =
     | Parser.ELSE
     | Parser.END
     | Parser.EVERY
+    | Parser.EXCEPT
     | Parser.IF
     | Parser.NEXT
     | Parser.RETURN
+    | Parser.TRY
     | Parser.WHILE -> true
     | _ -> false
   with

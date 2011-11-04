@@ -1,0 +1,8 @@
+SRC:
+try
+  raise IndexError.new(42)
+except Exception as e
+  puts(e.message)
+end
+OUT:
+42
