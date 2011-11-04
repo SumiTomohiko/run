@@ -41,6 +41,13 @@ let do_test expected actual =
     Some s -> assert (actual = s)
   | None -> ()
 
+let do_exception_test test err =
+  if err = "" then
+    ()
+  else
+    let exc = List.hd (List.tl (List.rev (ExtString.String.nsplit err "\n"))) in
+    do_test (Test.exception_of_test test) exc
+
 let main path =
   let test = parse_test path in
   let f path = exec_run path (Test.params_of_test test) in
@@ -48,6 +55,7 @@ let main path =
   let out, err, stat = write_src src (Test.filename_of_test test) f in
   do_test (Test.out_of_test test) out;
   do_test (Test.err_of_test test) err;
+  do_exception_test test err;
   match Test.stat_of_test test with
     Some expected -> assert (expected = stat)
   | None -> ()

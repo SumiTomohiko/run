@@ -1,0 +1,4 @@
+SRC:
+raise Exception.new(42)
+EXCEPTION:
+Exception: 42

@@ -11,6 +11,8 @@ type t =
   | Method of t * (t -> t list -> t)
   | UserFunction of string list * int
   | ProcessStatus of int
+  | Class of string * (t -> t list -> t)
+  | Exception of t * t
 
 let bool_of_value = function
   | Nil -> false
@@ -18,6 +20,8 @@ let bool_of_value = function
   | ProcessStatus 0 -> true
   | ProcessStatus _ -> false
   | _ -> true
+
+let sprintf = Printf.sprintf
 
 let rec string_of_value = function
     Nil -> "nil"
@@ -41,6 +45,9 @@ let rec string_of_value = function
   | Method _ -> "Method"
   | UserFunction _ -> "UserFunction"
   | ProcessStatus stat -> string_of_int stat
+  | Class (name, _) -> sprintf "#<Class %s>" name
+  | Exception (Class (name, _), _) -> sprintf "#<%s>" name
+  | _ -> assert false
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
