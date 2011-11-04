@@ -77,8 +77,8 @@ let dict_expand self _ =
       Value.String (String.concat " " (Hashtbl.fold f h []))
   | _ -> failwith "self must be Dict"
 
-let get_dict_attr h = function
-    "expand" -> Value.Method ((Value.Dict h), dict_expand)
+let get_dict_attr v = function
+  | "expand" -> Value.Method (v, dict_expand)
   | name -> failwith ("AttributeError: " ^ name)
 
 let get_class_attr v = function
@@ -88,9 +88,12 @@ let get_class_attr v = function
       | _ -> assert false)
   | _ -> failwith "TODO: Raise AttributeError"
 
-let get_array_attr a = function
-    "size" -> Value.Int (Num.num_of_int (Array.length a))
-  | "expand" -> Value.Method (Value.Array a, array_expand)
+let get_array_attr v = function
+  | "size" ->
+      (match v with
+      | Value.Array a -> Value.Int (Num.num_of_int (Array.length a))
+      | _ -> assert false)
+  | "expand" -> Value.Method (v, array_expand)
   | name -> failwith ("AttributeError: " ^ name)
 
 let eval_comparison stack f =
@@ -312,12 +315,13 @@ let eval_op env frame op =
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
   | Op.GetAttr name ->
-      let attr = match Stack.pop stack with
-        Value.Array a -> get_array_attr a name
-      | Value.Class _ as v -> get_class_attr v name
-      | Value.Dict h -> get_dict_attr h name
+      let v = Stack.pop stack in
+      let getter = match v with
+      | Value.Array _ -> get_array_attr
+      | Value.Class _ -> get_class_attr
+      | Value.Dict _ -> get_dict_attr
       | _ -> failwith "Unknown object" in
-      Stack.push attr stack
+      Stack.push (getter v name) stack
   | Op.Jump dest -> frame.pc <- dest
   | Op.JumpIfFalse dest ->
       if not (Value.bool_of_value (Stack.top stack)) then begin
