@@ -12,7 +12,7 @@ type t =
   | UserFunction of string list * int
   | ProcessStatus of int
   | Class of string * (t -> t list -> t)
-  | Exception of t * t
+  | Exception of t * (string * string * int) list * t
 
 let bool_of_value = function
   | Nil -> false
@@ -46,7 +46,7 @@ let rec string_of_value = function
   | UserFunction _ -> "UserFunction"
   | ProcessStatus stat -> string_of_int stat
   | Class (name, _) -> sprintf "#<Class %s>" name
-  | Exception (Class (name, _), _) -> sprintf "#<%s>" name
+  | Exception (Class (name, _), _, _) -> sprintf "#<%s>" name
   | _ -> assert false
 
 (*

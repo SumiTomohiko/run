@@ -60,14 +60,14 @@ let eval_binop stack intf floatf stringf string_intf =
     | _ -> raise_unsupported_operands_error () in
   Stack.push result stack
 
-let array_expand self _ =
+let array_expand _ self _ =
   match self with
     Value.Array a ->
       let strings = Array.to_list (Array.map Value.string_of_value a) in
       Value.String (String.concat " " strings)
   | _ -> failwith "self must be Array"
 
-let dict_expand self _ =
+let dict_expand _ self _ =
   match self with
     Value.Dict h ->
       let f key value init =
@@ -77,30 +77,30 @@ let dict_expand self _ =
       Value.String (String.concat " " (Hashtbl.fold f h []))
   | _ -> failwith "self must be Dict"
 
-let get_dict_attr v = function
-  | "expand" -> Value.Method (v, dict_expand)
+let get_dict_attr env v = function
+  | "expand" -> Value.Method (v, dict_expand env)
   | name -> failwith ("AttributeError: " ^ name)
 
-let get_exception_attr v = function
+let get_exception_attr _ v = function
   | "message" ->
       (match v with
-      | Value.Exception (_, msg) -> msg
+      | Value.Exception (_, _, msg) -> msg
       | _ -> assert false)
   | name -> failwith (Printf.sprintf "TODO: Raise AttributeError of %s" name)
 
-let get_class_attr v = function
+let get_class_attr env v = function
   | "new" ->
       (match v with
       | Value.Class (_, f) -> Value.Method (v, f)
       | _ -> assert false)
   | _ -> failwith "TODO: Raise AttributeError"
 
-let get_array_attr v = function
+let get_array_attr env v = function
   | "size" ->
       (match v with
       | Value.Array a -> Value.Int (Num.num_of_int (Array.length a))
       | _ -> assert false)
-  | "expand" -> Value.Method (v, array_expand)
+  | "expand" -> Value.Method (v, array_expand env)
   | name -> failwith ("AttributeError: " ^ name)
 
 let eval_comparison stack f =
@@ -333,7 +333,7 @@ let eval_op env frame op =
       | Value.Exception _ -> get_exception_attr
       | Value.Dict _ -> get_dict_attr
       | _ -> failwith "Unknown object" in
-      Stack.push (getter v name) stack
+      Stack.push (getter env v name) stack
   | Op.Jump dest -> jump frame dest
   | Op.JumpIfException dest ->
       let expected = Stack.pop stack in
@@ -341,7 +341,8 @@ let eval_op env frame op =
         jump frame dest
       else
         (match env.last_exception with
-        | Value.Exception (actual, _) when expected == actual -> jump frame dest
+        | Value.Exception (actual, _, _) when expected == actual ->
+            jump frame dest
         | _ -> ())
   | Op.JumpIfFalse dest ->
       if not (Value.bool_of_value (Stack.top stack)) then begin
@@ -418,11 +419,15 @@ let eval_op env frame op =
         pl_last_stdout=stdout } in
       Stack.push pipeline frame.pipelines
   | Op.Raise ->
-      let tb = make_traceback [] (Stack.copy env.frames) in
       let e = match Stack.pop stack with
       | Value.Exception _ as e -> e
-      | e -> Value.Exception (Symboltbl.find env.globals "Exception", e) in
-      raise (Exception.Run_exception (tb, e))
+      | e ->
+          let clazz = Symboltbl.find env.globals "Exception" in
+          let create = match clazz with
+          | Value.Class (_, create) -> create
+          | _ -> assert false in
+          create clazz [e] in
+      raise (Exception.Run_exception e)
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);
@@ -468,7 +473,7 @@ let rec eval_env env =
       let op = Array.get ops (frame.pc - 1) in
       eval_op env frame op
     with
-    | Exception.Run_exception (_, v) as e ->
+    | Exception.Run_exception v as e ->
         env.last_exception <- v;
         let rec jump_to_except () =
           if Stack.is_empty frames then
@@ -485,30 +490,34 @@ let rec eval_env env =
     eval_env env
   end
 
-let make_exception self = function
-  | [] -> Value.Exception (self, Value.Nil)
-  | [msg] -> Value.Exception (self, msg)
+let make_exception env self args =
+  let tb = make_traceback [] (Stack.copy env.frames) in
+  match args with
+  | [] -> Value.Exception (self, tb, Value.Nil)
+  | [msg] -> Value.Exception (self, tb, msg)
   | _ -> failwith "TODO: Raise ArgumentError"
 
-let add_exception tbl name =
-  Symboltbl.add tbl name (Value.Class (name, make_exception))
+let add_exception env tbl name =
+  Symboltbl.add tbl name (Value.Class (name, make_exception env))
 
-let make_globals () =
-  let tbl = Builtins.Function.create () in
-  List.iter (add_exception tbl) ["Exception"; "ArgumentError"; "IndexError"];
-  tbl
+let make_globals env =
+  let tbl = env.globals in
+  let exceptions = ["Exception"; "ArgumentError"; "IndexError"] in
+  List.iter (add_exception env tbl) exceptions
 
 let eval codes index =
   let frame = make_frame (Array.get codes index) (Symboltbl.create ()) in
   let frames = Stack.create () in
   Stack.push frame frames;
-  eval_env {
+  let env = {
     codes=codes;
-    globals=make_globals ();
+    globals=Builtins.Function.create ();
     builtins=Builtins.Command.create ();
     frames=frames;
     last_status=0;
-    last_exception=Value.Nil }
+    last_exception=Value.Nil } in
+  make_globals env;
+  eval_env env
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

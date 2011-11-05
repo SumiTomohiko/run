@@ -15,7 +15,7 @@ let rec print_traceback = function
   | [] -> ()
 
 let read_exception = function
-  | Value.Exception (Value.Class (name, _), msg) -> name, msg
+  | Value.Exception (Value.Class (name, _), tb, msg) -> name, tb, msg
   | _ -> assert false
 
 let main () =
@@ -26,8 +26,8 @@ let main () =
   try
     Eval.eval (DynArray.to_array codes) index
   with
-  | Exception.Run_exception (tb, e) ->
-      let name, msg = read_exception e in
+  | Exception.Run_exception e ->
+      let name, tb, msg = read_exception e in
       Printf.eprintf "Traceback (most recent call last):\n";
       print_traceback tb;
       Printf.eprintf "%s: %s\n" name (Value.string_of_value msg)
