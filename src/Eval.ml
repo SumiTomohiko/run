@@ -63,7 +63,7 @@ let eval_binop stack intf floatf stringf string_intf =
 let array_expand _ self _ =
   match self with
     Value.Array a ->
-      let strings = Array.to_list (Array.map Value.string_of_value a) in
+      let strings = Array.to_list (Array.map Value.to_string a) in
       Value.String (String.concat " " strings)
   | _ -> failwith "self must be Array"
 
@@ -71,8 +71,8 @@ let dict_expand _ self _ =
   match self with
     Value.Dict h ->
       let f key value init =
-        let s = Value.string_of_value key in
-        let t = Value.string_of_value value in
+        let s = Value.to_string key in
+        let t = Value.to_string value in
         (s ^ " " ^ t) :: init in
       Value.String (String.concat " " (Hashtbl.fold f h []))
   | _ -> failwith "self must be Dict"
@@ -226,7 +226,7 @@ let rec concat stack size s =
     s
   else
     let v = Stack.pop stack in
-    concat stack (size - 1) ((Value.string_of_value v) ^ s)
+    concat stack (size - 1) ((Value.to_string v) ^ s)
 
 let eval_params stack n params =
   let vals = Array.of_list (pop_args stack n) in
@@ -367,7 +367,7 @@ let eval_op env frame op =
   | Op.MakeUserFunction (args, index) ->
       Stack.push (Value.UserFunction (args, index)) stack
   | Op.MoveParam ->
-      let s = Value.string_of_value (Stack.pop stack) in
+      let s = Value.to_string (Stack.pop stack) in
       let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
       DynArray.add cmd.cmd_params s
   | Op.Mul ->

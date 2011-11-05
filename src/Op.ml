@@ -83,7 +83,7 @@ let name_of_op = function
   | PushCommand _ -> "PushCommand"
   | PushCommandE2O -> "PushCommandE2O"
   | PushCommandParams _ -> "PushCommandParams"
-  | PushConst v -> sprintf "PushConst (%s)" (Value.string_of_value v)
+  | PushConst v -> sprintf "PushConst (%s)" (Value.to_string v)
   | PushLastStatus -> "PushLastStatus"
   | PushLocal name -> sprintf "PushLocal (%s)" name
   | PushParams _ -> "PushParams"

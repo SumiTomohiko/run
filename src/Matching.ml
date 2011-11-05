@@ -109,7 +109,7 @@ and find_abs dir vals = function
 let find dir pattern vals =
   let size = (String.length dir) + 1 in
   let remove_dir path = String.sub path size ((String.length path) - size) in
-  let pathes = find_abs dir (Array.map Value.string_of_value vals) pattern in
+  let pathes = find_abs dir (Array.map Value.to_string vals) pattern in
   List.map remove_dir pathes
 
 let rec expand_branch pattern = function

@@ -30,7 +30,7 @@ let main () =
       let name, tb, msg = read_exception e in
       Printf.eprintf "Traceback (most recent call last):\n";
       print_traceback tb;
-      Printf.eprintf "%s: %s\n" name (Value.string_of_value msg)
+      Printf.eprintf "%s: %s\n" name (Value.to_string msg)
 
 let _ = main ()
 

@@ -4,8 +4,8 @@ let output f args =
   Value.Nil
 
 let builtins = [
-  ("print", output Value.string_of_value);
-  ("puts", output (fun v -> (Value.string_of_value v) ^ "\n"))]
+  ("print", output Value.to_string);
+  ("puts", output (fun v -> (Value.to_string v) ^ "\n"))]
 
 let create () =
   let tbl = Symboltbl.create () in

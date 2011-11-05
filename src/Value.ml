@@ -23,18 +23,18 @@ let bool_of_value = function
 
 let sprintf = Printf.sprintf
 
-let rec string_of_value = function
+let rec to_string = function
     Nil -> "nil"
   | Bool b -> if b then "true" else "false"
   | Int n -> Num.string_of_num n
   | Float f -> string_of_float f
   | String s -> s
   | Array a ->
-      let strings = Array.to_list (Array.map string_of_value a) in
+      let strings = Array.to_list (Array.map to_string a) in
       "[" ^ (String.concat ", " strings) ^ "]"
   | Dict h ->
       let string_of_pair key value init =
-        let pair = (string_of_value key) ^ ": " ^ (string_of_value value) in
+        let pair = (to_string key) ^ ": " ^ (to_string value) in
         pair :: init in
       let pairs = Hashtbl.fold string_of_pair h [] in
       if (List.length pairs = 0) then
