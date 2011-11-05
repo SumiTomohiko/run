@@ -42,11 +42,11 @@ let do_test expected actual =
   | None -> ()
 
 let do_exception_test test err =
-  if err = "" then
-    ()
-  else
-    let exc = List.hd (List.tl (List.rev (ExtString.String.nsplit err "\n"))) in
-    do_test (Test.exception_of_test test) exc
+  match Test.exception_of_test test with
+  | Some _ as expected ->
+      let split = ExtString.String.nsplit in
+      do_test expected (List.hd (List.tl (List.rev (split err "\n"))))
+  | None -> ()
 
 let main path =
   let test = parse_test path in
