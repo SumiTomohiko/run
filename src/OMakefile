@@ -52,7 +52,6 @@ FILES[] =
     Lexer
     Code
     Op
-    OpList
     Compiler
     Symboltbl
     Builtins
