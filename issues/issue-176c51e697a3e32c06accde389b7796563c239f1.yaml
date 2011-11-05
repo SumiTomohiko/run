@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Cannot print a backtrace when an exception is uncatched.
+desc: ""
+type: :bugfix
+component: core
+release: 
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-05 07:06:14.407151 Z
+references: []
+
+id: 176c51e697a3e32c06accde389b7796563c239f1
+log_events: 
+- - 2011-11-05 07:06:15.015926 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
