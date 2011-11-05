@@ -428,6 +428,7 @@ let eval_op env frame op =
           | _ -> assert false in
           create clazz [e] in
       raise (Exception.Run_exception e)
+  | Op.Reraise -> raise (Exception.Run_exception env.last_exception)
   | Op.Return ->
       let value = Stack.pop stack in
       ignore (Stack.pop env.frames);

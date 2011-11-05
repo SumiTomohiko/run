@@ -70,6 +70,7 @@ let conv_kind = function
   | Op.PushParams (n, params) -> Op.PushParams (n, params)
   | Op.PushPipeline flags -> Op.PushPipeline flags
   | Op.Raise -> Op.Raise
+  | Op.Reraise -> Op.Reraise
   | Op.Return -> Op.Return
   | Op.StoreLastException name -> Op.StoreLastException name
   | Op.StoreLocal name -> Op.StoreLocal name
@@ -248,13 +249,13 @@ and compile_excepts compiler pos try_end = function
   | (exprs, name, stmts) :: tl ->
       let stmts_begin = Op.make_label pos in
       let except_end = Op.make_label pos in
-      let rec compile_exprs compiler = function
+      let rec compile_exceptions compiler = function
         | hd :: tl ->
             compile_expr compiler hd;
             add_op compiler (Op.JumpIfException stmts_begin) pos;
-            compile_exprs compiler tl
+            compile_exceptions compiler tl
         | [] -> () in
-      compile_exprs compiler exprs;
+      compile_exceptions compiler exprs;
       add_op compiler (Op.Jump except_end) pos;
       add_label compiler stmts_begin;
       (match name with
@@ -264,7 +265,7 @@ and compile_excepts compiler pos try_end = function
       add_op compiler (Op.Jump try_end) pos;
       add_label compiler except_end;
       compile_excepts compiler pos try_end tl
-  | [] -> ()
+  | [] -> add_op compiler Op.Reraise pos
 and compile_stmt compiler (pos, stmt) =
   match stmt with
   | Node.Break ->

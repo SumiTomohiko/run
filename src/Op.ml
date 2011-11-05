@@ -33,6 +33,7 @@ type 'a kind =
   | PushParams of int * Param.t list
   | PushPipeline of Unix.open_flag list
   | Raise
+  | Reraise
   | Return
   | StoreLastException of string
   | StoreLocal of string
@@ -88,6 +89,7 @@ let name_of_op = function
   | PushParams _ -> "PushParams"
   | PushPipeline _ -> "PushPipeline"
   | Raise -> "Raise"
+  | Reraise -> "Reraise"
   | Return -> "Return"
   | StoreLastException name -> sprintf "StoreLastException (%s)" name
   | StoreLocal _ -> "StoreLocal"
