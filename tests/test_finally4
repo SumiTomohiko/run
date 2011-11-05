@@ -1,0 +1,8 @@
+SRC:
+try
+  raise IndexError.new()
+except ArgumentError as e
+finally
+end
+EXCEPTION:
+IndexError: nil

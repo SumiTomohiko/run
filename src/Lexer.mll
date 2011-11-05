@@ -224,6 +224,7 @@ let try_keyword line =
     | Parser.END
     | Parser.EVERY
     | Parser.EXCEPT
+    | Parser.FINALLY
     | Parser.IF
     | Parser.NEXT
     | Parser.RETURN

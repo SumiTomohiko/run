@@ -245,7 +245,7 @@ let rec compile_every compiler pos { Node.params; Node.names; Node.stmts } =
   compile_stmts compiler stmts;
   add_op compiler (Op.Jump top) pos;
   add_label compiler last
-and compile_excepts compiler pos try_end = function
+and compile_excepts compiler pos finally_begin finally = function
   | (exprs, name, stmts) :: tl ->
       let stmts_begin = Op.make_label pos in
       let except_end = Op.make_label pos in
@@ -262,10 +262,12 @@ and compile_excepts compiler pos try_end = function
       | Some name -> add_op compiler (Op.StoreLastException name) pos
       | None -> ());
       compile_stmts compiler stmts;
-      add_op compiler (Op.Jump try_end) pos;
+      add_op compiler (Op.Jump finally_begin) pos;
       add_label compiler except_end;
-      compile_excepts compiler pos try_end tl
-  | [] -> add_op compiler Op.Reraise pos
+      compile_excepts compiler pos finally_begin finally tl
+  | [] ->
+      compile_stmts compiler finally;
+      add_op compiler Op.Reraise pos
 and compile_stmt compiler (pos, stmt) =
   match stmt with
   | Node.Break ->
@@ -307,18 +309,19 @@ and compile_stmt compiler (pos, stmt) =
   | Node.Return expr ->
       compile_expr compiler expr;
       add_op compiler Op.Return pos
-  | Node.Try (stmts, excepts, _) ->
+  | Node.Try (stmts, excepts, finally) ->
       let stmts_begin = Op.make_label pos in
       let stmts_end = Op.make_label pos in
       let excepts_begin = Op.make_label pos in
-      let try_end = Op.make_label pos in
+      let finally_begin = Op.make_label pos in
       add_label compiler stmts_begin;
       compile_stmts compiler stmts;
       add_label compiler stmts_end;
-      add_op compiler (Op.Jump try_end) pos;
+      add_op compiler (Op.Jump finally_begin) pos;
       add_label compiler excepts_begin;
-      compile_excepts compiler pos try_end excepts;
-      add_label compiler try_end;
+      compile_excepts compiler pos finally_begin finally excepts;
+      add_label compiler finally_begin;
+      compile_stmts compiler finally;
       add_exception_table_entry compiler stmts_begin stmts_end excepts_begin
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
       let index = compile compiler.path uf_name compiler.codes uf_stmts in

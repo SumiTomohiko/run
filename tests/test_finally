@@ -1,0 +1,7 @@
+SRC:
+try
+finally
+  puts(42)
+end
+OUT:
+42

@@ -1,0 +1,11 @@
+SRC:
+try
+  raise Exception.new()
+except Exception as e
+  puts(42)
+finally
+  puts(26)
+end
+OUT:
+42
+26
