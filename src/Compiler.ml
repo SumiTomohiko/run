@@ -257,7 +257,9 @@ and compile_excepts compiler pos try_end = function
       compile_exprs compiler exprs;
       add_op compiler (Op.Jump except_end) pos;
       add_label compiler stmts_begin;
-      add_op compiler (Op.StoreLastException name) pos;
+      (match name with
+      | Some name -> add_op compiler (Op.StoreLastException name) pos
+      | None -> ());
       compile_stmts compiler stmts;
       add_op compiler (Op.Jump try_end) pos;
       add_label compiler except_end;

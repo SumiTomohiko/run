@@ -428,9 +428,8 @@ let eval_op env frame op =
       ignore (Stack.pop env.frames);
       let frame = Stack.top env.frames in
       Stack.push value frame.stack
-  | Op.StoreLastException (Some name) ->
+  | Op.StoreLastException name ->
       store_top_local frame name env.last_exception
-  | Op.StoreLastException None -> ()
   | Op.StoreLocal name -> store_top_local frame name (Stack.pop stack)
   | Op.StoreSubscript ->
       let index = Stack.pop stack in

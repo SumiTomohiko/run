@@ -34,7 +34,7 @@ type 'a kind =
   | PushPipeline of Unix.open_flag list
   | Raise
   | Return
-  | StoreLastException of string option
+  | StoreLastException of string
   | StoreLocal of string
   | StoreSubscript
   | Sub
@@ -89,8 +89,7 @@ let name_of_op = function
   | PushPipeline _ -> "PushPipeline"
   | Raise -> "Raise"
   | Return -> "Return"
-  | StoreLastException (Some name) -> sprintf "StoreLastException (%s)" name
-  | StoreLastException None -> assert false
+  | StoreLastException name -> sprintf "StoreLastException (%s)" name
   | StoreLocal _ -> "StoreLocal"
   | StoreSubscript -> "StoreSubscript"
   | Sub -> "Sub"
