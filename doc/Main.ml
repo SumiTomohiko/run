@@ -4,8 +4,8 @@ type page = { title: string; nodes: BlockNode.t list }
 type generator = {
   mutable section_depth: int;
   mutable list_depth: int Stack.t;
-  pages: (string, page) Hashtbl.t
-}
+  pages: (string, page) Hashtbl.t;
+  mutable preformatted: bool }
 
 let escape_char = function
     '&' -> "&amp;"
@@ -21,8 +21,18 @@ let escape_html s =
 
 let enclose_tag tag text = Printf.sprintf "<%s>%s</%s>" tag text tag
 
+let rec get_whitespace_length s index =
+  if (String.get s index) <> ' ' then
+    index
+  else
+    get_whitespace_length s (index + 1)
+
+let get_indent_depth = function
+  | InlineNode.Plain s -> get_whitespace_length s 0
+  | _ -> assert false
+
 let convert_inline generator = function
-    InlineNode.Plain s -> escape_html s
+    InlineNode.Plain s -> if s = "::" then ":" else escape_html s
   | InlineNode.Literal s -> enclose_tag "code" (escape_html s)
   | InlineNode.Eof -> ""
   | InlineNode.Reference name ->
@@ -76,10 +86,34 @@ let open_or_close_list generator depth =
 
 let rec close_all_list generator = close_list generator list_sentinel ""
 
+let set_preformatted generator b = generator.preformatted <- b
+let enable_preformatted generator = set_preformatted generator true
+let disable_preformatted generator = set_preformatted generator false
+
+let rec trim_indent accum depth = function
+  | (InlineNode.Plain s) :: tl ->
+      let trimmed = String.sub s depth ((String.length s) - depth) in
+      trim_indent (accum @ [InlineNode.Plain trimmed]) depth tl
+  | [] -> accum
+  | _ -> assert false
+
 let convert_nonlist_block generator = function
     BlockNode.BulletItem _ -> assert false
+  | BlockNode.Paragraph [InlineNode.Plain "::"] ->
+      enable_preformatted generator;
+      ""
   | BlockNode.Paragraph nodes ->
-      enclose_tag "p" (convert_inlines generator nodes)
+      if generator.preformatted then begin
+        disable_preformatted generator;
+        let depth = get_indent_depth (List.hd nodes) in
+        let l = trim_indent [] depth nodes in
+        enclose_tag "pre" (convert_inlines generator l)
+      end else begin
+        (match List.hd (List.rev nodes) with
+        | InlineNode.Plain "::" -> enable_preformatted generator
+        | _ -> ());
+        enclose_tag "p" (convert_inlines generator nodes)
+      end
   | BlockNode.Title (depth, nodes) ->
       convert_title generator depth nodes
 
@@ -213,7 +247,8 @@ let main () =
   let generator = {
     section_depth=1;
     list_depth=Stack.create ();
-    pages=pages } in
+    pages=pages;
+    preformatted=false } in
   Stack.push list_sentinel generator.list_depth;
   output_all_pages generator
 
