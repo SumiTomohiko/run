@@ -49,7 +49,6 @@ Features
 
 * Structured programming with ``if``, ``while`` and ``every`` statements
 * Arithmetic operations
-* Function
 * UTF-8 (only) acceptable
 * Written in Objective Caml
 * MIT Lisence
