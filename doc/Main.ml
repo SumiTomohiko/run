@@ -54,22 +54,27 @@ let convert_title generator depth nodes =
   let opening = open_section generator in
   closing ^ opening ^ (enclose_tag "h1" (convert_inlines generator nodes))
 
-let open_list generator depth =
+let list_sentinel = (-1)
+
+let rec close_list generator depth accum =
+  let stack = generator.list_depth in
+  let current_depth = Stack.top stack in
+  if current_depth = depth then
+    accum
+  else begin
+    ignore (Stack.pop stack);
+    close_list generator depth (accum ^ "</ul>\n")
+  end
+
+let open_or_close_list generator depth =
   let current_depth = Stack.top generator.list_depth in
   if current_depth < depth then begin
     Stack.push depth generator.list_depth;
     "<ul>\n"
   end else
-    ""
+    close_list generator depth ""
 
-let rec close_list generator tags =
-  let stack = generator.list_depth in
-  if (Stack.length stack) = 1 then
-    tags
-  else begin
-    ignore (Stack.pop stack);
-    close_list generator (tags ^ "</ul>\n")
-  end
+let rec close_all_list generator = close_list generator list_sentinel ""
 
 let convert_nonlist_block generator = function
     BlockNode.BulletItem _ -> assert false
@@ -80,10 +85,10 @@ let convert_nonlist_block generator = function
 
 let convert_block generator = function
     BlockNode.BulletItem (depth, nodes) ->
-      let opening = open_list generator depth in
+      let opening = open_or_close_list generator depth in
       opening ^ (enclose_tag "li" (convert_inlines generator nodes))
   | node ->
-      let list_closing = close_list generator "" in
+      let list_closing = close_all_list generator in
       list_closing ^ (convert_nonlist_block generator node)
 
 let generate generator ch node =
@@ -209,7 +214,7 @@ let main () =
     section_depth=1;
     list_depth=Stack.create ();
     pages=pages } in
-  Stack.push (-1) generator.list_depth; (* -1 is a sentinel *)
+  Stack.push list_sentinel generator.list_depth;
   output_all_pages generator
 
 let _ = main ()
