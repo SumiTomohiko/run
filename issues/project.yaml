@@ -6,4 +6,13 @@ components:
   name: core
 - !ditz.rubyforge.org,2008-03-06/component 
   name: doc
-releases: []
+releases: 
+- !ditz.rubyforge.org,2008-03-06/release 
+  name: 0.1.0
+  status: :unreleased
+  release_time: 
+  log_events: 
+  - - 2011-11-06 13:55:58.636003 Z
+    - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+    - created
+    - First release.
