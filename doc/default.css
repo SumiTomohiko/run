@@ -1,25 +1,10 @@
 
-@font-face {
-  font-family: "bodyfont";
-  /**
-   * Copyright Information of Inconsolata.otf
-   * Lisence: Open Font Lisence
-   * Author: Raph Levien
-   * URL: http://www.levien.com/type/myfonts/inconsolata.html
-   */
-  src: url("Inconsolata.otf") format("opentype");
-}
-
-body {
-  font-family: "bodyfont";
-}
-
 pre {
-    border-style: solid;
-    border-width: 1px;
-    padding: 12px;
+  border-style: solid;
+  border-width: 1px;
+  padding: 12px;
 }
 
 /**
- * vim: tabstop=4 shiftwidth=4 expandtab softtabstop=4
+ * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  */
