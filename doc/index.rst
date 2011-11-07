@@ -13,21 +13,32 @@ Samples
 Hello, world!
 -------------
 
-TODO::
+::
 
   puts("Hello, world!")
 
 Pipeline
 --------
 
-TODO
+::
+
+  ls -t | head
 
 Communication between two processes, ``ping`` and ``pong``
 ----------------------------------------------------------
 
-TODO::
+::
 
   ./ping <-> ./pong
+
+Iterate all files under the current directory
+---------------------------------------------
+
+::
+
+  every * as f
+    puts(f)
+  end
 
 Features
 ========
