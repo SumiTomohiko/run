@@ -27,6 +27,14 @@ let rec get_whitespace_length s index =
   else
     get_whitespace_length s (index + 1)
 
+let sprintf = Printf.sprintf
+
+let string_of_inline_node = function
+  | InlineNode.Eof -> "<Eof>"
+  | InlineNode.Literal s -> sprintf "<Literal %s>" s
+  | InlineNode.Plain s -> sprintf "<Plain %s>" s
+  | InlineNode.Reference s -> sprintf "<Reference %s>" s
+
 let get_indent_depth = function
   | InlineNode.Plain s -> get_whitespace_length s 0
   | _ -> assert false
