@@ -19,7 +19,9 @@ let escape_html s =
   String.iter (DynArray.add chars) s;
   String.concat "" (DynArray.to_list (DynArray.map escape_char chars))
 
-let enclose_tag tag text = Printf.sprintf "<%s>%s</%s>" tag text tag
+let sprintf = Printf.sprintf
+
+let enclose_tag tag text = sprintf "<%s>%s</%s>" tag text tag
 
 let rec get_whitespace_length s index =
   if (String.get s index) <> ' ' then
@@ -27,28 +29,30 @@ let rec get_whitespace_length s index =
   else
     get_whitespace_length s (index + 1)
 
-let sprintf = Printf.sprintf
-
 let make_tag name content = sprintf "<%s %s>" name content
 
 let string_of_inline_node = function
   | InlineNode.Eof -> "<Eof>"
+  | InlineNode.Link (text, url) -> make_tag "Link %s" (sprintf "%s %s" text url)
   | InlineNode.Literal s -> make_tag "Literal" s
   | InlineNode.Plain s -> make_tag "Plain" s
   | InlineNode.Reference s -> make_tag "Reference" s
 
 let get_indent_depth = function
-  | InlineNode.Plain s -> get_whitespace_length s 0
+  | InlineNode.Link (text, _)
+  | InlineNode.Plain text -> get_whitespace_length text 0
   | _ -> assert false
 
 let convert_inline generator = function
     InlineNode.Plain s -> if s = "::" then ":" else escape_html s
+  | InlineNode.Link (text, url) ->
+      sprintf "<a href=\"%s\">%s</a>" (escape_html url) (escape_html text)
   | InlineNode.Literal s -> enclose_tag "code" (escape_html s)
   | InlineNode.Eof -> ""
   | InlineNode.Reference name ->
       let plain_title = (Hashtbl.find generator.pages name).title in
       let title = escape_html plain_title in
-      Printf.sprintf "<a href=\"%s.html\">%s</a>" (escape_html name) title
+      sprintf "<a href=\"%s.html\">%s</a>" (escape_html name) title
 
 let convert_inlines generator nodes =
   String.concat "" (List.map (convert_inline generator) nodes)
@@ -101,6 +105,7 @@ let enable_preformatted generator = set_preformatted generator true
 let disable_preformatted generator = set_preformatted generator false
 
 let rec trim_indent accum depth = function
+  | (InlineNode.Link (s, _)) :: tl
   | (InlineNode.Plain s) :: tl ->
       if 0 < (String.length s) then
         if (String.get s 0) = '\n' then
@@ -148,7 +153,7 @@ let generate generator ch node =
   output_string ch ((convert_block generator node) ^ "\n")
 
 let generate_header ch title =
-  output_string ch (Printf.sprintf "<!DOCTYPE html>
+  output_string ch (sprintf "<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/>
@@ -179,10 +184,8 @@ let generate_page generator ch title nodes =
 let rec find_all_references_inline founds = function
     hd :: tl ->
       let names = match hd with
-        InlineNode.Eof
-      | InlineNode.Literal _
-      | InlineNode.Plain _ -> []
-      | InlineNode.Reference name -> [name] in
+      | InlineNode.Reference name -> [name]
+      | _ -> [] in
       find_all_references_inline (founds @ names) tl
   | [] -> founds
 
@@ -214,6 +217,7 @@ let rec plain_text_of_inline_node s = function
     hd :: tl ->
       let t = match hd with
         InlineNode.Plain s -> s
+      | InlineNode.Link (text, _) -> text
       | InlineNode.Literal s -> s
       | InlineNode.Eof -> ""
       | InlineNode.Reference name -> name in

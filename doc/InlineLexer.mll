@@ -1,9 +1,15 @@
+{
+let trim = ExtString.String.strip
+}
 
 rule token = parse
     eof { InlineNode.Eof }
   | "``" ([^'`']* as s) "``" { InlineNode.Literal s }
   | ":doc:`" ([^'`']+ as name) '`' { InlineNode.Reference name }
   | "::" as s { InlineNode.Plain s }
+  | '`' ([^'<']* as text) '<' ([^'`']* as url) ">`_" {
+    InlineNode.Link (trim text, trim url)
+  }
   | [^'`' ':']* as s { InlineNode.Plain s }
 
 (*
