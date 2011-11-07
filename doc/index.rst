@@ -57,6 +57,8 @@ Features
   * Function
   * UserFunction
   * Method
+  * ProcessStatus
+  * Exception
 
 * Structured programming with ``if``, ``while`` and ``every`` statements
 * Arithmetic operations
