@@ -161,7 +161,7 @@ let generate_header ch title =
 <title>run Documentation</title>
 </head>
 <body>
-<header><a href=\"index.html\">run Documentation - %s</a></header>
+<header><a href=\"index.html\">run Documentation</a> - %s</header>
 " (escape_html title))
 
 let generate_footer ch =
