@@ -61,8 +61,8 @@ Features
 * Structured programming with ``if``, ``while`` and ``every`` statements
 * Arithmetic operations
 * UTF-8 (only) acceptable
-* Written in Objective Caml
-* MIT Lisence
+* Written in `Objective Caml <http://caml.inria.fr/ocaml/index.en.html>`_
+* :doc:`copying`
 
 Documentations
 ==============
