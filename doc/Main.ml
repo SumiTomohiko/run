@@ -29,11 +29,13 @@ let rec get_whitespace_length s index =
 
 let sprintf = Printf.sprintf
 
+let make_tag name content = sprintf "<%s %s>" name content
+
 let string_of_inline_node = function
   | InlineNode.Eof -> "<Eof>"
-  | InlineNode.Literal s -> sprintf "<Literal %s>" s
-  | InlineNode.Plain s -> sprintf "<Plain %s>" s
-  | InlineNode.Reference s -> sprintf "<Reference %s>" s
+  | InlineNode.Literal s -> make_tag "Literal" s
+  | InlineNode.Plain s -> make_tag "Plain" s
+  | InlineNode.Reference s -> make_tag "Reference" s
 
 let get_indent_depth = function
   | InlineNode.Plain s -> get_whitespace_length s 0
@@ -100,8 +102,17 @@ let disable_preformatted generator = set_preformatted generator false
 
 let rec trim_indent accum depth = function
   | (InlineNode.Plain s) :: tl ->
-      let trimmed = String.sub s depth ((String.length s) - depth) in
-      trim_indent (accum @ [InlineNode.Plain trimmed]) depth tl
+      if 0 < (String.length s) then
+        if (String.get s 0) = '\n' then
+          let pos = depth + 1 in
+          let trimmed = String.sub s pos ((String.length s) - pos) in
+          trim_indent (accum @ [InlineNode.Plain ("\n" ^ trimmed)]) depth tl
+        else
+          let pos = depth in
+          let trimmed = String.sub s pos ((String.length s) - pos) in
+          trim_indent (accum @ [InlineNode.Plain trimmed]) depth tl
+      else
+        trim_indent accum depth tl
   | [] -> accum
   | _ -> assert false
 
