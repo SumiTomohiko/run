@@ -1,0 +1,21 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Implement iterate statement.
+desc: |-
+  iterate foo as bar
+    # Use bar
+  end
+type: :task
+component: core
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-08 18:42:21.968164 Z
+references: []
+
+id: ef645bb04d793d6d77817efe4b1c0f23c3acf5b2
+log_events: 
+- - 2011-11-08 18:42:23.108390 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
