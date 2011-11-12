@@ -1,0 +1,8 @@
+SRC:
+iterate { 42: 26 } as key, value
+  puts(key)
+  puts(value)
+end
+OUT:
+42
+26

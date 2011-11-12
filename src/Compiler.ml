@@ -89,7 +89,9 @@ let conv_kind = function
   | Op.LessEqual -> Op.LessEqual
   | Op.MakeArray n -> Op.MakeArray n
   | Op.MakeDict n -> Op.MakeDict n
+  | Op.MakeIterator -> Op.MakeIterator
   | Op.MakeUserFunction (args, index) -> Op.MakeUserFunction (args, index)
+  | Op.MoveIterator dest -> Op.MoveIterator dest.Op.index
   | Op.MoveParam -> Op.MoveParam
   | Op.Mul -> Op.Mul
   | Op.NotEqual -> Op.NotEqual
@@ -331,6 +333,17 @@ and compile_stmt compiler (pos, stmt) =
       add_label compiler else_begin;
       compile_stmts compiler stmts2;
       add_label compiler else_end
+  | Node.Iterate (expr, names, stmts) ->
+      compile_expr compiler expr;
+      add_op compiler Op.MakeIterator pos;
+      let stmts_begin = Op.make_label pos in
+      add_label compiler stmts_begin;
+      let stmts_end = Op.make_label pos in
+      add_op compiler (Op.MoveIterator stmts_end) pos;
+      List.iter (fun name -> add_op compiler (Op.StoreLocal name) pos) names;
+      compile_stmts compiler stmts;
+      add_op compiler (Op.Jump stmts_begin) pos;
+      add_label compiler stmts_end
   | Node.Next ->
       let label, _ = Stack.top compiler.while_stack in
       add_op compiler (Op.Jump label) pos

@@ -41,6 +41,7 @@ rule script_token lexer = parse
   | "false" { Parser.FALSE }
   | "finally" { Parser.FINALLY }
   | "if" { Parser.IF }
+  | "iterate" { Parser.ITERATE }
   | "next" { Parser.NEXT }
   | "raise" { Parser.RAISE }
   | "return" { Parser.RETURN }
@@ -177,6 +178,7 @@ let next_token_of_lexbuf lexer lexbuf =
   | Parser.LBRACE -> Stack.push (Stack.top mode_stack) mode_stack
   | Parser.DOLLER_LBRACE
   | Parser.EXCEPT
+  | Parser.ITERATE
   | Parser.LPAR -> Stack.push Script mode_stack
   | Parser.DOLLER_LPAR
   | Parser.EVERY -> Stack.push Pipeline mode_stack
@@ -226,6 +228,7 @@ let try_keyword line =
     | Parser.EXCEPT
     | Parser.FINALLY
     | Parser.IF
+    | Parser.ITERATE
     | Parser.NEXT
     | Parser.RETURN
     | Parser.TRY

@@ -364,8 +364,39 @@ let eval_op env frame op =
             iter (n - 1) in
       iter size;
       Stack.push (Value.Dict hash) stack
+  | Op.MakeIterator ->
+      let iter = match Stack.pop stack with
+      | Value.Array a -> Value.ArrayIterator (ExtArray.Array.enum a)
+      | Value.Dict d -> Value.DictIterator (ExtHashtbl.Hashtbl.enum d)
+      | Value.Int n -> Value.IntIterator (Num.num_of_int 0, n)
+      | _ -> assert false in
+      Stack.push iter stack
   | Op.MakeUserFunction (args, index) ->
       Stack.push (Value.UserFunction (args, index)) stack
+  | Op.MoveIterator dest ->
+      (match Stack.top stack with
+      | Value.ArrayIterator enum ->
+          (match Enum.get enum with
+          | Some v -> Stack.push v stack
+          | None ->
+              ignore (Stack.pop stack);
+              jump frame dest)
+      | Value.DictIterator enum ->
+          (match Enum.get enum with
+          | Some (key, value) ->
+              Stack.push value stack;
+              Stack.push key stack
+          | None ->
+              ignore (Stack.pop stack);
+              jump frame dest)
+      | Value.IntIterator (next, max) ->
+          ignore (Stack.pop stack);
+          if Num.(=/) next max then
+            jump frame dest
+          else
+            Stack.push (Value.IntIterator (Num.succ_num next, max)) stack;
+            Stack.push (Value.of_num next) stack
+      | _ -> assert false)
   | Op.MoveParam ->
       let s = Value.to_string (Stack.pop stack) in
       let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in

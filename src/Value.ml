@@ -1,8 +1,10 @@
 
+type int_internal = Num.num
+
 type t =
   | Nil
   | Bool of bool
-  | Int of Num.num
+  | Int of int_internal
   | Float of float
   | String of string
   | Array of t array
@@ -13,6 +15,12 @@ type t =
   | ProcessStatus of int
   | Class of string * (t -> t list -> t)
   | Exception of t * (string * string * int) list * t
+  (* FIXME: Do you have better idea for iterators? *)
+  | ArrayIterator of t Enum.t
+  | DictIterator of (t * t) Enum.t
+  | IntIterator of int_internal * int_internal
+
+let of_num n = Int n
 
 let bool_of_value = function
   | Nil -> false

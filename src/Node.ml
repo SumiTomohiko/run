@@ -31,11 +31,11 @@ and expr_body =
   | Subscript of subscript
   | Var of string
 and expr = pos * expr_body
-and every = { params: param list; names: string list; stmts: stmt list }
+and every = { params: param list; names: string list; stmts: stmts }
 and user_function = {
   uf_name: string;
   uf_args: string list;
-  uf_stmts: stmt list }
+  uf_stmts: stmts }
 and redirect = Dup | File of string * Unix.open_flag list
 and param = param_atom list
 and expr_param = { mutable ep_index: int; ep_expr: expr }
@@ -47,20 +47,22 @@ and param_atom =
   | Star
   | StarStar
 and command = param list * string option * redirect option * redirect option
-and except = expr list * string option * stmt list
+and except = expr list * string option * stmts
+and stmts = stmt list
 and stmt_body =
     Break
   | Communication of param list * param list
   | Every of every
   | Expr of expr
-  | If of expr * stmt list * stmt list
+  | If of expr * stmts * stmts
+  | Iterate of expr * string list * stmts
   | Next
   | Pipeline of command list
   | Raise of expr option
   | Return of expr
-  | Try of stmt list * except list * stmt list
+  | Try of stmts * except list * stmts
   | UserFunction of user_function
-  | While of expr * stmt list
+  | While of expr * stmts
 
   (* For an empty line *)
   | Empty
@@ -76,6 +78,7 @@ let rec dump = function
       | Every _ -> "Every"
       | Expr _ -> "Expr"
       | If _ -> "If"
+      | Iterate _ -> "Iterate"
       | Next -> "Next"
       | Pipeline _ -> "Pipeline"
       | Raise _ -> "Raise"

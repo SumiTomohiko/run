@@ -1,0 +1,7 @@
+SRC:
+iterate [42, 26] as n
+  puts(n)
+end
+OUT:
+42
+26
