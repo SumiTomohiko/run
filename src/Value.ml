@@ -22,7 +22,7 @@ type t =
 
 let of_num n = Int n
 
-let bool_of_value = function
+let to_bool = function
   | Nil -> false
   | Bool b -> b
   | ProcessStatus 0 -> true

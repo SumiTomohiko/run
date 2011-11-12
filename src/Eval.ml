@@ -345,7 +345,7 @@ let eval_op env frame op =
             jump frame dest
         | _ -> ())
   | Op.JumpIfFalse dest ->
-      if not (Value.bool_of_value (Stack.top stack)) then begin
+      if not (Value.to_bool (Stack.top stack)) then begin
         ignore (Stack.pop stack);
         jump frame dest
       end
