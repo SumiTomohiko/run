@@ -1,0 +1,22 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Write a tutorial.
+desc: ""
+type: :task
+component: doc
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :in_progress
+disposition: 
+creation_time: 2011-11-12 20:40:00.630570 Z
+references: []
+
+id: 46251b873c0de5b26318abf40f2d815b23c1edc0
+log_events: 
+- - 2011-11-12 20:40:02.614354 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
+- - 2011-11-12 20:40:21.555867 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - changed status from unstarted to in_progress
+  - ""
