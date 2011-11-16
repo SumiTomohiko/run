@@ -69,6 +69,7 @@ Features
 Documentations
 ==============
 
+* :doc:`tutorial`
 * :doc:`install`
 * :doc:`parsing`
 
