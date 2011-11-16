@@ -4,8 +4,7 @@ type page = { title: string; nodes: BlockNode.t list }
 type generator = {
   mutable section_depth: int;
   mutable list_depth: int Stack.t;
-  pages: (string, page) Hashtbl.t;
-  mutable preformatted: bool }
+  pages: (string, page) Hashtbl.t }
 
 let escape_char = function
     '&' -> "&amp;"
@@ -38,10 +37,7 @@ let string_of_inline_node = function
   | InlineNode.Plain s -> make_tag "Plain" s
   | InlineNode.Reference s -> make_tag "Reference" s
 
-let get_indent_depth = function
-  | InlineNode.Link (text, _)
-  | InlineNode.Plain text -> get_whitespace_length text 0
-  | _ -> assert false
+let get_indent_depth text = get_whitespace_length text 0
 
 let convert_inline generator = function
     InlineNode.Plain s -> if s = "::" then ":" else escape_html s
@@ -100,46 +96,30 @@ let open_or_close_list generator depth =
 
 let rec close_all_list generator = close_list generator list_sentinel ""
 
-let set_preformatted generator b = generator.preformatted <- b
-let enable_preformatted generator = set_preformatted generator true
-let disable_preformatted generator = set_preformatted generator false
-
 let rec trim_indent accum depth = function
-  | (InlineNode.Link (s, _)) :: tl
-  | (InlineNode.Plain s) :: tl ->
-      if 0 < (String.length s) then
-        if (String.get s 0) = '\n' then
+  | hd :: tl ->
+      if 0 < (String.length hd) then
+        if (String.get hd 0) = '\n' then
           let pos = depth + 1 in
-          let trimmed = String.sub s pos ((String.length s) - pos) in
-          trim_indent (accum @ [InlineNode.Plain ("\n" ^ trimmed)]) depth tl
+          let trimmed = String.sub hd pos ((String.length hd) - pos) in
+          trim_indent (accum @ ["\n" ^ trimmed]) depth tl
         else
           let pos = depth in
-          let trimmed = String.sub s pos ((String.length s) - pos) in
-          trim_indent (accum @ [InlineNode.Plain trimmed]) depth tl
+          let trimmed = String.sub hd pos ((String.length hd) - pos) in
+          trim_indent (accum @ [trimmed]) depth tl
       else
         trim_indent accum depth tl
   | [] -> accum
-  | _ -> assert false
 
 let convert_nonlist_block generator = function
     BlockNode.BulletItem _ -> assert false
-  | BlockNode.Paragraph [InlineNode.Plain "::"] ->
-      enable_preformatted generator;
-      ""
+  | BlockNode.Paragraph [InlineNode.Plain "::"] -> ""
   | BlockNode.Paragraph nodes ->
-      if generator.preformatted then begin
-        disable_preformatted generator;
-        let depth = get_indent_depth (List.hd nodes) in
-        let l = trim_indent [] depth nodes in
-        enclose_tag "pre" (convert_inlines generator l)
-      end else begin
-        (match List.hd (List.rev nodes) with
-        | InlineNode.Plain "::" -> enable_preformatted generator
-        | _ -> ());
-        enclose_tag "p" (convert_inlines generator nodes)
-      end
-  | BlockNode.Title (depth, nodes) ->
-      convert_title generator depth nodes
+      enclose_tag "p" (convert_inlines generator nodes)
+  | BlockNode.Preformatted contents ->
+      let depth = get_indent_depth (List.hd contents) in
+      enclose_tag "pre" (String.concat "\n" (trim_indent [] depth contents))
+  | BlockNode.Title (depth, nodes) -> convert_title generator depth nodes
 
 let convert_block generator = function
     BlockNode.BulletItem (depth, nodes) ->
@@ -194,6 +174,7 @@ let rec find_all_references founds = function
       let nodes = match hd with
         BlockNode.BulletItem (_, nodes) -> nodes
       | BlockNode.Paragraph nodes -> nodes
+      | BlockNode.Preformatted _ -> []
       | BlockNode.Title (_, nodes) -> nodes in
       let names = find_all_references_inline [] nodes in
       find_all_references (founds @ names) tl
@@ -270,8 +251,7 @@ let main () =
   let generator = {
     section_depth=1;
     list_depth=Stack.create ();
-    pages=pages;
-    preformatted=false } in
+    pages=pages } in
   Stack.push list_sentinel generator.list_depth;
   output_all_pages generator
 
