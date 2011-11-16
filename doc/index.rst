@@ -47,20 +47,20 @@ Features
 * Powerfull redirecting
 * Basic Types
 
-  * Nil
-  * Bool
-  * Int
-  * Float
-  * String
-  * Array
-  * Dictionary (Hash)
-  * Function
-  * UserFunction
-  * Method
-  * ProcessStatus
-  * Exception
+  * ``Nil``
+  * ``Bool``
+  * ``Int``
+  * ``Float``
+  * ``String``
+  * ``Array``
+  * ``Dictionary`` (Hash)
+  * ``Function`` / ``UserFunction``
+  * ``Method``
+  * ``ProcessStatus``
+  * Some exceptions
 
-* Structured programming with ``if``, ``while`` and ``every`` statements
+* Structured programming with ``if``, ``while``, ``iterate`` and ``every``
+  statements
 * Arithmetic operations
 * UTF-8 (only) acceptable
 * Written in `Objective Caml <http://caml.inria.fr/ocaml/index.en.html>`_
