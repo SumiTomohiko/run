@@ -118,7 +118,8 @@ let convert_nonlist_block generator = function
       enclose_tag "p" (convert_inlines generator nodes)
   | BlockNode.Preformatted contents ->
       let depth = get_indent_depth (List.hd contents) in
-      enclose_tag "pre" (String.concat "\n" (trim_indent [] depth contents))
+      let s = String.concat "\n" (trim_indent [] depth contents) in
+      enclose_tag "pre" (escape_html s)
   | BlockNode.Title (depth, nodes) -> convert_title generator depth nodes
 
 let convert_block generator = function
