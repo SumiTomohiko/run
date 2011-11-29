@@ -293,16 +293,42 @@ Command Executing
 Basic
 -----
 
+Executing a command is simple::
+
+  echo "Hello, world!"
+
 Pipeline
 --------
+
+Joining some commands with ``|`` becomes a pipeline::
+
+  echo "Hello, world!" | cat -n
 
 Redirection
 -----------
 
+``<`` with a path after a command is redirection to standard input. ``>`` with
+a path after a command is redirection to standard output::
+
+  grep -v "^#" < /etc/rc.conf > settings
+
+If you hope to write both of stdout and stderr to a file, you can use ``=>``::
+
+  foo => foo.log
+
 Process Status
 --------------
 
+``$?`` is a status of last executed process.
+
 Command Expression
 ------------------
+
+Enclosing a pipeline (including single command) with ``$(`` and ``)`` is a
+command expression. This will be a string of stdout of specified process::
+
+  foo = $(echo "Hello, world!")
+
+``foo`` will be ``"Hello, world!"``.
 
 .. vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=rst
