@@ -237,20 +237,55 @@ parenthesises, like::
 Exception
 =========
 
+run supports exceptions like Java and Python, etc.
+
 ``try`` Statement
 -----------------
+
+``try`` statement declares range of catching an exception. ``try`` statement
+must have one or more ``except`` clauses, one ``finally`` clause or both::
+
+  try
+    # Code expecting exceptions
+  except Exception as e
+    # e is an exception.
+  finally
+    # Cleanup
+  end
 
 ``except`` Clause
 -----------------
 
+One ``except`` clause has an exception class to catch, and a variable name to
+store an exception after ``as`` keyword.
+
 ``finally`` Clause
 ------------------
+
+run executes code in ``finally`` clause always.
 
 ``raise`` Statement
 -------------------
 
+You can raise an exception with ``raise`` statement.
+
 Traceback
 ---------
+
+If an exception is not catched, run show a traceback::
+
+  $ cat foo.run
+
+  def foo()
+    raise Exception.new(42)
+  end
+
+  foo()
+  $ run foo.run
+  Traceback (most recent call last):
+    File "foo.run", line 6, in <module>
+    File "foo.run", line 3, in foo
+  Exception: 42
 
 Command Executing
 =================
