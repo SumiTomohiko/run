@@ -1,0 +1,23 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Patterns with "/" are rejected.
+desc: |-
+  Below code will be error::
+  
+    every /etc/rc.d/* as f
+      puts(f)
+    end
+type: :bugfix
+component: core
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-29 17:25:26.383451 Z
+references: []
+
+id: b9d3e538cded15ca94dd4c9a2ed1360f2825f0cb
+log_events: 
+- - 2011-11-29 17:25:27.207669 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

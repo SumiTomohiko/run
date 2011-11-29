@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: rst2html cannot make <pre/> with blank lines.
+desc: See "Traceback" section.
+type: :bugfix
+component: doc
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-29 17:26:24.782120 Z
+references: []
+
+id: 0984b3ec7150f9220012bda78dc3b25df29abfb9
+log_events: 
+- - 2011-11-29 17:26:25.176066 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

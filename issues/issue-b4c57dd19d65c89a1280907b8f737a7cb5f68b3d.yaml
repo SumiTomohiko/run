@@ -1,0 +1,21 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Path names with "/" are rejected.
+desc: |-
+  ::
+  
+    grep -v "^#" < /etc/rc.conf
+type: :bugfix
+component: core
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-29 17:27:44.863276 Z
+references: []
+
+id: b4c57dd19d65c89a1280907b8f737a7cb5f68b3d
+log_events: 
+- - 2011-11-29 17:27:45.258411 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
