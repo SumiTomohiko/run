@@ -7,12 +7,13 @@ let parse_inline text =
     | node -> loop (nodes @ [node]) lexbuf in
   loop [] lexbuf
 %}
-%token EOF EMPTY
+%token EOF EMPTY PREFORMATTED_EMPTY
 %token <int> UNDERLINE
-%token <string> LINE
+%token <string> LINE PREFORMATTED
 %token <int * string> BULLET_ITEM
 %type <BlockNode.t list> rst
 %start rst
+%right PREFORMATTED_EMPTY
 %%
 rst
   : blocks EOF { $1 }
@@ -26,6 +27,9 @@ blocks
 block
   : EMPTY line UNDERLINE { [BlockNode.Title ($3, $2)] }
   | EMPTY lines { [BlockNode.Paragraph $2] }
+  | PREFORMATTED_EMPTY preformatted_blocks PREFORMATTED_EMPTY {
+    [BlockNode.Preformatted $2]
+  }
   | EMPTY bullet_list { $2 }
   | EMPTY { [] }
   ;
@@ -54,6 +58,20 @@ lines
 
 line
   : LINE { parse_inline $1 }
+  ;
+
+preformatted_blocks
+  : preformatted_blocks PREFORMATTED_EMPTY preformatted_lines { $1 @ [""] @ $3 }
+  | preformatted_lines { $1 }
+  ;
+
+preformatted_lines
+  : preformatted_lines preformatted { $1 @ [$2] }
+  | preformatted { [$1] }
+  ;
+
+preformatted
+  : PREFORMATTED { $1 }
   ;
 
 /**

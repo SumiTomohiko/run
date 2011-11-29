@@ -1,29 +1,26 @@
 --- !ditz.rubyforge.org,2008-03-06/issue 
-title: Implement iterate statement.
-desc: |-
-  iterate foo as bar
-    # Use bar
-  end
+title: Write a tutorial.
+desc: ""
 type: :task
-component: core
+component: doc
 release: 0.1.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :closed
 disposition: :fixed
-creation_time: 2011-11-08 18:42:21.968164 Z
+creation_time: 2011-11-12 20:40:00.630570 Z
 references: []
 
-id: ef645bb04d793d6d77817efe4b1c0f23c3acf5b2
+id: 46251b873c0de5b26318abf40f2d815b23c1edc0
 log_events: 
-- - 2011-11-08 18:42:23.108390 Z
+- - 2011-11-12 20:40:02.614354 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - created
   - ""
-- - 2011-11-08 19:51:12.555139 Z
+- - 2011-11-12 20:40:21.555867 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - changed status from unstarted to in_progress
   - ""
-- - 2011-11-16 15:40:33.847897 Z
+- - 2011-11-29 17:16:21.937666 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - closed with disposition fixed
   - ""

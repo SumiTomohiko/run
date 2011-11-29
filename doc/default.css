@@ -1,5 +1,11 @@
 
+code {
+  color: purple;
+  font-weight: bold;
+}
+
 pre {
+  background-color: gainsboro;
   border-style: solid;
   border-width: 1px;
   padding: 12px;
