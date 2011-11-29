@@ -2,6 +2,55 @@
 Tutorial
 ********
 
+Hello, world! (First Step into run)
+===================================
+
+Giving a script path to ``run`` command executes it::
+
+  $ echo 'print("Hello, world!")' > foo.run
+  $ run foo.run
+  Hello, world!
+
+Comment
+=======
+
+Single Line Comment with ``#``
+------------------------------
+
+A part from ``#`` to next newline is a comment. ``run`` ignores there::
+
+  print("Hello, world!") # Here is a comment.
+
+Multi Line (Smiling) Comment
+----------------------------
+
+A smiling mark ``(:`` tells a start of a multiline comment. An end mark of a
+multiline comment is ``:)``::
+
+  (:
+   : Here is a comment.
+   :)
+  print("Hello, world!")
+
+A multiline comment can have nested multiline comments::
+
+  (:
+   : (:
+   :  :
+   :  :)
+   : Here is still a comment.
+   :)
+  print("Hello, world!")
+
+Variable and Assignment
+=======================
+
+Assignment of run is on ALGOL style (using ``=``)::
+
+  foo = 42
+
+You do not need any declarations. First assignment makes a variable.
+
 Basic Types
 ===========
 
@@ -21,15 +70,72 @@ a value.
 
 A double quoted string like ``"foobarbazquux"`` is an instance of ``String``.
 
+Heredocument
+'''''''''''''
+
+run supports heredocuments::
+
+  print(<<EOF)
+  foobarbazquux
+  EOF
+
+Above code prints ``foobarbazquux``.
+
 ``Nil``
 -------
 
 ``Nil`` is a type of ``nil``.
 
+``Array``
+---------
+
+Enclosing comma-separated-values with ``[`` and ``]`` makes an array::
+
+  foo = [42, 1.21]
+
+Each element in an array can be read by the following way::
+
+  print(foo[0]) # => 42
+
+You can know length of an array with ``size`` attribute::
+
+  print(foo.size) # => 2
+
+``Dict``
+--------
+
+Enclosing comma-separated-pairs with ``{`` and ``}`` makes a dictionary. One
+pair consists of two values separated with ``:``::
+
+  foo = { 42: 26 }
+
+Each element in a dictionary can be read by the way like arrays::
+
+  print(foo[42]) # => 26
+
+``Function`` and ``UserFunction``
+---------------------------------
+
+In run, ``Function`` is a builtin function. On the other hand, ``UserFunction``
+is a function declared in a script.
+
+``ProcessStatus``
+-----------------
+
+``ProcessStatus`` object represents status of a process. You can take this with
+``$?`` after executing a process. In usual shells (like bash and csh), ``$?`` is
+an integer, but this is concrete. run hopes more abstract process status. This
+is a reason why ``ProcessStatus`` exists.
+
+If you give a ``ProcessStatus`` object in an expression which is evalulated as
+boolean (like a condition expression in ``if`` statement), ``ProcessStatus`` of
+zero is true, any others are false.
+
 true or false
 -------------
 
-``nil`` and ``false`` are false. Anything else are true.
+``nil``, ``false`` and ``ProcessStatus`` of ``0`` are false. Anything else are
+true.
 
 Structured Programming
 ======================
@@ -76,6 +182,35 @@ iteration. So you must give two variables after ``as`` separated with "``,``"::
 
 The above code prints ``42`` and ``26``.
 
+``every`` Statement
+'''''''''''''''''''
+
+``every`` statement can be used in iterating files. ``every`` statement accepts
+one or more file name patterns after ``every`` keyword. ``every`` statement
+searches files which are matched with this patterns, and assigns each name to
+a variable after ``as`` keyword::
+
+  every * as f
+    puts(f)
+  end
+
+Above code prints files in a current directory.
+
+Branch (``if`` Statement)
+-------------------------
+
+You will understand all of ``if`` statement with below code::
+
+  if score < 60
+    print("NG")
+  elif score < 80
+    print("Good")
+  elif score < 90
+    print("Excellent")
+  else
+    print("Amazing")
+  end
+
 Function
 ========
 
@@ -109,6 +244,30 @@ Exception
 -----------------
 
 ``finally`` Clause
+------------------
+
+``raise`` Statement
+-------------------
+
+Traceback
+---------
+
+Command Executing
+=================
+
+Basic
+-----
+
+Pipeline
+--------
+
+Redirection
+-----------
+
+Process Status
+--------------
+
+Command Expression
 ------------------
 
 .. vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=rst
