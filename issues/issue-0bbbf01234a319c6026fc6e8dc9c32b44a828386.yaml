@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Implement exception statement.
+desc: exception NetworkError > ParentException
+type: :task
+component: core
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-29 19:31:30.065216 Z
+references: []
+
+id: 0bbbf01234a319c6026fc6e8dc9c32b44a828386
+log_events: 
+- - 2011-11-29 19:31:30.485068 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
