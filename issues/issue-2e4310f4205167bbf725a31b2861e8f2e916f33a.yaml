@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Implement zoe statement.
+desc: If a command fails given to zoe statement, raise CommandError.
+type: :task
+component: core
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-29 20:35:43.835516 Z
+references: []
+
+id: 2e4310f4205167bbf725a31b2861e8f2e916f33a
+log_events: 
+- - 2011-11-29 20:35:44.374274 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
