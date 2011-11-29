@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Write <->.
+desc: ""
+type: :task
+component: doc
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-29 20:36:59.764619 Z
+references: []
+
+id: f73a80d405734b4297048bc2ef6770a50f2e3cd0
+log_events: 
+- - 2011-11-29 20:37:00.280249 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
