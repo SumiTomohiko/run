@@ -57,8 +57,10 @@ and try_pattern pattern vals name index =
           try_pattern tl vals name index
     | Op.Star :: tl -> try_star tl vals name index size
     | Op.StarStar :: _ -> true, pattern
+    | Op.Dir :: _
     | [] -> false, []
-    | _ -> failwith "Invalid operation"
+
+let sprintf = Printf.sprintf
 
 let rec traverse dir pattern vals =
   try
@@ -70,7 +72,7 @@ let rec traverse dir pattern vals =
         | "."
         | ".." -> loop founds
         | name ->
-            let path = Printf.sprintf "%s/%s" dir name in
+            let path = sprintf "%s/%s" dir name in
             let matched = find_abs path vals pattern in
             let matched2 = if (Unix.stat path).Unix.st_kind = Unix.S_DIR then
               traverse path pattern vals
@@ -88,7 +90,10 @@ and find_at dirp dir pattern vals founds =
     | "."
     | ".." -> []
     | name ->
-        let path = Printf.sprintf "%s/%s" dir name in
+        let path = if dir = "/" then
+          sprintf "%s%s" dir name
+        else
+          sprintf "%s/%s" dir name in
         match try_pattern pattern vals name 0 with
         | true, [] -> [path]
         | true, child -> find_abs path vals child
@@ -107,10 +112,15 @@ and find_abs dir vals = function
       | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
 
 let find dir pattern vals =
-  let size = (String.length dir) + 1 in
-  let remove_dir path = String.sub path size ((String.length path) - size) in
-  let pathes = find_abs dir (Array.map Value.to_string vals) pattern in
-  List.map remove_dir pathes
+  let string_vals = Array.map Value.to_string vals in
+  match pattern with
+  | Op.Dir :: tl -> find_abs "/" string_vals tl
+  | pattern ->
+      let pathes = find_abs dir string_vals pattern in
+      let remove_dir dir_size path =
+        let path_size = String.length path in
+        String.sub path dir_size (path_size - dir_size) in
+      List.map (remove_dir ((String.length dir) + 1)) pathes
 
 let rec expand_branch pattern = function
   | hd :: tl ->
