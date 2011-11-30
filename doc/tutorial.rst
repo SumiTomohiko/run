@@ -134,8 +134,8 @@ zero is true, any others are false.
 true or false
 -------------
 
-``nil``, ``false`` and ``ProcessStatus`` of ``0`` are false. Anything else are
-true.
+``nil``, ``false`` and ``ProcessStatus`` of non-zero are false. Anything else
+are true.
 
 Structured Programming
 ======================
