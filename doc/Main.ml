@@ -108,7 +108,7 @@ let rec trim_indent accum depth = function
           let trimmed = String.sub hd pos ((String.length hd) - pos) in
           trim_indent (accum @ [trimmed]) depth tl
       else
-        trim_indent accum depth tl
+        trim_indent (accum @ [""]) depth tl
   | [] -> accum
 
 let convert_nonlist_block generator = function
