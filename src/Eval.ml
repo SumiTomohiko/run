@@ -1,32 +1,4 @@
 
-type command = {
-  cmd_params: string DynArray.t;
-  cmd_stderr_redirect: Redirect.t option
-}
-
-type pipeline = {
-  pl_commands: command DynArray.t;
-  pl_first_stdin: string option;
-  pl_last_stdout: (string * Unix.open_flag list) option
-}
-
-type frame = {
-  code: Code.t;
-  mutable pc: int;
-  locals: Symboltbl.t;
-  outer_frame: frame option;
-  stack: Value.t Stack.t;
-  pipelines: pipeline Stack.t
-}
-
-type env = {
-  codes: Code.t array;
-  globals: Symboltbl.t;
-  builtins: Builtins.Command.t;
-  frames: frame Stack.t;
-  mutable last_status: int;
-  mutable last_exception: Value.t }
-
 let rec pop_args stack = function
     0 -> []
   | n -> let last = Stack.pop stack in (pop_args stack (n - 1)) @ [last]
@@ -37,11 +9,11 @@ let call env callee args =
   | Value.Method (self, f) -> f self args
   | _ -> failwith "Object is not callable"
 
-let find_global env = Symboltbl.find env.globals
+let find_global env = Symboltbl.find env.Env.globals
 
 let find_local env frame name =
   try
-    Symboltbl.find frame.locals name
+    Symboltbl.find frame.Env.locals name
   with
     Not_found -> find_global env name
 
@@ -135,7 +107,7 @@ let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 let close = Option.may Unix.close
 
 let exec cmd =
-  let args = cmd.cmd_params in
+  let args = cmd.Env.cmd_params in
   let prog = DynArray.get args 0 in
   Unix.execvp prog (DynArray.to_array args)
 
@@ -148,7 +120,7 @@ let exec_communicate cmd pipes =
     0 ->
       dup_and_close (fst (List.hd pipes)) Unix.stdin;
       dup_and_close (snd (List.hd (List.tl pipes))) Unix.stdout;
-      let args = cmd.cmd_params in
+      let args = cmd.Env.cmd_params in
       let prog = DynArray.get args 0 in
       Unix.execv prog (DynArray.to_array args)
   | pid -> pid
@@ -160,7 +132,7 @@ let exec_command cmd (pipe1, pipe2) =
       close (fst pipe2);
       dup (fst pipe1) Unix.stdin;
       dup (snd pipe2) Unix.stdout;
-      (match cmd.cmd_stderr_redirect with
+      (match cmd.Env.cmd_stderr_redirect with
         Some (Redirect.File (path, flags)) ->
           let fd = Unix.openfile path flags 0o644 in
           Unix.dup2 fd Unix.stderr;
@@ -177,7 +149,8 @@ let rec close_second_pipes = function
       close_second_pipes tl
   | [] -> ()
 
-let add_command frame = DynArray.add (Stack.top frame.pipelines).pl_commands
+let add_command frame =
+  DynArray.add (Stack.top frame.Env.pipelines).Env.pl_commands
 
 let wait_children = List.iter (fun pid -> ignore (Unix.waitpid [] pid))
 
@@ -187,18 +160,18 @@ let close_all_pipes = function
   | _ -> failwith "Invalid pipes"
 
 let exec_pipeline env pipeline last_stdout_pair read_last_output =
-  let cmds = pipeline.pl_commands in
+  let cmds = pipeline.Env.pl_commands in
   let cmd = DynArray.get cmds 0 in
-  let name = DynArray.get cmd.cmd_params 0 in
+  let name = DynArray.get cmd.Env.cmd_params 0 in
   try
-    let f = Builtins.Command.find env.builtins name in
-    let ret = f (List.tl (DynArray.to_list cmd.cmd_params)) in
+    let f = Builtins.Command.find env.Env.builtins name in
+    let ret = f (List.tl (DynArray.to_list cmd.Env.cmd_params)) in
     close (fst last_stdout_pair);
     close (snd last_stdout_pair);
     ret
   with
     Not_found ->
-      let first_stdin_fd = match pipeline.pl_first_stdin with
+      let first_stdin_fd = match pipeline.Env.pl_first_stdin with
         Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
       | None -> None in
       let first_pair = (first_stdin_fd, None) in
@@ -232,31 +205,23 @@ let eval_params stack n params =
   let vals = Array.of_list (pop_args stack n) in
   List.concat (List.map (Param.eval vals) params)
 
-let make_frame code locals = {
-  code=code;
-  pc=0;
-  locals=locals;
-  outer_frame=None;
-  stack=Stack.create ();
-  pipelines=Stack.create () }
-
 let rec make_traceback accum frames =
   if Stack.is_empty frames then
     accum
   else
     let frame = Stack.pop frames in
-    let code = frame.code in
+    let code = frame.Env.code in
     let path = Code.path_of_code code in
     let name = Code.name_of_code code in
-    let lineno = Code.lineno_of_pc code (frame.pc - 1) in
+    let lineno = Code.lineno_of_pc code (frame.Env.pc - 1) in
     make_traceback ((path, name, lineno) :: accum) frames
 
-let jump frame dest = frame.pc <- dest
+let jump frame dest = frame.Env.pc <- dest
 
-let store_top_local frame = Symboltbl.add frame.locals
+let store_top_local frame = Symboltbl.add frame.Env.locals
 
 let eval_op env frame op =
-  let stack = frame.stack in
+  let stack = frame.Env.stack in
   let error _ = raise_unsupported_operands_error () in
   match op with
     Op.Add ->
@@ -265,19 +230,19 @@ let eval_op env frame op =
       let stringf s t = Value.String (s ^ t) in
       eval_binop stack intf floatf stringf error
   | Op.Call nargs ->
-      let args = pop_args frame.stack nargs in
+      let args = pop_args frame.Env.stack nargs in
       (match Stack.pop stack with
       | Value.UserFunction (params, index) ->
           let locals = Symboltbl.create () in
           let store_param param arg = Symboltbl.add locals param arg in
           List.iter2 store_param params args;
-          let frame = make_frame (Array.get env.codes index) locals in
-          Stack.push frame env.frames
+          let frame = Env.make_frame (Array.get env.Env.codes index) locals in
+          Stack.push frame env.Env.frames
       | f -> Stack.push (call env f args) stack)
   | Op.Communicate ->
-      let pipeline = Stack.pop frame.pipelines in
+      let pipeline = Stack.pop frame.Env.pipelines in
       let pipes = [Unix.pipe (); Unix.pipe ()] in
-      let cmds = DynArray.to_list pipeline.pl_commands in
+      let cmds = DynArray.to_list pipeline.Env.pl_commands in
       let pids = List.map2 exec_communicate cmds [pipes; (List.rev pipes)] in
       close_all_pipes pipes;
       wait_children pids
@@ -292,8 +257,8 @@ let eval_op env frame op =
       eval_binop stack intf floatf error error
   | Op.Equal -> eval_equality stack ((=) 0)
   | Op.Exec ->
-      let pipeline = Stack.pop frame.pipelines in
-      let last_stdout_fd = match pipeline.pl_last_stdout with
+      let pipeline = Stack.pop frame.Env.pipelines in
+      let last_stdout_fd = match pipeline.Env.pl_last_stdout with
         Some (path, flags) -> Some (Unix.openfile path flags 0o644)
       | None -> None in
       let last_pair = (None, last_stdout_fd) in
@@ -303,7 +268,7 @@ let eval_op env frame op =
         | _ -> -1 in
         status, "" in
       let status, _ = exec_pipeline env pipeline last_pair read_last_output in
-      env.last_status <- status
+      env.Env.last_status <- status
   | Op.ExecAndPush ->
       let rfd, wfd = Unix.pipe () in
       let pair = (Some rfd, Some wfd) in
@@ -319,9 +284,9 @@ let eval_op env frame op =
             | _, _ -> -1, s in
           loop "" pid fd
       | None -> failwith "Invalid stdout file descriptor" in
-      let pipeline = Stack.pop frame.pipelines in
+      let pipeline = Stack.pop frame.Env.pipelines in
       let status, stdout = exec_pipeline env pipeline pair read_last_output in
-      env.last_status <- status;
+      env.Env.last_status <- status;
       Stack.push (Value.String (trim stdout)) stack
   | Op.Greater -> eval_comparison stack ((<) 0)
   | Op.GreaterEqual -> eval_comparison stack ((<=) 0)
@@ -337,10 +302,10 @@ let eval_op env frame op =
   | Op.Jump dest -> jump frame dest
   | Op.JumpIfException dest ->
       let expected = Stack.pop stack in
-      if expected == Symboltbl.find env.globals "Exception" then
+      if expected == Symboltbl.find env.Env.globals "Exception" then
         jump frame dest
       else
-        (match env.last_exception with
+        (match env.Env.last_exception with
         | Value.Exception (actual, _, _) when expected == actual ->
             jump frame dest
         | _ -> ())
@@ -399,8 +364,8 @@ let eval_op env frame op =
       | _ -> assert false)
   | Op.MoveParam ->
       let s = Value.to_string (Stack.pop stack) in
-      let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
-      DynArray.add cmd.cmd_params s
+      let cmd = DynArray.last (Stack.top frame.Env.pipelines).Env.pl_commands in
+      DynArray.add cmd.Env.cmd_params s
   | Op.Mul ->
       let intf n m = Value.Int (Num.mult_num n m) in
       let floatf x y = Value.Float (x *. y) in
@@ -418,19 +383,20 @@ let eval_op env frame op =
       | Value.Nil -> None
       | _ -> failwith "Invalid stderr redirect" in
       let cmd = {
-        cmd_params=DynArray.create (); cmd_stderr_redirect=stderr_redirect } in
+        Env.cmd_params=DynArray.create ();
+        Env.cmd_stderr_redirect=stderr_redirect } in
       add_command frame cmd
   | Op.PushCommandE2O ->
       let cmd = {
-        cmd_params=DynArray.create ();
-        cmd_stderr_redirect=Some Redirect.Dup } in
+        Env.cmd_params=DynArray.create ();
+        Env.cmd_stderr_redirect=Some Redirect.Dup } in
       add_command frame cmd
   | Op.PushCommandParams (n, params) ->
-      let cmd = DynArray.last (Stack.top frame.pipelines).pl_commands in
-      List.iter (DynArray.add cmd.cmd_params) (eval_params stack n params)
+      let cmd = DynArray.last (Stack.top frame.Env.pipelines).Env.pl_commands in
+      List.iter (DynArray.add cmd.Env.cmd_params) (eval_params stack n params)
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLastStatus ->
-      Stack.push (Value.ProcessStatus env.last_status) stack
+      Stack.push (Value.ProcessStatus env.Env.last_status) stack
   | Op.PushLocal name -> Stack.push (find_local env frame name) stack
   | Op.PushParams (n, params) ->
       let actuals = eval_params stack n params in
@@ -445,28 +411,28 @@ let eval_op env frame op =
       | Value.Nil -> None
       | _ -> failwith "Invalid stdin path" in
       let pipeline = {
-        pl_commands=DynArray.create ();
-        pl_first_stdin=stdin;
-        pl_last_stdout=stdout } in
-      Stack.push pipeline frame.pipelines
+        Env.pl_commands=DynArray.create ();
+        Env.pl_first_stdin=stdin;
+        Env.pl_last_stdout=stdout } in
+      Stack.push pipeline frame.Env.pipelines
   | Op.Raise ->
       let e = match Stack.pop stack with
       | Value.Exception _ as e -> e
       | e ->
-          let clazz = Symboltbl.find env.globals "Exception" in
+          let clazz = Symboltbl.find env.Env.globals "Exception" in
           let create = match clazz with
           | Value.Class (_, create) -> create
           | _ -> assert false in
           create clazz [e] in
       raise (Exception.Run_exception e)
-  | Op.Reraise -> raise (Exception.Run_exception env.last_exception)
+  | Op.Reraise -> raise (Exception.Run_exception env.Env.last_exception)
   | Op.Return ->
       let value = Stack.pop stack in
-      ignore (Stack.pop env.frames);
-      let frame = Stack.top env.frames in
-      Stack.push value frame.stack
+      ignore (Stack.pop env.Env.frames);
+      let frame = Stack.top env.Env.frames in
+      Stack.push value frame.Env.stack
   | Op.StoreLastException name ->
-      store_top_local frame name env.last_exception
+      store_top_local frame name env.Env.last_exception
   | Op.StoreLocal name -> store_top_local frame name (Stack.pop stack)
   | Op.StoreSubscript ->
       let index = Stack.pop stack in
@@ -493,26 +459,27 @@ let eval_op env frame op =
   | Op.Label -> assert false
 
 let rec eval_env env =
-  let frames = env.frames in
+  let frames = env.Env.frames in
   let frame = Stack.top frames in
-  let pc = frame.pc in
-  let ops = Code.ops_of_code frame.code in
+  let pc = frame.Env.pc in
+  let ops = Code.ops_of_code frame.Env.code in
   if (Array.length ops) <= pc then
     ()
   else begin
     jump frame (pc + 1);
     (try
-      let op = Array.get ops (frame.pc - 1) in
+      let op = Array.get ops (frame.Env.pc - 1) in
       eval_op env frame op
     with
     | Exception.Run_exception v as e ->
-        env.last_exception <- v;
+        env.Env.last_exception <- v;
         let rec jump_to_except () =
           if Stack.is_empty frames then
             raise e
           else
             let frame = Stack.top frames in
-            let dest = Code.dest_of_exception frame.code (frame.pc - 1) in
+            let pc = frame.Env.pc - 1 in
+            let dest = Code.dest_of_exception frame.Env.code pc in
             if dest < 0 then begin
               ignore (Stack.pop frames);
               jump_to_except ();
@@ -523,7 +490,7 @@ let rec eval_env env =
   end
 
 let make_exception env self args =
-  let tb = make_traceback [] (Stack.copy env.frames) in
+  let tb = make_traceback [] (Stack.copy env.Env.frames) in
   match args with
   | [] -> Value.Exception (self, tb, Value.Nil)
   | [msg] -> Value.Exception (self, tb, msg)
@@ -533,21 +500,12 @@ let add_exception env tbl name =
   Symboltbl.add tbl name (Value.Class (name, make_exception env))
 
 let make_globals env =
-  let tbl = env.globals in
+  let tbl = env.Env.globals in
   let exceptions = ["Exception"; "ArgumentError"; "IndexError"] in
   List.iter (add_exception env tbl) exceptions
 
 let eval codes index =
-  let frame = make_frame (Array.get codes index) (Symboltbl.create ()) in
-  let frames = Stack.create () in
-  Stack.push frame frames;
-  let env = {
-    codes=codes;
-    globals=Builtins.Function.create ();
-    builtins=Builtins.Command.create ();
-    frames=frames;
-    last_status=0;
-    last_exception=Value.Nil } in
+  let env = Env.create codes index in
   make_globals env;
   eval_env env
 

@@ -51,6 +51,7 @@ FILES[] =
     Op
     Compiler
     Symboltbl
+    Env
     Builtins
     Redirect
     Eval
