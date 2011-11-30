@@ -216,29 +216,15 @@ param
   ;
 
 param_body
-  : path { $1 }
-  | SEP path { [Node.Dir] @ $2 }
-  | SEP { [Node.Dir] }
-  ;
-
-path
-  : path SEP name { $1 @ [Node.Dir] @ $3 }
-  | name { $1 }
-  ;
-
-name
-  : STAR_STAR { [Node.StarStar] }
-  | param_atoms { $1 }
-  ;
-
-param_atoms
-  : param_atoms param_atom { $1 @ [$2] }
+  : param_body param_atom { $1 @ [$2] }
   | param_atom { [$1] }
   ;
 
 param_atom
   : CHAR { Node.Char $1 }
+  | SEP { Node.Dir }
   | STAR { Node.Star }
+  | STAR_STAR { Node.StarStar }
   | LBRACE param_bodies RBRACE { Node.Branch $2 }
   | DOLLER_LBRACE expr RBRACE {
     Node.ExprParam { Node.ep_index=0; Node.ep_expr=$2 }

@@ -5,8 +5,8 @@ type: :bugfix
 component: core
 release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
-status: :unstarted
-disposition: 
+status: :closed
+disposition: :fixed
 creation_time: 2011-11-30 19:23:47.885874 Z
 references: []
 
@@ -15,4 +15,12 @@ log_events:
 - - 2011-11-30 19:23:48.433464 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
   - created
+  - ""
+- - 2011-11-30 19:37:34.377092 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - changed status from unstarted to in_progress
+  - ""
+- - 2011-11-30 19:49:06.524669 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - closed with disposition fixed
   - ""
