@@ -15,9 +15,9 @@ sy match Float "[0-9][0-9]*\.[0-9][0-9]*"
 sy keyword Exception try raise except finally
 sy keyword Keyword end as def return
 sy keyword Conditional if elif else
-sy keyword Statement
+"sy keyword Statement
 sy keyword Repeat while next break every iterate
-sy keyword Special
+"sy keyword Special
 
 sy match Type "\<_*[A-Z][A-Za-z_0-9]*\>"
 
