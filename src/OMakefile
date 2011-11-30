@@ -30,9 +30,6 @@
 # If so, define the subdirectory targets and uncomment this section.
 #
 
-SRC_DIR = $(dir .)
-.SUBDIRS: Builtins
-
 ########################################################################
 # OCaml configuration.
 # Delete this section if you are not building OCaml files.
