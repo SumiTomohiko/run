@@ -137,7 +137,7 @@ single_command
   ;
 
 redirect_dest
-  : PARAM_BEGIN path PARAM_END {
+  : PARAM_BEGIN param_body PARAM_END {
     let s, l = Param.chain_static_chars "" $2 in
     assert ((List.length l) = 0);
     s
