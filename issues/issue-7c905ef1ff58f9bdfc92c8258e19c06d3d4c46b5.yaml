@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Command with arguments of URL is rejected.
+desc: curl http://neko-daisuki.ddo.jp/
+type: :bugfix
+component: core
+release: 0.0.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-30 19:23:47.885874 Z
+references: []
+
+id: 7c905ef1ff58f9bdfc92c8258e19c06d3d4c46b5
+log_events: 
+- - 2011-11-30 19:23:48.433464 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
