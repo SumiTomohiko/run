@@ -3,7 +3,7 @@ title: Rewrite tests/run_tests with run.
 desc: ""
 type: :task
 component: core
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
@@ -18,5 +18,5 @@ log_events:
   - ""
 - - 2011-11-29 19:33:32.289052 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
-  - assigned to release 0.1.0 from unassigned
+  - assigned to release 0.0.0 from unassigned
   - ""

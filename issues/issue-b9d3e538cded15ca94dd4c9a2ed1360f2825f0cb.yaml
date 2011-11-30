@@ -8,7 +8,7 @@ desc: |-
     end
 type: :bugfix
 component: core
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :closed
 disposition: :fixed

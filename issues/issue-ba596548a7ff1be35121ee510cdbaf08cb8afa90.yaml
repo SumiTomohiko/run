@@ -3,7 +3,7 @@ title: tests/test_inline_pipeline failed sometimes.
 desc: Reproductivity is low.
 type: :bugfix
 component: core
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
@@ -18,5 +18,5 @@ log_events:
   - ""
 - - 2011-11-08 19:50:59.843293 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
-  - assigned to release 0.1.0 from unassigned
+  - assigned to release 0.0.0 from unassigned
   - ""

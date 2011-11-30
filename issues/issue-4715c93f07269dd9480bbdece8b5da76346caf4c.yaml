@@ -3,7 +3,7 @@ title: Write the documentation.
 desc: ""
 type: :task
 component: doc
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :closed
 disposition: :reorg
@@ -22,7 +22,7 @@ log_events:
   - ""
 - - 2011-11-06 13:56:21.209844 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
-  - assigned to release 0.1.0 from unassigned
+  - assigned to release 0.0.0 from unassigned
   - ""
 - - 2011-11-12 20:40:14.205672 Z
   - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>

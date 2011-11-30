@@ -3,7 +3,7 @@ title: rst2html cannot make <pre/> with blank lines.
 desc: See "Traceback" section.
 type: :bugfix
 component: doc
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 

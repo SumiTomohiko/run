@@ -3,7 +3,7 @@ title: Implement zoe statement.
 desc: If a command fails given to zoe statement, raise CommandError.
 type: :task
 component: core
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 

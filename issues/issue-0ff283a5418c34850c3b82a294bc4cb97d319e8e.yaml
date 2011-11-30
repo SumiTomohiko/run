@@ -3,7 +3,7 @@ title: Value.bool_of_value must be Value.to_bool.
 desc: ""
 type: :task
 component: core
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :closed
 disposition: :fixed

@@ -3,7 +3,7 @@ title: Implement exception statement.
 desc: exception NetworkError > ParentException
 type: :task
 component: core
-release: 0.1.0
+release: 0.0.0
 reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
 status: :unstarted
 disposition: 
