@@ -36,7 +36,6 @@ let rec nodes_of_string result s index =
 %token RIGHT_RIGHT_ARROW RPAR SEP STAR STAR_STAR TRUE TRY WHILE
 %token <char> CHAR
 %token <Num.num> INT
-%token <int> DOLLER_NUMBER
 %token <float> FLOAT
 %token <string> NAME STRING
 %token <Buffer.t> HEREDOC
@@ -230,7 +229,6 @@ path
 name
   : STAR_STAR { [Node.StarStar] }
   | param_atoms { $1 }
-  | doller_number { nodes_of_string [] $1 0 }
   ;
 
 param_atoms
@@ -250,10 +248,6 @@ param_atom
 param_bodies
   : param_bodies COMMA param_body { $1 @ [$3] }
   | param_body { [$1] }
-  ;
-
-doller_number
-  : DOLLER_NUMBER { Array.get Sys.argv ($1 + 1) }
   ;
 
 expr
@@ -392,7 +386,6 @@ atom
     make_node (Node.InlinePipeline $2) $startpos($1)
   }
   | DOLLER_QUESTION { make_node Node.LastStatus $startpos($1) }
-  | doller_number { make_const (Value.String $1) $startpos($1) }
   ;
 
 string_contents_opt

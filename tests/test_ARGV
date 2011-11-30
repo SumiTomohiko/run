@@ -1,5 +1,5 @@
 SRC:
-echo $1
+echo ${ARGV[1]}
 PARAMS:
 foo
 OUT:

@@ -51,7 +51,6 @@ rule script_token lexer = parse
   | ' '+ { script_token lexer lexbuf }
   | '"' { Parser.DOUBLE_QUOTE }
   | '#' [^'\n']* { script_token lexer lexbuf }
-  | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
   | '(' { Parser.LPAR }
   | ')' { Parser.RPAR }
   | '*' { Parser.STAR }
@@ -99,7 +98,6 @@ and pipeline_token lexer = parse
 and param_token lexer = parse
   | "${" { Parser.DOLLER_LBRACE }
   | "**" { Parser.STAR_STAR }
-  | '$' (digit+ as s) { Parser.DOLLER_NUMBER (int_of_string s) }
   | '*' { Parser.STAR }
   | ',' { Parser.COMMA }
   | '/' { Parser.SEP }

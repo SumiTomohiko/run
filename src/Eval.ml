@@ -541,9 +541,13 @@ let eval codes index =
   let frame = make_frame (Array.get codes index) (Symboltbl.create ()) in
   let frames = Stack.create () in
   Stack.push frame frames;
+  let globals = Builtins.Function.create () in
+  let len = Array.length Sys.argv in
+  let argv = Array.map Value.of_string (Array.sub Sys.argv 1 (len - 1)) in
+  Symboltbl.add globals "ARGV" (Value.Array argv);
   let env = {
     codes=codes;
-    globals=Builtins.Function.create ();
+    globals=globals;
     builtins=Builtins.Command.create ();
     frames=frames;
     last_status=0;

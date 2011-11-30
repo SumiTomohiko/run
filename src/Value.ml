@@ -21,6 +21,7 @@ type t =
   | IntIterator of int_internal * int_internal
 
 let of_num n = Int n
+let of_string s = String s
 
 let to_bool = function
   | Nil -> false
