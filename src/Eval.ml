@@ -88,7 +88,7 @@ let get_exception_attr _ v = function
       | _ -> assert false)
   | name -> failwith (Printf.sprintf "TODO: Raise AttributeError of %s" name)
 
-let get_class_attr env v = function
+let get_class_attr _ v = function
   | "new" ->
       (match v with
       | Value.Class (_, f) -> Value.Method (v, f)
