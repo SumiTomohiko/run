@@ -304,6 +304,17 @@ Joining some commands with ``|`` becomes a pipeline::
 
   echo "Hello, world!" | cat -n
 
+Interprocess Communication
+--------------------------
+
+A pipeline give first process's output to second process. But first process can
+read second process's output with ``<=>``. If::
+
+  foo <=> bar
+
+standard output of ``foo`` is connected to ``bar``'s standard input. And
+standard output of ``bar`` can be read with standard input of ``foo``.
+
 Redirection
 -----------
 
