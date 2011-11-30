@@ -314,7 +314,7 @@ a path after a command is redirection to standard output::
 
 If you hope to write both of stdout and stderr to a file, you can use ``=>``::
 
-  foo => foo.log
+  curl http://neko-daisuki.ddo.jp/ => curl.log
 
 Process Status
 --------------
