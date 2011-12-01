@@ -26,7 +26,7 @@ let rec create_single_param parts = function
 
 let rec eval_single s vals = function
   | (Dynamic index) :: tl ->
-      let v = Value.to_string (Array.get vals index) in
+      let v = Core.string_of_value (Array.get vals index) in
       eval_single (s ^ v) vals tl
   | (Static t) :: tl -> eval_single (s ^ t) vals tl
   | [] -> s

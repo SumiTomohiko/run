@@ -2,9 +2,7 @@
 let eval_string src =
   let tokenizer, lexbuf = Lexer.tokenizer_of_string src in
   let stmts = Parser.program tokenizer lexbuf in
-  let codes = DynArray.create () in
-  let index = Compiler.compile "<stdin>" "<module>" codes stmts in
-  Eval.eval (DynArray.to_array codes) index
+  Eval.eval (Compiler.compile "<stdin>" "<module>" stmts)
 
 let _ = Callback.register "eval_string" eval_string
 

@@ -12,7 +12,7 @@ and expr_body =
   | Assign of binop
   | Attr of attr
   | Call of call
-  | Const of Value.t
+  | Const of Core.value
   | Dict of pair list
   | Div of binop
   | DivDiv of binop

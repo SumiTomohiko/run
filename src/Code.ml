@@ -7,6 +7,13 @@ type t = {
   exception_table: table;
   ops: int Op.kind array }
 
+let codes = (DynArray.create (): t DynArray.t)
+let register code =
+  let index = DynArray.length codes in
+  DynArray.add codes code;
+  index
+let code_of_index = DynArray.get codes
+
 let rec find tbl target index not_found =
   if (Array.length tbl) = index then
     not_found

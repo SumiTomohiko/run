@@ -40,7 +40,8 @@
 #
 
 FILES[] =
-    Value
+    Redirect
+    Core
     Exception
     Node
     Matching
@@ -50,10 +51,7 @@ FILES[] =
     Code
     Op
     Compiler
-    Symboltbl
-    Env
     Builtins
-    Redirect
     Eval
 EXE_FILES = $(FILES) Main
 OBJ_FILES = $(FILES) Stub

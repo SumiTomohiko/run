@@ -29,7 +29,7 @@ type 'a kind =
   | PushCommand of Unix.open_flag list
   | PushCommandE2O
   | PushCommandParams of int * Param.t list
-  | PushConst of Value.t
+  | PushConst of Core.value
   | PushLastStatus
   | PushLocal of string
   | PushParams of int * Param.t list
@@ -87,7 +87,7 @@ let name_of_op = function
   | PushCommand _ -> "PushCommand"
   | PushCommandE2O -> "PushCommandE2O"
   | PushCommandParams _ -> "PushCommandParams"
-  | PushConst v -> sprintf "PushConst (%s)" (Value.to_string v)
+  | PushConst v -> sprintf "PushConst (%s)" (Core.string_of_value v)
   | PushLastStatus -> "PushLastStatus"
   | PushLocal name -> sprintf "PushLocal (%s)" name
   | PushParams _ -> "PushParams"
