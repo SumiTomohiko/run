@@ -44,8 +44,10 @@ test:
     cd tests && ./run_tests
 
 clean:
-    rm -f src/{,Builtins}/*.{cmi,cmx,cmxa,o,annot,automaton,a,omc}
+    rm -f **/*.{cma,cmi,cmo,cmx,cmxa,o,annot,automaton,a,omc}
     rm -f src/run src/run.opt
+    rm -f doc/rst2html.run
+    rm -f tests/ping.run tests/pong.run tests/run_test.run
 
 html:
     cd doc && ./rst2html index.rst
