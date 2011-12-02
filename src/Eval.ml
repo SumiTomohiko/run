@@ -339,7 +339,8 @@ let eval_op env frame op =
         Core.cmd_stderr_redirect=Some Redirect.Dup } in
       add_command frame cmd
   | Op.PushCommandParams (n, params) ->
-      let cmd = DynArray.last (Stack.top frame.Core.pipelines).Core.pl_commands in
+      let pipeline = Stack.top frame.Core.pipelines in
+      let cmd = DynArray.last pipeline.Core.pl_commands in
       List.iter (DynArray.add cmd.Core.cmd_params) (eval_params stack n params)
   | Op.PushConst v -> Stack.push v stack
   | Op.PushLastStatus ->
