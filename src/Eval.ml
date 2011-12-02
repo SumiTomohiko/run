@@ -162,17 +162,6 @@ let eval_params stack n params =
   let vals = Array.of_list (pop_args stack n) in
   List.concat (List.map (Param.eval vals) params)
 
-let rec make_traceback accum frames =
-  if Stack.is_empty frames then
-    accum
-  else
-    let frame = Stack.pop frames in
-    let code = Code.code_of_index frame.Core.code in
-    let path = Code.path_of_code code in
-    let name = Code.name_of_code code in
-    let lineno = Code.lineno_of_pc code (frame.Core.pc - 1) in
-    make_traceback ((path, name, lineno) :: accum) frames
-
 let jump frame dest = frame.Core.pc <- dest
 
 let store_top_local frame = Core.Symboltbl.add frame.Core.locals
@@ -449,27 +438,11 @@ let rec eval_env env =
     eval_env env
   end
 
-let make_exception env self args =
-  let tb = make_traceback [] (Stack.copy env.Core.frames) in
-  match args with
-  | [] -> Core.Exception (self, tb, Core.Nil)
-  | [msg] -> Core.Exception (self, tb, msg)
-  | _ -> failwith "TODO: Raise ArgumentError"
-
-let add_exception env tbl name =
-  Core.Symboltbl.add tbl name (Core.Class (name, make_exception))
-
-let make_globals env =
-  let tbl = env.Core.globals in
-  let exceptions = ["Exception"; "ArgumentError"; "IndexError"] in
-  List.iter (add_exception env tbl) exceptions
-
 let eval index =
   let globals = Builtins.Function.create () in
+  Exception.register_exceptions globals;
   let builtins = Builtins.Command.create () in
-  let env = Core.create_env index globals builtins in
-  make_globals env;
-  eval_env env
+  eval_env (Core.create_env index globals builtins)
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
