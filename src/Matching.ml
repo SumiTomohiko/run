@@ -112,7 +112,7 @@ and find_abs dir vals = function
       | Unix.Unix_error (Unix.ENOTDIR, _, _) -> []
 
 let find dir pattern vals =
-  let string_vals = Array.map Value.to_string vals in
+  let string_vals = Array.map Core.string_of_value vals in
   match pattern with
   | Op.Dir :: tl -> find_abs "/" string_vals tl
   | pattern ->

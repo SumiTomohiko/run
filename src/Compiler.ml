@@ -34,7 +34,6 @@ end
 
 type compiler = {
   path: string;
-  codes: Code.t DynArray.t;
   oplist: OpList.t;
   while_stack: (Op.t * Op.t) Stack.t;
   exception_table: (Op.t * Op.t * Op.t) DynArray.t }
@@ -174,22 +173,22 @@ and compile_commands compiler pos = function
       compile_command_params compiler pos params;
       compile_commands compiler pos tl
   | (params, _, _, Some (Node.File (path, flags))) :: tl ->
-      add_command compiler params (Value.String path) flags pos;
+      add_command compiler params (Core.String path) flags pos;
       compile_commands compiler pos tl
   | (params, _, _, None) :: tl ->
-      add_command compiler params Value.Nil [] pos;
+      add_command compiler params Core.Nil [] pos;
       compile_commands compiler pos tl
   | [] -> ()
 and compile_pipeline compiler pos commands last_op =
   let _, first_stdin, _, _ = List.hd commands in
   let stdin_path = match first_stdin with
-    Some path -> Value.String path
-  | None -> Value.Nil in
+    Some path -> Core.String path
+  | None -> Core.Nil in
   add_op compiler (Op.PushConst stdin_path) pos;
   let _, _, last_stdout, _ = List.hd (List.rev commands) in
   let stdout_path, flags = match last_stdout with
-    Some (Node.File (path, flags)) -> Value.String path, flags
-  | None -> Value.Nil, []
+    Some (Node.File (path, flags)) -> Core.String path, flags
+  | None -> Core.Nil, []
   | Some _ -> failwith "Invalid stdout redirect" in
   add_op compiler (Op.PushConst stdout_path) pos;
   add_op compiler (Op.PushPipeline flags) pos;
@@ -237,7 +236,7 @@ and compile_expr compiler (pos, expr) =
       compile_binop compiler operands Op.GreaterEqual pos
   | Node.Heredoc buf ->
       let s = Buffer.contents buf in
-      add_op compiler (Op.PushConst (Value.String s)) pos
+      add_op compiler (Op.PushConst (Core.String s)) pos
   | Node.InlinePipeline commands ->
       compile_pipeline compiler pos commands Op.ExecAndPush
   | Node.LastStatus -> add_op compiler Op.PushLastStatus pos
@@ -268,7 +267,7 @@ let add_exception_table_entry compiler front rear dest =
   DynArray.add compiler.exception_table (front, rear, dest)
 
 let rec compile_every compiler pos { Node.params; Node.names; Node.stmts } =
-  let push_false _ = add_op compiler (Op.PushConst (Value.Bool false)) pos in
+  let push_false _ = add_op compiler (Op.PushConst (Core.Bool false)) pos in
   List.iter push_false names;
   compile_every_params compiler pos (List.rev params);
   let last = Op.make_label pos in
@@ -309,13 +308,13 @@ and compile_stmt compiler (pos, stmt) =
       let _, label = Stack.top compiler.while_stack in
       add_op compiler (Op.Jump label) pos
   | Node.Communication (left, right) ->
-      add_op compiler (Op.PushConst Value.Nil) pos;
-      add_op compiler (Op.PushConst Value.Nil) pos;
+      add_op compiler (Op.PushConst Core.Nil) pos;
+      add_op compiler (Op.PushConst Core.Nil) pos;
       add_op compiler (Op.PushPipeline []) pos;
-      add_op compiler (Op.PushConst Value.Nil) pos;
+      add_op compiler (Op.PushConst Core.Nil) pos;
       add_op compiler (Op.PushCommand []) pos;
       compile_command_params compiler pos left;
-      add_op compiler (Op.PushConst Value.Nil) pos;
+      add_op compiler (Op.PushConst Core.Nil) pos;
       add_op compiler (Op.PushCommand []) pos;
       compile_command_params compiler pos right;
       add_op compiler Op.Communicate pos
@@ -370,7 +369,7 @@ and compile_stmt compiler (pos, stmt) =
       compile_stmts compiler finally;
       add_exception_table_entry compiler stmts_begin stmts_end excepts_begin
   | Node.UserFunction { Node.uf_name; Node.uf_args; Node.uf_stmts } ->
-      let index = compile compiler.path uf_name compiler.codes uf_stmts in
+      let index = compile compiler.path uf_name uf_stmts in
       add_op compiler (Op.MakeUserFunction (uf_args, index)) pos;
       add_op compiler (Op.StoreLocal uf_name) pos
   | Node.While (expr, stmts) ->
@@ -390,18 +389,16 @@ and compile_stmts compiler = function
       compile_stmt compiler hd;
       compile_stmts compiler tl
   | [] -> ()
-and compile path name codes stmts =
+and compile path name stmts =
   let compiler = {
     path=path;
-    codes=codes;
     oplist=OpList.make ();
     while_stack=Stack.create ();
     exception_table=DynArray.create () } in
   compile_stmts compiler stmts;
   let head = Some (OpList.top compiler.oplist) in
   let code = make_code path name compiler.exception_table head in
-  DynArray.add codes code;
-  (DynArray.length codes) - 1
+  Code.register code
 
 (*
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

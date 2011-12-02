@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Write about replacing in the form of "${foo}" in a string.
+desc: ""
+type: :task
+component: doc
+release: 0.1.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2011-11-30 07:56:03.915651 Z
+references: []
+
+id: 1bed4c3d04aeeb432af509ac07c5074794c9c31e
+log_events: 
+- - 2011-11-30 07:56:04.422227 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""

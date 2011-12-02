@@ -9,7 +9,7 @@ let make_call callee args =
 let make_default_return stmts pos =
   match (snd (List.hd (List.rev stmts))) with
     Node.Return _ -> []
-  | _ -> [make_node (Node.Return (make_const Value.Nil pos)) pos]
+  | _ -> [make_node (Node.Return (make_const Core.Nil pos)) pos]
 
 let make_file_redirect path flags = Some (Node.File (path, flags))
 let write_flags = [Unix.O_CREAT; Unix.O_WRONLY]
@@ -355,10 +355,10 @@ exprs
   ;
 
 atom
-  : TRUE { make_const (Value.Bool true) $startpos($1) }
-  | FALSE { make_const (Value.Bool false) $startpos($1) }
-  | INT { make_const (Value.Int $1) $startpos($1) }
-  | FLOAT { make_const (Value.Float $1) $startpos($1) }
+  : TRUE { make_const (Core.value_of_bool true) $startpos($1) }
+  | FALSE { make_const (Core.value_of_bool false) $startpos($1) }
+  | INT { make_const (Core.value_of_num $1) $startpos($1) }
+  | FLOAT { make_const (Core.value_of_float $1) $startpos($1) }
   | DOUBLE_QUOTE string_contents_opt DOUBLE_QUOTE {
     make_node (Node.String $2) $startpos($1)
   }
@@ -385,7 +385,7 @@ string_contents
   ;
 
 string_content
-  : STRING { make_const (Value.String $1) $startpos($1) }
+  : STRING { make_const (Core.value_of_string $1) $startpos($1) }
   | DOLLER_LBRACE expr RBRACE { $2 }
   ;
 

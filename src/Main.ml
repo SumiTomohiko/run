@@ -15,22 +15,21 @@ let rec print_traceback = function
   | [] -> ()
 
 let read_exception = function
-  | Value.Exception (Value.Class (name, _), tb, msg) -> name, tb, msg
+  | Core.Exception (Core.Class (name, _), tb, msg) -> name, tb, msg
   | _ -> assert false
 
 let main () =
   let path = Array.get Sys.argv 1 in
   let stmts = Ensure.open_in path (parse path) in
-  let codes = DynArray.create () in
-  let index = Compiler.compile path "<module>" codes stmts in
+  let index = Compiler.compile path "<module>" stmts in
   try
-    Eval.eval (DynArray.to_array codes) index
+    Eval.eval index
   with
   | Exception.Run_exception e ->
       let name, tb, msg = read_exception e in
       Printf.eprintf "Traceback (most recent call last):\n";
       print_traceback tb;
-      Printf.eprintf "%s: %s\n" name (Value.to_string msg)
+      Printf.eprintf "%s: %s\n" name (Core.string_of_value msg)
 
 let _ = main ()
 
