@@ -287,6 +287,19 @@ If an exception is not catched, run show a traceback::
     File "foo.run", line 3, in foo
   Exception: 42
 
+New Exception Class Declaration with ``exception`` Statement
+------------------------------------------------------------
+
+Some script must need to use non-builtin exceptions, such as ``NetworkError``.
+``exception`` statement can be used to make new exception::
+
+  exception NetworkError
+
+You can use exceptions declared with ``exception`` statements in the same way as
+builtin exceptions::
+
+  raise NetworkError.new("Host not found")
+
 Command Executing
 =================
 

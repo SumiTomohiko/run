@@ -38,6 +38,7 @@ rule script_token lexer = parse
   | "end" { Parser.END }
   | "every" { Parser.EVERY }
   | "except" { Parser.EXCEPT }
+  | "exception" { Parser.EXCEPTION }
   | "false" { Parser.FALSE }
   | "finally" { Parser.FINALLY }
   | "if" { Parser.IF }

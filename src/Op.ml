@@ -19,6 +19,7 @@ type 'a kind =
   | LessEqual
   | MakeArray of int
   | MakeDict of int
+  | MakeException of string
   | MakeIterator
   | MakeUserFunction of string list * int
   | MoveIterator of 'a
@@ -77,6 +78,7 @@ let name_of_op = function
   | LessEqual -> "LessEqual"
   | MakeArray _ -> "MakeArray"
   | MakeDict _ -> "MakeDict"
+  | MakeException _ -> "MakeException"
   | MakeIterator -> "MakeIterator"
   | MakeUserFunction _ -> "MakeUserFunction"
   | MoveIterator _ -> "MoveIterator"

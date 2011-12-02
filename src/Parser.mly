@@ -27,7 +27,7 @@ let rec nodes_of_string result s index =
     nodes_of_string (result @ [Node.Char (String.get s index)]) s (index + 1)
 %}
 %token AS BAR BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
-%token DOLLER_QUESTION DOT DOUBLE_QUOTE EXCEPT ELIF ELSE END EOF EQUAL
+%token DOLLER_QUESTION DOT DOUBLE_QUOTE EXCEPT EXCEPTION ELIF ELSE END EOF EQUAL
 %token EQUAL_EQUAL ERR_RIGHT_ARROW ERR_RIGHT_ARROW_OUT ERR_RIGHT_RIGHT_ARROW
 %token EVERY FALSE FINALLY GREATER GREATER_GREATER GREATER_EQUAL IF ITERATE
 %token LBRACE LBRACKET LEFT_RIGHT_ARROW LESS LESS_EQUAL LPAR MINUS NEWLINE NEXT
@@ -97,6 +97,7 @@ stmt
   }
   | RAISE expr { make_node (Node.Raise (Some $2)) $startpos($1) }
   | RAISE { make_node (Node.Raise None) $startpos($1) }
+  | EXCEPTION NAME { make_node (Node.Exception $2) $startpos($1) }
   | pipeline { make_node (Node.Pipeline $1) $startpos($1) }
   | params LEFT_RIGHT_ARROW params {
     make_node (Node.Communication ($1, $3)) $startpos($1)

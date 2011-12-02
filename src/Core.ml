@@ -1,4 +1,6 @@
 
+let sprintf = Printf.sprintf
+
 type command = {
   cmd_params: string DynArray.t;
   cmd_stderr_redirect: Redirect.t option }
@@ -55,9 +57,6 @@ let bool_of_value = function
   | ProcessStatus 0 -> true
   | ProcessStatus _ -> false
   | _ -> true
-
-let sprintf = Printf.sprintf
-
 let rec string_of_value = function
   | Nil -> "nil"
   | Bool true -> "true"
@@ -84,6 +83,10 @@ let rec string_of_value = function
   | ProcessStatus stat -> string_of_int stat
   | Class (name, _) -> sprintf "<Class %s>" name
   | Exception (Class (name, _), _, _) -> sprintf "<%s>" name
+  | _ -> assert false
+
+let name_of_class = function
+  | Class (name, _) -> name
   | _ -> assert false
 
 let make_frame code locals = {

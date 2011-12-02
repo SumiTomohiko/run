@@ -1,0 +1,9 @@
+SRC:
+exception FooException
+try
+  raise FooException.new(42)
+except FooException as e
+  puts(e.message)
+end
+OUT:
+42

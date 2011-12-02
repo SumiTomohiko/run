@@ -1,0 +1,4 @@
+SRC:
+puts(Exception.new(42).message)
+OUT:
+42

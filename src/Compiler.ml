@@ -88,6 +88,7 @@ let conv_kind = function
   | Op.LessEqual -> Op.LessEqual
   | Op.MakeArray n -> Op.MakeArray n
   | Op.MakeDict n -> Op.MakeDict n
+  | Op.MakeException name -> Op.MakeException name
   | Op.MakeIterator -> Op.MakeIterator
   | Op.MakeUserFunction (args, index) -> Op.MakeUserFunction (args, index)
   | Op.MoveIterator dest -> Op.MoveIterator dest.Op.index
@@ -318,6 +319,9 @@ and compile_stmt compiler (pos, stmt) =
       add_op compiler (Op.PushCommand []) pos;
       compile_command_params compiler pos right;
       add_op compiler Op.Communicate pos
+  | Node.Exception name ->
+      add_op compiler (Op.MakeException name) pos;
+      add_op compiler (Op.StoreLocal name) pos
   | Node.Expr ((pos, _) as expr) ->
       compile_expr compiler expr;
       add_op compiler Op.Pop pos

@@ -275,6 +275,8 @@ let eval_op env frame op =
             iter (n - 1) in
       iter size;
       Stack.push (Core.Dict hash) stack
+  | Op.MakeException name ->
+      Stack.push (Exception.make_exception_class name) stack
   | Op.MakeIterator ->
       let iter = match Stack.pop stack with
       | Core.Array a -> Core.ArrayIterator (ExtArray.Array.enum a)

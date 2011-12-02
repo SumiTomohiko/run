@@ -53,6 +53,7 @@ and stmt_body =
     Break
   | Communication of param list * param list
   | Every of every
+  | Exception of string
   | Expr of expr
   | If of expr * stmts * stmts
   | Iterate of expr * string list * stmts
@@ -76,6 +77,7 @@ let rec dump = function
       | Break -> "Break"
       | Communication _ -> "Communication"
       | Every _ -> "Every"
+      | Exception _ -> "Exception"
       | Expr _ -> "Expr"
       | If _ -> "If"
       | Iterate _ -> "Iterate"

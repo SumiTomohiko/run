@@ -19,12 +19,13 @@ let make_exception env self args =
   | [msg] -> Core.Exception (self, tb, msg)
   | _ -> failwith "TODO: Raise ArgumentError"
 
-let add_exception tbl name =
-  Core.Symboltbl.add tbl name (Core.Class (name, make_exception))
+let make_exception_class name = Core.Class (name, make_exception)
 
 let register_exceptions tbl =
-  let exceptions = ["Exception"; "ArgumentError"; "IndexError"] in
-  List.iter (add_exception tbl) exceptions
+  let add_exception clazz =
+    Core.Symboltbl.add tbl (Core.name_of_class clazz) clazz in
+  let exceptions = ["ArgumentError"; "Exception"; "IndexError"] in
+  List.iter add_exception (List.map make_exception_class exceptions)
 
 (**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

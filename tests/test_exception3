@@ -1,0 +1,8 @@
+SRC:
+exception FooException
+try
+  raise FooException.new(42)
+except IndexError as _
+end
+EXCEPTION:
+FooException: 42
