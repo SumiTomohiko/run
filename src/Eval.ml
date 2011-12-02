@@ -321,7 +321,8 @@ let eval_op env frame op =
       | _ -> assert false)
   | Op.MoveParam ->
       let s = Core.string_of_value (Stack.pop stack) in
-      let cmd = DynArray.last (Stack.top frame.Core.pipelines).Core.pl_commands in
+      let pipeline = Stack.top frame.Core.pipelines in
+      let cmd = DynArray.last pipeline.Core.pl_commands in
       DynArray.add cmd.Core.cmd_params s
   | Op.Mul ->
       let intf n m = Core.Int (Num.mult_num n m) in
