@@ -1,6 +1,6 @@
 
 let rec ping_pong = function
-    0 -> ()
+  | 0 -> ()
   | n ->
     print_endline "PING";
     let s = read_line () in

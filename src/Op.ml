@@ -59,7 +59,7 @@ let sprintf = Printf.sprintf
 
 (* For debugging *)
 let name_of_op = function
-    Add -> "Add"
+  | Add -> "Add"
   | Call nargs -> sprintf "Call (%d)" nargs
   | Communicate -> "Communicate"
   | Concat n -> sprintf "Concat (%d)" n

@@ -7,7 +7,7 @@ type generator = {
   pages: (string, page) Hashtbl.t }
 
 let escape_char = function
-    '&' -> "&amp;"
+  | '&' -> "&amp;"
   | '<' -> "&lt;"
   | '>' -> "&gt;"
   | '"' -> "&quot;"
@@ -40,7 +40,7 @@ let string_of_inline_node = function
 let get_indent_depth text = get_whitespace_length text 0
 
 let convert_inline generator = function
-    InlineNode.Plain s -> if s = "::" then ":" else escape_html s
+  | InlineNode.Plain s -> if s = "::" then ":" else escape_html s
   | InlineNode.Link (text, url) ->
       sprintf "<a href=\"%s\">%s</a>" (escape_html url) (escape_html text)
   | InlineNode.Literal s -> enclose_tag "code" (escape_html s)
@@ -112,7 +112,7 @@ let rec trim_indent accum depth = function
   | [] -> accum
 
 let convert_nonlist_block generator = function
-    BlockNode.BulletItem _ -> assert false
+  | BlockNode.BulletItem _ -> assert false
   | BlockNode.Paragraph [InlineNode.Plain "::"] -> ""
   | BlockNode.Paragraph nodes ->
       enclose_tag "p" (convert_inlines generator nodes)
@@ -123,7 +123,7 @@ let convert_nonlist_block generator = function
   | BlockNode.Title (depth, nodes) -> convert_title generator depth nodes
 
 let convert_block generator = function
-    BlockNode.BulletItem (depth, nodes) ->
+  | BlockNode.BulletItem (depth, nodes) ->
       let opening = open_or_close_list generator depth in
       opening ^ (enclose_tag "li" (convert_inlines generator nodes))
   | node ->
@@ -163,7 +163,7 @@ let generate_page generator ch title nodes =
   generate_footer ch
 
 let rec find_all_references_inline founds = function
-    hd :: tl ->
+  | hd :: tl ->
       let names = match hd with
       | InlineNode.Reference name -> [name]
       | _ -> [] in
@@ -171,7 +171,7 @@ let rec find_all_references_inline founds = function
   | [] -> founds
 
 let rec find_all_references founds = function
-    hd :: tl ->
+  | hd :: tl ->
       let nodes = match hd with
       | BlockNode.BulletItem (_, nodes) -> nodes
       | BlockNode.Paragraph nodes -> nodes
@@ -196,7 +196,7 @@ let rec read_all_pages queue hash =
     read_all_pages queue hash
 
 let rec plain_text_of_inline_node s = function
-    hd :: tl ->
+  | hd :: tl ->
       let t = match hd with
       | InlineNode.Plain s -> s
       | InlineNode.Link (text, _) -> text
@@ -207,7 +207,7 @@ let rec plain_text_of_inline_node s = function
   | [] -> s
 
 let rec find_title = function
-    hd :: tl ->
+  | hd :: tl ->
       (match hd with
       | BlockNode.Title (_, nodes) -> plain_text_of_inline_node "" nodes
       | _ -> find_title tl)

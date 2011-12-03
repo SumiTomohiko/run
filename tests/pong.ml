@@ -1,6 +1,6 @@
 
 let rec pong_ping = function
-    0 -> ()
+  | 0 -> ()
   | n ->
       let s = read_line () in
         assert (s = "PING");

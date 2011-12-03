@@ -1,6 +1,6 @@
 
 let rec pop_args stack = function
-    0 -> []
+  | 0 -> []
   | n -> let last = Stack.pop stack in (pop_args stack (n - 1)) @ [last]
 
 let call env callee args =
@@ -53,7 +53,7 @@ let eval_equality stack f =
   Stack.push (Core.Bool (f result)) stack
 
 let rec make_pipes pairs prev_pair last_pair = function
-    1 -> pairs @ [(prev_pair, last_pair)]
+  | 1 -> pairs @ [(prev_pair, last_pair)]
   | n ->
       let rfd, wfd = Unix.pipe () in
       let pair = (Some rfd, Some wfd) in
@@ -100,7 +100,7 @@ let exec_command cmd (pipe1, pipe2) =
   | pid -> pid
 
 let rec close_second_pipes = function
-    (_, pair) :: tl ->
+  | (_, pair) :: tl ->
       close (fst pair);
       close (snd pair);
       close_second_pipes tl
@@ -112,7 +112,7 @@ let add_command frame =
 let wait_children = List.iter (fun pid -> ignore (Unix.waitpid [] pid))
 
 let close_all_pipes = function
-    [(rfd1, wfd1); (rfd2, wfd2)] ->
+  | [(rfd1, wfd1); (rfd2, wfd2)] ->
       List.iter Unix.close [rfd1; wfd1; rfd2; wfd2]
   | _ -> failwith "Invalid pipes"
 
@@ -219,7 +219,7 @@ let eval_op env frame op =
       let rfd, wfd = Unix.pipe () in
       let pair = (Some rfd, Some wfd) in
       let read_last_output pid = function
-        Some fd ->
+      | Some fd ->
           let rec loop s pid fd =
             let i = IO.input_channel (Unix.in_channel_of_descr fd) in
             match Unix.waitpid [Unix.WNOHANG] pid with
@@ -267,7 +267,7 @@ let eval_op env frame op =
   | Op.MakeDict size ->
       let hash = Hashtbl.create 0 in
       let rec iter = function
-          0 -> ()
+        | 0 -> ()
         | n ->
             let value = Stack.pop stack in
             let key = Stack.pop stack in

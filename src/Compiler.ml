@@ -169,7 +169,7 @@ and add_command compiler params path flags pos =
   add_op compiler (Op.PushCommand flags) pos;
   compile_command_params compiler pos params
 and compile_commands compiler pos = function
-    (params, _, _, Some Node.Dup) :: tl ->
+  | (params, _, _, Some Node.Dup) :: tl ->
       add_op compiler Op.PushCommandE2O pos;
       compile_command_params compiler pos params;
       compile_commands compiler pos tl
