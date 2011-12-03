@@ -121,7 +121,7 @@ and string_token s lexer = parse
 and comment depth lexer = parse
     ":)" {
       match depth with
-        1 -> script_token lexer lexbuf
+      | 1 -> script_token lexer lexbuf
       | _ -> comment (depth - 1) lexer lexbuf
   }
   | "(:" { comment (depth + 1) lexer lexbuf }
@@ -218,7 +218,7 @@ let try_keyword line =
   let lexer = make_lexer () in
   try
     match script_token lexer (Lexing.from_string line) with
-      Parser.BREAK
+    | Parser.BREAK
     | Parser.DEF
     | Parser.ELIF
     | Parser.ELSE
@@ -247,7 +247,7 @@ let determine_mode line =
 
 let tokenizer_of_string src =
   let f = match determine_mode src with
-    Script -> script_token
+  | Script -> script_token
   | Pipeline -> pipeline_token
   | _ -> failwith "Invalid source" in
   f (make_lexer ()), (Lexing.from_string src)

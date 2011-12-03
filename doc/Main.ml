@@ -173,7 +173,7 @@ let rec find_all_references_inline founds = function
 let rec find_all_references founds = function
     hd :: tl ->
       let nodes = match hd with
-        BlockNode.BulletItem (_, nodes) -> nodes
+      | BlockNode.BulletItem (_, nodes) -> nodes
       | BlockNode.Paragraph nodes -> nodes
       | BlockNode.Preformatted _ -> []
       | BlockNode.Title (_, nodes) -> nodes in
@@ -198,7 +198,7 @@ let rec read_all_pages queue hash =
 let rec plain_text_of_inline_node s = function
     hd :: tl ->
       let t = match hd with
-        InlineNode.Plain s -> s
+      | InlineNode.Plain s -> s
       | InlineNode.Link (text, _) -> text
       | InlineNode.Literal s -> s
       | InlineNode.Eof -> ""
@@ -209,7 +209,7 @@ let rec plain_text_of_inline_node s = function
 let rec find_title = function
     hd :: tl ->
       (match hd with
-        BlockNode.Title (_, nodes) -> plain_text_of_inline_node "" nodes
+      | BlockNode.Title (_, nodes) -> plain_text_of_inline_node "" nodes
       | _ -> find_title tl)
   | [] -> failwith "Title not found"
 

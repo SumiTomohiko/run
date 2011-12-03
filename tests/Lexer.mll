@@ -2,7 +2,7 @@ rule token = parse
     [^'\n']* '\n' {
     let s = Lexing.lexeme lexbuf in
     match s with
-      "SRC:\n" -> Parser.SRC
+    | "SRC:\n" -> Parser.SRC
     | "OUT:\n" -> Parser.OUT
     | "ERR:\n" -> Parser.ERR
     | "STAT:\n" -> Parser.STAT

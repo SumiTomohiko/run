@@ -30,7 +30,7 @@ let exec_run path params =
   let out = input_all stdout "" in
   let err = input_all stderr "" in
   match Unix.close_process_full (stdout, stdin, stderr) with
-    Unix.WEXITED stat -> out, err, stat
+  | Unix.WEXITED stat -> out, err, stat
   | _ -> assert false
 
 let write_src src filename f =
@@ -38,7 +38,7 @@ let write_src src filename f =
 
 let do_test expected actual =
   match expected with
-    Some s -> assert (actual = s)
+  | Some s -> assert (actual = s)
   | None -> ()
 
 let do_exception_test test err =
@@ -57,7 +57,7 @@ let main path =
   do_test (Test.err_of_test test) err;
   do_exception_test test err;
   match Test.stat_of_test test with
-    Some expected -> assert (expected = stat)
+  | Some expected -> assert (expected = stat)
   | None -> ()
 
 let _ = main (Array.get Sys.argv 1)
