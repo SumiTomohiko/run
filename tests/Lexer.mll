@@ -1,5 +1,5 @@
 rule token = parse
-    [^'\n']* '\n' {
+  | [^'\n']* '\n' {
     let s = Lexing.lexeme lexbuf in
     match s with
     | "SRC:\n" -> Parser.SRC

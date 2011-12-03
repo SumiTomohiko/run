@@ -16,7 +16,7 @@ let alnum = alpha | digit
 let name = alpha alnum*
 
 rule script_token lexer = parse
-    eof { Parser.EOF }
+  | eof { Parser.EOF }
   | "<<" (name as name) {
     let buf = Buffer.create 16 in
     Queue.add (name, buf) lexer.heredoc_queue;
@@ -111,7 +111,7 @@ and string_param s = parse
   | '"' { s }
   | _ as c { string_param (s ^ (String.make 1 c)) lexbuf }
 and string_token s lexer = parse
-    '"' {
+  | '"' {
     enqueue_ahead_token lexer Parser.DOUBLE_QUOTE;
     Parser.STRING s }
   | "${" {
@@ -119,7 +119,7 @@ and string_token s lexer = parse
     Parser.STRING s }
   | _ as c { string_token (s ^ (String.make 1 c)) lexer lexbuf }
 and comment depth lexer = parse
-    ":)" {
+  | ":)" {
       match depth with
       | 1 -> script_token lexer lexbuf
       | _ -> comment (depth - 1) lexer lexbuf
@@ -127,7 +127,7 @@ and comment depth lexer = parse
   | "(:" { comment (depth + 1) lexer lexbuf }
   | _ { comment depth lexer lexbuf }
 and heredoc name buf = parse
-    ([^'\n']* as s) '\n' {
+  | ([^'\n']* as s) '\n' {
       if s = name then
         ()
       else begin

@@ -12,7 +12,7 @@ let whitespace = ' '
 let contents = [^ '\n']*
 
 rule normal lexer = shortest
-    eof { Parser.EOF }
+  | eof { Parser.EOF }
   | ("::" as s) newline {
     lexer.get_token <- preformatted;
     Parser.LINE s
