@@ -202,7 +202,7 @@ let try_expr line =
     ignore (Parser.program f (Lexing.from_string line));
     true
   with
-    Failure _
+  | Failure _
   | Parser.Error -> false
 
 let try_comment line =
@@ -211,7 +211,7 @@ let try_comment line =
     ignore (script_token lexer (Lexing.from_string line));
     false
   with
-    Failure _ -> true
+  | Failure _ -> true
   | Parser.Error -> false
 
 let try_keyword line =
@@ -234,7 +234,7 @@ let try_keyword line =
     | Parser.WHILE -> true
     | _ -> false
   with
-    Failure _
+  | Failure _
   | Parser.Error -> false
 
 let determine_mode line =
@@ -259,7 +259,7 @@ let tokenizer_of_channel ch =
       try
         lexer.buffer <- (input_line ch) ^ "\n"
       with
-        End_of_file -> ()
+      | End_of_file -> ()
     else
       ();
 
@@ -285,7 +285,7 @@ let tokenizer_of_channel ch =
       lexer.buffer <- (try
         (input_line ch) ^ "\n"
       with
-        End_of_file -> "");
+      | End_of_file -> "");
       Stack.push (determine_mode lexer.buffer) mode_stack;
       token lexbuf
     end in

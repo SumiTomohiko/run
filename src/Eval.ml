@@ -15,7 +15,7 @@ let find_local env frame name =
   try
     Core.Symboltbl.find frame.Core.locals name
   with
-    Not_found -> find_global env name
+  | Not_found -> find_global env name
 
 let raise_unsupported_operands_error () =
   failwith "Unsupported operands"
@@ -127,7 +127,7 @@ let exec_pipeline env pipeline last_stdout_pair read_last_output =
     close (snd last_stdout_pair);
     ret
   with
-    Not_found ->
+  | Not_found ->
       let first_stdin_fd = match pipeline.Core.pl_first_stdin with
       | Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
       | None -> None in

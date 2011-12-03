@@ -12,7 +12,7 @@ let main () =
   let n = try
     int_of_string (Array.get Sys.argv 1)
   with
-    Invalid_argument _ -> 1 in
+  | Invalid_argument _ -> 1 in
   pong_ping n
 
 let _ = main ()

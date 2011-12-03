@@ -3,7 +3,7 @@ let rec input_all ch s =
   try
     input_all ch (s ^ (input_line ch) ^ "\n")
   with
-    End_of_file -> s
+  | End_of_file -> s
 
 let parse_test path =
   Ensure.open_in path (fun ch ->
