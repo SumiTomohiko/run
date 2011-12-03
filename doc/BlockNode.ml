@@ -7,6 +7,6 @@ type t =
   | Preformatted of string list
   | Title of int * inline_nodes
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

@@ -62,6 +62,6 @@ let main path =
 
 let _ = main (Array.get Sys.argv 1)
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

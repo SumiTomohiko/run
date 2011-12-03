@@ -404,6 +404,6 @@ and compile path name stmts =
   let code = make_code path name compiler.exception_table head in
   Code.register code
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

@@ -93,6 +93,6 @@ let rec dump = function
       dump tl
   | [] -> ()
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

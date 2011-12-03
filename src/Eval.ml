@@ -455,6 +455,6 @@ let eval index =
   let builtins = Builtins.Command.create () in
   eval_env (Core.create_env index (make_globals ()) builtins)
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

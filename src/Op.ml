@@ -106,6 +106,6 @@ let name_of_op = function
   | Anchor -> "Anchor"
   | Label -> "Label"
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)
