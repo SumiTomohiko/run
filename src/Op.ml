@@ -1,6 +1,6 @@
 
 type 'a kind =
-    Add
+  | Add
   | Call of int
   | Communicate
   | Concat of int

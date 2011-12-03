@@ -1,6 +1,6 @@
 
 type t =
-    Eof
+  | Eof
   | Link of string * string
   | Literal of string
   | Plain of string
