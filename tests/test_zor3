@@ -1,0 +1,4 @@
+SRC:
+zor false | cat
+EXCEPTION:
+CommandError: status 1: false

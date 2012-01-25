@@ -1,0 +1,4 @@
+SRC:
+echo -n | zor false
+EXCEPTION:
+CommandError: status 1: false

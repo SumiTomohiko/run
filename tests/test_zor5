@@ -1,0 +1,4 @@
+SRC:
+zor false 42 26 "foo bar"
+EXCEPTION:
+CommandError: status 1: false 42 26 "foo bar"
