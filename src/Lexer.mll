@@ -16,7 +16,7 @@ let alnum = alpha | digit
 let name = alpha alnum*
 
 rule script_token lexer = parse
-    eof { Parser.EOF }
+  | eof { Parser.EOF }
   | "<<" (name as name) {
     let buf = Buffer.create 16 in
     Queue.add (name, buf) lexer.heredoc_queue;
@@ -111,7 +111,7 @@ and string_param s = parse
   | '"' { s }
   | _ as c { string_param (s ^ (String.make 1 c)) lexbuf }
 and string_token s lexer = parse
-    '"' {
+  | '"' {
     enqueue_ahead_token lexer Parser.DOUBLE_QUOTE;
     Parser.STRING s }
   | "${" {
@@ -119,15 +119,15 @@ and string_token s lexer = parse
     Parser.STRING s }
   | _ as c { string_token (s ^ (String.make 1 c)) lexer lexbuf }
 and comment depth lexer = parse
-    ":)" {
+  | ":)" {
       match depth with
-        1 -> script_token lexer lexbuf
+      | 1 -> script_token lexer lexbuf
       | _ -> comment (depth - 1) lexer lexbuf
   }
   | "(:" { comment (depth + 1) lexer lexbuf }
   | _ { comment depth lexer lexbuf }
 and heredoc name buf = parse
-    ([^'\n']* as s) '\n' {
+  | ([^'\n']* as s) '\n' {
       if s = name then
         ()
       else begin
@@ -202,7 +202,7 @@ let try_expr line =
     ignore (Parser.program f (Lexing.from_string line));
     true
   with
-    Failure _
+  | Failure _
   | Parser.Error -> false
 
 let try_comment line =
@@ -211,14 +211,14 @@ let try_comment line =
     ignore (script_token lexer (Lexing.from_string line));
     false
   with
-    Failure _ -> true
+  | Failure _ -> true
   | Parser.Error -> false
 
 let try_keyword line =
   let lexer = make_lexer () in
   try
     match script_token lexer (Lexing.from_string line) with
-      Parser.BREAK
+    | Parser.BREAK
     | Parser.DEF
     | Parser.ELIF
     | Parser.ELSE
@@ -234,7 +234,7 @@ let try_keyword line =
     | Parser.WHILE -> true
     | _ -> false
   with
-    Failure _
+  | Failure _
   | Parser.Error -> false
 
 let determine_mode line =
@@ -247,7 +247,7 @@ let determine_mode line =
 
 let tokenizer_of_string src =
   let f = match determine_mode src with
-    Script -> script_token
+  | Script -> script_token
   | Pipeline -> pipeline_token
   | _ -> failwith "Invalid source" in
   f (make_lexer ()), (Lexing.from_string src)
@@ -259,7 +259,7 @@ let tokenizer_of_channel ch =
       try
         lexer.buffer <- (input_line ch) ^ "\n"
       with
-        End_of_file -> ()
+      | End_of_file -> ()
     else
       ();
 
@@ -285,7 +285,7 @@ let tokenizer_of_channel ch =
       lexer.buffer <- (try
         (input_line ch) ^ "\n"
       with
-        End_of_file -> "");
+      | End_of_file -> "");
       Stack.push (determine_mode lexer.buffer) mode_stack;
       token lexbuf
     end in

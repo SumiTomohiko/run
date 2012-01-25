@@ -1,6 +1,6 @@
 
 type 'a kind =
-    Add
+  | Add
   | Call of int
   | Communicate
   | Concat of int
@@ -59,7 +59,7 @@ let sprintf = Printf.sprintf
 
 (* For debugging *)
 let name_of_op = function
-    Add -> "Add"
+  | Add -> "Add"
   | Call nargs -> sprintf "Call (%d)" nargs
   | Communicate -> "Communicate"
   | Concat n -> sprintf "Concat (%d)" n
@@ -106,6 +106,6 @@ let name_of_op = function
   | Anchor -> "Anchor"
   | Label -> "Label"
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

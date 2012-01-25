@@ -7,7 +7,7 @@ and subscript = { prefix: expr; index: expr }
 and pair = { key: expr; value: expr }
 and attr = { attr_prefix: expr; attr_name: string }
 and expr_body =
-    Add of binop
+  | Add of binop
   | Array of expr list
   | Assign of binop
   | Attr of attr
@@ -50,7 +50,7 @@ and command = param list * string option * redirect option * redirect option
 and except = expr list * string option * stmts
 and stmts = stmt list
 and stmt_body =
-    Break
+  |  Break
   | Communication of param list * param list
   | Every of every
   | Exception of string
@@ -93,6 +93,6 @@ let rec dump = function
       dump tl
   | [] -> ()
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

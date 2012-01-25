@@ -8,7 +8,7 @@ let make_call callee args =
 
 let make_default_return stmts pos =
   match (snd (List.hd (List.rev stmts))) with
-    Node.Return _ -> []
+  | Node.Return _ -> []
   | _ -> [make_node (Node.Return (make_const Core.Nil pos)) pos]
 
 let make_file_redirect path flags = Some (Node.File (path, flags))

@@ -1,11 +1,11 @@
 
 let rec pop_args stack = function
-    0 -> []
+  | 0 -> []
   | n -> let last = Stack.pop stack in (pop_args stack (n - 1)) @ [last]
 
 let call env callee args =
   match callee with
-    Core.Function f -> f args
+  | Core.Function f -> f args
   | Core.Method (self, f) -> f env self args
   | _ -> failwith "Object is not callable"
 
@@ -15,7 +15,7 @@ let find_local env frame name =
   try
     Core.Symboltbl.find frame.Core.locals name
   with
-    Not_found -> find_global env name
+  | Not_found -> find_global env name
 
 let raise_unsupported_operands_error () =
   failwith "Unsupported operands"
@@ -24,7 +24,7 @@ let eval_binop stack intf floatf stringf string_intf =
   let right = Stack.pop stack in
   let left = Stack.pop stack in
   let result = match left, right with
-      Core.Int n, Core.Int m -> intf n m
+    | Core.Int n, Core.Int m -> intf n m
     | Core.Float x, Core.Float y -> floatf x y
     | Core.String s, Core.String t -> stringf s t
     | Core.Int n, Core.String s -> string_intf s n ""
@@ -36,7 +36,7 @@ let eval_comparison stack f =
   let right = Stack.pop stack in
   let left = Stack.pop stack in
   let result = match left, right with
-    Core.Int n, Core.Int m -> compare n m
+  | Core.Int n, Core.Int m -> compare n m
   | Core.Float f, Core.Float g -> compare f g
   | Core.String s, Core.String t -> compare s t
   | _ -> failwith "Invalid comparison" in
@@ -46,14 +46,14 @@ let eval_equality stack f =
   let right = Stack.pop stack in
   let left = Stack.pop stack in
   let result = match left, right with
-    Core.Int n, Core.Int m -> compare n m
+  | Core.Int n, Core.Int m -> compare n m
   | Core.Float f, Core.Float g -> compare f g
   | Core.String s, Core.String t -> compare s t
   | _ -> 1 in
   Stack.push (Core.Bool (f result)) stack
 
 let rec make_pipes pairs prev_pair last_pair = function
-    1 -> pairs @ [(prev_pair, last_pair)]
+  | 1 -> pairs @ [(prev_pair, last_pair)]
   | n ->
       let rfd, wfd = Unix.pipe () in
       let pair = (Some rfd, Some wfd) in
@@ -74,7 +74,7 @@ let dup_and_close oldfd newfd =
 
 let exec_communicate cmd pipes =
   match Unix.fork () with
-    0 ->
+  | 0 ->
       dup_and_close (fst (List.hd pipes)) Unix.stdin;
       dup_and_close (snd (List.hd (List.tl pipes))) Unix.stdout;
       let args = cmd.Core.cmd_params in
@@ -84,13 +84,13 @@ let exec_communicate cmd pipes =
 
 let exec_command cmd (pipe1, pipe2) =
   match Unix.fork () with
-    0 ->
+  | 0 ->
       close (snd pipe1);
       close (fst pipe2);
       dup (fst pipe1) Unix.stdin;
       dup (snd pipe2) Unix.stdout;
       (match cmd.Core.cmd_stderr_redirect with
-        Some (Redirect.File (path, flags)) ->
+      | Some (Redirect.File (path, flags)) ->
           let fd = Unix.openfile path flags 0o644 in
           Unix.dup2 fd Unix.stderr;
           Unix.close fd
@@ -100,7 +100,7 @@ let exec_command cmd (pipe1, pipe2) =
   | pid -> pid
 
 let rec close_second_pipes = function
-    (_, pair) :: tl ->
+  | (_, pair) :: tl ->
       close (fst pair);
       close (snd pair);
       close_second_pipes tl
@@ -112,7 +112,7 @@ let add_command frame =
 let wait_children = List.iter (fun pid -> ignore (Unix.waitpid [] pid))
 
 let close_all_pipes = function
-    [(rfd1, wfd1); (rfd2, wfd2)] ->
+  | [(rfd1, wfd1); (rfd2, wfd2)] ->
       List.iter Unix.close [rfd1; wfd1; rfd2; wfd2]
   | _ -> failwith "Invalid pipes"
 
@@ -127,9 +127,9 @@ let exec_pipeline env pipeline last_stdout_pair read_last_output =
     close (snd last_stdout_pair);
     ret
   with
-    Not_found ->
+  | Not_found ->
       let first_stdin_fd = match pipeline.Core.pl_first_stdin with
-        Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
+      | Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
       | None -> None in
       let first_pair = (first_stdin_fd, None) in
       let num_cmds = DynArray.length cmds in
@@ -147,7 +147,7 @@ let exec_pipeline env pipeline last_stdout_pair read_last_output =
 let rec trim s =
   let size = String.length s in
   match String.get s (size - 1) with
-    ' '
+  | ' '
   | '\n' -> trim (String.sub s 0 (size - 1))
   | _ -> s
 
@@ -170,7 +170,7 @@ let eval_op env frame op =
   let stack = frame.Core.stack in
   let error _ = raise_unsupported_operands_error () in
   match op with
-    Op.Add ->
+  | Op.Add ->
       let intf n m = Core.Int (Num.add_num n m) in
       let floatf x y = Core.Float (x +. y) in
       let stringf s t = Core.String (s ^ t) in
@@ -205,12 +205,12 @@ let eval_op env frame op =
   | Op.Exec ->
       let pipeline = Stack.pop frame.Core.pipelines in
       let last_stdout_fd = match pipeline.Core.pl_last_stdout with
-        Some (path, flags) -> Some (Unix.openfile path flags 0o644)
+      | Some (path, flags) -> Some (Unix.openfile path flags 0o644)
       | None -> None in
       let last_pair = (None, last_stdout_fd) in
       let read_last_output pid _ =
         let status = match snd (Unix.waitpid [] pid) with
-          Unix.WEXITED status -> status
+        | Unix.WEXITED status -> status
         | _ -> -1 in
         status, "" in
       let status, _ = exec_pipeline env pipeline last_pair read_last_output in
@@ -219,11 +219,11 @@ let eval_op env frame op =
       let rfd, wfd = Unix.pipe () in
       let pair = (Some rfd, Some wfd) in
       let read_last_output pid = function
-        Some fd ->
+      | Some fd ->
           let rec loop s pid fd =
             let i = IO.input_channel (Unix.in_channel_of_descr fd) in
             match Unix.waitpid [Unix.WNOHANG] pid with
-              0, _ ->
+            | 0, _ ->
                 let t = try IO.nread i 1024 with IO.No_more_input -> "" in
                 loop (s ^ t) pid fd
             | _, Unix.WEXITED status -> status, s
@@ -267,7 +267,7 @@ let eval_op env frame op =
   | Op.MakeDict size ->
       let hash = Hashtbl.create 0 in
       let rec iter = function
-          0 -> ()
+        | 0 -> ()
         | n ->
             let value = Stack.pop stack in
             let key = Stack.pop stack in
@@ -328,7 +328,7 @@ let eval_op env frame op =
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushCommand flags ->
       let stderr_redirect = match Stack.pop stack with
-        Core.String path -> Some (Redirect.File (path, flags))
+      | Core.String path -> Some (Redirect.File (path, flags))
       | Core.Nil -> None
       | _ -> failwith "Invalid stderr redirect" in
       let cmd = {
@@ -353,11 +353,11 @@ let eval_op env frame op =
       List.iter (fun s -> Stack.push (Core.String s) stack) actuals
   | Op.PushPipeline flags ->
       let stdout = match Stack.pop stack with
-        Core.String path -> Some (path, flags)
+      | Core.String path -> Some (path, flags)
       | Core.Nil -> None
       | _ -> failwith "Invalid stdout path" in
       let stdin = match Stack.pop stack with
-        Core.String path -> Some path
+      | Core.String path -> Some path
       | Core.Nil -> None
       | _ -> failwith "Invalid stdin path" in
       let pipeline = {
@@ -389,7 +389,7 @@ let eval_op env frame op =
       let prefix = Stack.pop stack in
       let value = Stack.top stack in
       (match prefix, index with
-        Core.Array a, Core.Int (Num.Int n) -> Array.set a n value
+      | Core.Array a, Core.Int (Num.Int n) -> Array.set a n value
       | Core.Dict h, _ -> Hashtbl.replace h index value
       | _ -> failwith "Invalid subscript operation")
   | Op.Sub ->
@@ -400,7 +400,7 @@ let eval_op env frame op =
       let index = Stack.pop stack in
       let prefix = Stack.pop stack in
       let value = match prefix, index with
-        Core.Array a, Core.Int (Num.Int n) -> Array.get a n
+      | Core.Array a, Core.Int (Num.Int n) -> Array.get a n
       | Core.Dict h, _ -> Hashtbl.find h index
       | _ -> failwith "Invalid subscript operation" in
       Stack.push value stack
@@ -455,6 +455,6 @@ let eval index =
   let builtins = Builtins.Command.create () in
   eval_env (Core.create_env index (make_globals ()) builtins)
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

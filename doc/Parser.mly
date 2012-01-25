@@ -3,7 +3,7 @@ let parse_inline text =
   let lexbuf = Lexing.from_string text in
   let rec loop nodes lexbuf =
     match InlineLexer.token lexbuf with
-      InlineNode.Eof -> nodes
+    | InlineNode.Eof -> nodes
     | node -> loop (nodes @ [node]) lexbuf in
   loop [] lexbuf
 %}

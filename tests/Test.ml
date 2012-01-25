@@ -24,6 +24,6 @@ let err_of_test test = test.err
 let exception_of_test test = test.exc
 let stat_of_test test = test.stat
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

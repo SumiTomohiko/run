@@ -12,7 +12,7 @@ let whitespace = ' '
 let contents = [^ '\n']*
 
 rule normal lexer = shortest
-    eof { Parser.EOF }
+  | eof { Parser.EOF }
   | ("::" as s) newline {
     lexer.get_token <- preformatted;
     Parser.LINE s
@@ -23,7 +23,7 @@ rule normal lexer = shortest
       let pos = DynArray.index_of ((=) c) stack in
       DynArray.delete_range stack 0 pos
     with
-      Not_found -> DynArray.insert stack 0 c);
+    | Not_found -> DynArray.insert stack 0 c);
     Parser.UNDERLINE (DynArray.length stack)
   }
   | (whitespace* as ws) bullet_mark whitespace* (_* as text) newline {

@@ -63,7 +63,7 @@ module Class = struct
   module Dict = struct
     let dict_expand _ self _ =
       match self with
-        Core.Dict h ->
+      | Core.Dict h ->
           let f key value init =
             let s = Core.string_of_value key in
             let t = Core.string_of_value value in

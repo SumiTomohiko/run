@@ -169,7 +169,7 @@ and add_command compiler params path flags pos =
   add_op compiler (Op.PushCommand flags) pos;
   compile_command_params compiler pos params
 and compile_commands compiler pos = function
-    (params, _, _, Some Node.Dup) :: tl ->
+  | (params, _, _, Some Node.Dup) :: tl ->
       add_op compiler Op.PushCommandE2O pos;
       compile_command_params compiler pos params;
       compile_commands compiler pos tl
@@ -183,12 +183,12 @@ and compile_commands compiler pos = function
 and compile_pipeline compiler pos commands last_op =
   let _, first_stdin, _, _ = List.hd commands in
   let stdin_path = match first_stdin with
-    Some path -> Core.String path
+  | Some path -> Core.String path
   | None -> Core.Nil in
   add_op compiler (Op.PushConst stdin_path) pos;
   let _, _, last_stdout, _ = List.hd (List.rev commands) in
   let stdout_path, flags = match last_stdout with
-    Some (Node.File (path, flags)) -> Core.String path, flags
+  | Some (Node.File (path, flags)) -> Core.String path, flags
   | None -> Core.Nil, []
   | Some _ -> failwith "Invalid stdout redirect" in
   add_op compiler (Op.PushConst stdout_path) pos;
@@ -197,7 +197,7 @@ and compile_pipeline compiler pos commands last_op =
   add_op compiler last_op pos
 and compile_expr compiler (pos, expr) =
   match expr with
-    Node.Add operands -> compile_binop compiler operands Op.Add pos
+  | Node.Add operands -> compile_binop compiler operands Op.Add pos
   | Node.Array exprs ->
       compile_exprs compiler exprs;
       add_op compiler (Op.MakeArray (List.length exprs)) pos
@@ -404,6 +404,6 @@ and compile path name stmts =
   let code = make_code path name compiler.exception_table head in
   Code.register code
 
-(*
+(**
  * vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
  *)

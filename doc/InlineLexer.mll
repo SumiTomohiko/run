@@ -3,7 +3,7 @@ let trim = ExtString.String.strip
 }
 
 rule token = parse
-    eof { InlineNode.Eof }
+  | eof { InlineNode.Eof }
   | "``" ([^'`']* as s) "``" { InlineNode.Literal s }
   | ":doc:`" ([^'`']+ as name) '`' { InlineNode.Reference name }
   | "::" as s { InlineNode.Plain s }
