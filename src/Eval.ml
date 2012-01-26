@@ -63,10 +63,19 @@ let dup oldfd newfd = Unix.dup2 (Option.default newfd oldfd) newfd
 
 let close = Option.may Unix.close
 
-let exec cmd =
+let args_of_cmd cmd =
   let args = cmd.Core.cmd_params in
   let prog = DynArray.get args 0 in
-  Unix.execvp prog (DynArray.to_array args)
+  prog, args
+
+let exec env cmd =
+  let prog, args = args_of_cmd cmd in
+  try
+    let f = Builtins.Command.find env.Core.builtins prog in
+    exit (fst (f env (List.tl (DynArray.to_list args))))
+  with
+  | Not_found ->
+      Unix.execvp prog (DynArray.to_array args)
 
 let dup_and_close oldfd newfd =
   Unix.dup2 oldfd newfd;
@@ -77,12 +86,11 @@ let exec_communicate cmd pipes =
   | 0 ->
       dup_and_close (fst (List.hd pipes)) Unix.stdin;
       dup_and_close (snd (List.hd (List.tl pipes))) Unix.stdout;
-      let args = cmd.Core.cmd_params in
-      let prog = DynArray.get args 0 in
+      let prog, args = args_of_cmd cmd in
       Unix.execv prog (DynArray.to_array args)
   | pid -> pid
 
-let exec_command cmd (pipe1, pipe2) =
+let exec_command env cmd (pipe1, pipe2) =
   match Unix.fork () with
   | 0 ->
       close (snd pipe1);
@@ -96,7 +104,7 @@ let exec_command cmd (pipe1, pipe2) =
           Unix.close fd
       | Some Redirect.Dup -> Unix.dup2 Unix.stdout Unix.stderr
       | None -> ());
-      exec cmd
+      exec env cmd
   | pid -> pid
 
 let rec close_second_pipes = function
@@ -118,23 +126,26 @@ let close_all_pipes = function
 
 let exec_pipeline env pipeline last_stdout_pair read_last_output =
   let cmds = pipeline.Core.pl_commands in
-  let cmd = DynArray.get cmds 0 in
-  let name = DynArray.get cmd.Core.cmd_params 0 in
-  try
-    let f = Builtins.Command.find env.Core.builtins name in
-    let ret = f env (List.tl (DynArray.to_list cmd.Core.cmd_params)) in
-    close (fst last_stdout_pair);
-    close (snd last_stdout_pair);
-    ret
-  with
-  | Not_found ->
+  let prog, args = args_of_cmd (DynArray.get cmds 0) in
+  match prog with
+  | "cd" ->
+      Sys.chdir (DynArray.get args 1);
+      0, ""
+  | "exit" ->
+      let stat = match (List.tl (DynArray.to_list args)) with
+      | [] -> 0
+      | [stat] -> int_of_string stat
+      (* TODO: raise ArgumentError *)
+      | _ -> failwith "exit accepts one optional parameter." in
+      exit stat
+  | _ ->
       let first_stdin_fd = match pipeline.Core.pl_first_stdin with
       | Some path -> Some (Unix.openfile path [Unix.O_RDONLY] 0)
       | None -> None in
       let first_pair = (first_stdin_fd, None) in
       let num_cmds = DynArray.length cmds in
       let pipes = make_pipes [] first_pair last_stdout_pair num_cmds in
-      let pids = List.map2 exec_command (DynArray.to_list cmds) pipes in
+      let pids = List.map2 (exec_command env) (DynArray.to_list cmds) pipes in
       close_second_pipes (List.tl (List.rev pipes));
       close (snd last_stdout_pair);
       let fd = fst last_stdout_pair in

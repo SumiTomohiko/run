@@ -1,25 +1,10 @@
 
 module Command = struct
-  let exit _ = function
-    | [] -> exit 0
-    | [stat] -> exit (int_of_string stat)
-    (* TODO: raise ArgumentError *)
-    | _ -> failwith "exit accepts one optional parameter."
-
-  let cd _ = function
-    | [dir] ->
-        Unix.chdir dir;
-        0, ""
-    (* TODO: raise ArgumentError *)
-    | _ -> failwith "cd accepts only one parameter."
-
   let find = Hashtbl.find
 
   let create () =
     let hash = Hashtbl.create 31 in
-    List.iter (fun (name, f) -> Hashtbl.add hash name f) [
-      ("cd", cd);
-      ("exit", exit)];
+    List.iter (fun (name, f) -> Hashtbl.add hash name f) [];
     hash
 end
 
