@@ -68,8 +68,15 @@ let args_of_cmd cmd =
   let prog = DynArray.get args 0 in
   prog, args
 
+let args_of_zor_cmd cmd =
+  match DynArray.to_list cmd.Core.cmd_params with
+  (* TODO: Raise an error *)
+  | "zor" :: [] -> failwith "zor requires one or more arguments."
+  | "zor" :: prog :: args -> prog, (DynArray.of_list (prog :: args))
+  | _ -> args_of_cmd cmd
+
 let exec env cmd =
-  let prog, args = args_of_cmd cmd in
+  let prog, args = args_of_zor_cmd cmd in
   try
     let f = Builtins.Command.find env.Core.builtins prog in
     exit (fst (f env (List.tl (DynArray.to_list args))))
@@ -117,12 +124,40 @@ let rec close_second_pipes = function
 let add_command frame =
   DynArray.add (Stack.top frame.Core.pipelines).Core.pl_commands
 
-let wait_children = List.iter (fun pid -> ignore (Unix.waitpid [] pid))
+let status_of_pid pid =
+  match snd (Unix.waitpid [] pid) with
+  | Unix.WEXITED status -> status
+  | _ -> -1
+
+let wait_children = List.map status_of_pid
 
 let close_all_pipes = function
   | [(rfd1, wfd1); (rfd2, wfd2)] ->
       List.iter Unix.close [rfd1; wfd1; rfd2; wfd2]
   | _ -> failwith "Invalid pipes"
+
+let sprintf = Printf.sprintf
+
+let quote s =
+  if String.contains s ' ' then sprintf "\"%s\"" s else s
+
+let make_zor_message stat args =
+  sprintf "status %d: %s" stat (String.concat " " (List.map quote args))
+
+let zor env stat cmd =
+  match stat, (DynArray.to_list cmd.Core.cmd_params) with
+  | 0, _ -> ()
+  | _, "zor" :: tl ->
+      let clazz = Hashtbl.find env.Core.globals "CommandError" in
+      let constructor = match clazz with
+      | Core.Class (_, constructor) -> constructor
+      | _ -> failwith "Invalid exception class" in
+      let v = Core.value_of_string (make_zor_message stat tl) in
+      raise (Exception.Run_exception (constructor env clazz [v]))
+  | _ -> ()
+
+let do_zor env statuses cmds =
+  List.iter2 (zor env) statuses (DynArray.to_list cmds)
 
 let exec_pipeline env pipeline last_stdout_pair read_last_output =
   let cmds = pipeline.Core.pl_commands in
@@ -152,7 +187,8 @@ let exec_pipeline env pipeline last_stdout_pair read_last_output =
       let output = read_last_output (List.hd (List.rev pids)) fd in
       close fd;
       close first_stdin_fd;
-      wait_children (List.tl (List.rev pids));
+      let statuses = wait_children (List.tl (List.rev pids)) in
+      do_zor env (List.rev ((fst output) :: statuses)) cmds;
       output
 
 let rec trim s =
@@ -202,7 +238,7 @@ let eval_op env frame op =
       let cmds = DynArray.to_list pipeline.Core.pl_commands in
       let pids = List.map2 exec_communicate cmds [pipes; (List.rev pipes)] in
       close_all_pipes pipes;
-      wait_children pids
+      ignore (wait_children pids)
   | Op.Concat size -> Stack.push (Core.String (concat stack size "")) stack
   | Op.Div ->
       let intf n m = Core.Float (Num.float_of_num (Num.div_num n m)) in

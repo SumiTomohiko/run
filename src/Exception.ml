@@ -24,7 +24,11 @@ let make_exception_class name = Core.Class (name, make_exception)
 let register_exceptions tbl =
   let add_exception clazz =
     Core.Symboltbl.add tbl (Core.name_of_class clazz) clazz in
-  let exceptions = ["ArgumentError"; "Exception"; "IndexError"] in
+  let exceptions = [
+    "ArgumentError";
+    "CommandError";
+    "Exception";
+    "IndexError"] in
   List.iter add_exception (List.map make_exception_class exceptions)
 
 (**
