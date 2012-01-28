@@ -193,10 +193,13 @@ let exec_pipeline env pipeline last_stdout_pair read_last_output =
 
 let rec trim s =
   let size = String.length s in
-  match String.get s (size - 1) with
-  | ' '
-  | '\n' -> trim (String.sub s 0 (size - 1))
-  | _ -> s
+  if size = 0 then
+    ""
+  else
+    match String.get s (size - 1) with
+    | ' '
+    | '\n' -> trim (String.sub s 0 (size - 1))
+    | _ -> s
 
 let rec concat stack size s =
   if size = 0 then
