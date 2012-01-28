@@ -4,8 +4,7 @@ dir = $(dirname ${ARGV[0]})
 
 every test_* as test
   log = $("${dir}/run_test" "${test}" err->out)
-  if $?
-  else
+  if !$?
     echo "${test} failed"
     echo "${log}"
   end
