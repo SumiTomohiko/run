@@ -1,0 +1,18 @@
+--- !ditz.rubyforge.org,2008-03-06/issue 
+title: Improve tests/run_tests to use an expression of !$?.
+desc: There is one "if" statement with an empty true clause.
+type: :task
+component: core
+release: 0.0.0
+reporter: Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+status: :unstarted
+disposition: 
+creation_time: 2012-01-28 13:11:43.327966 Z
+references: []
+
+id: d5dfc147f6c2cb352ec8590f508ec747da854f3f
+log_events: 
+- - 2012-01-28 13:11:44.276595 Z
+  - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+  - created
+  - ""
