@@ -216,6 +216,15 @@ let jump frame dest = frame.Core.pc <- dest
 
 let store_top_local frame = Core.Symboltbl.add frame.Core.locals
 
+let rec input_all accum ch =
+  let buf_size = 1024 in
+  let buf = String.create buf_size in
+  let n = input ch buf 0 buf_size in
+  if n = 0 then
+    accum
+  else
+    input_all (accum ^ (String.sub buf 0 n)) ch
+
 let eval_op env frame op =
   let stack = frame.Core.stack in
   let error _ = raise_unsupported_operands_error () in
@@ -270,14 +279,12 @@ let eval_op env frame op =
       let pair = (Some rfd, Some wfd) in
       let read_last_output pid = function
       | Some fd ->
+          let ch = Unix.in_channel_of_descr fd in
           let rec loop s pid fd =
-            let i = IO.input_channel (Unix.in_channel_of_descr fd) in
             match Unix.waitpid [Unix.WNOHANG] pid with
-            | 0, _ ->
-                let t = try IO.nread i 1024 with IO.No_more_input -> "" in
-                loop (s ^ t) pid fd
-            | _, Unix.WEXITED status -> status, s
-            | _, _ -> -1, s in
+            | 0, _ -> loop (s ^ (input_all "" ch)) pid fd
+            | _, Unix.WEXITED status -> status, s ^ (input_all "" ch)
+            | _ -> -1, s in
           loop "" pid fd
       | None -> failwith "Invalid stdout file descriptor" in
       let pipeline = Stack.pop frame.Core.pipelines in
