@@ -120,9 +120,9 @@ and string_token s lexer = parse
   | _ as c { string_token (s ^ (String.make 1 c)) lexer lexbuf }
 and comment depth lexer = parse
   | ":)" {
-      match depth with
-      | 1 -> script_token lexer lexbuf
-      | _ -> comment (depth - 1) lexer lexbuf
+    match depth with
+    | 1 -> script_token lexer lexbuf
+    | _ -> comment (depth - 1) lexer lexbuf
   }
   | "(:" { comment (depth + 1) lexer lexbuf }
   | _ { comment depth lexer lexbuf }
