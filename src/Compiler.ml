@@ -331,6 +331,7 @@ and compile_stmt compiler (pos, stmt) =
       let else_end = Op.make_label pos in
       compile_expr compiler expr;
       add_op compiler (Op.JumpIfFalse else_begin) pos;
+      add_op compiler Op.Pop pos;
       compile_stmts compiler stmts1;
       add_op compiler (Op.Jump else_end) pos;
       add_label compiler else_begin;
@@ -383,6 +384,7 @@ and compile_stmt compiler (pos, stmt) =
       add_label compiler while_begin;
       compile_expr compiler expr;
       add_op compiler (Op.JumpIfFalse while_end) pos;
+      add_op compiler Op.Pop pos;
       compile_stmts compiler stmts;
       add_op compiler (Op.Jump while_begin) pos;
       add_label compiler while_end;

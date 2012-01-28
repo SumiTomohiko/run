@@ -1,0 +1,10 @@
+SRC:
+every foo bar baz as t
+  puts(t)
+  if t
+  end
+end
+OUT:
+foo
+bar
+baz
