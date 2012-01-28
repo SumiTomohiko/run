@@ -1,14 +1,14 @@
-#!/bin/sh
+#!run
 
-dir=`dirname $0`
+dir = $(dirname ${ARGV[0]})
 
-find "${dir}" -name "test_*" -type f | while read t
-do
-  log=$("${dir}/run_test" "${t}" 2>&1)
-  if [ $? != 0 ]; then
-    echo "${t} failed"
+every test_* as test
+  log = $("${dir}/run_test" "${test}" err->out)
+  if $?
+  else
+    echo "${test} failed"
     echo "${log}"
-  fi
-done
+  end
+end
 
 # vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2

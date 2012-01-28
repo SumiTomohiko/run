@@ -41,7 +41,7 @@ OCAMLPACKS = extlib
 .SUBDIRS: doc $(LIB_DIR) src tests
 
 test:
-    cd tests && ./run_tests
+    cd tests && ../src/run run_tests
 
 clean:
     rm -f **/*.{cma,cmi,cmo,cmx,cmxa,o,annot,automaton,a,omc}
