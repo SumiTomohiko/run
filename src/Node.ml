@@ -25,6 +25,7 @@ and expr_body =
   | Less of binop
   | LessEqual of binop
   | Mul of binop
+  | Not of expr
   | NotEqual of binop
   | String of expr list
   | Sub of binop

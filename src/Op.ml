@@ -25,6 +25,7 @@ type 'a kind =
   | MoveIterator of 'a
   | MoveParam
   | Mul
+  | Not
   | NotEqual
   | Pop
   | PushCommand of Unix.open_flag list
@@ -84,6 +85,7 @@ let name_of_op = function
   | MoveIterator _ -> "MoveIterator"
   | MoveParam -> "MoveParam"
   | Mul -> "Mul"
+  | Not -> "Not"
   | NotEqual -> "NotEqual"
   | Pop -> "Pop"
   | PushCommand _ -> "PushCommand"

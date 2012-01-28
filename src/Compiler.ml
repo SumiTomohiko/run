@@ -94,6 +94,7 @@ let conv_kind = function
   | Op.MoveIterator dest -> Op.MoveIterator dest.Op.index
   | Op.MoveParam -> Op.MoveParam
   | Op.Mul -> Op.Mul
+  | Op.Not -> Op.Not
   | Op.NotEqual -> Op.NotEqual
   | Op.Pop -> Op.Pop
   | Op.PushCommand flags -> Op.PushCommand flags
@@ -244,6 +245,9 @@ and compile_expr compiler (pos, expr) =
   | Node.Less operands -> compile_binop compiler operands Op.Less pos
   | Node.LessEqual operands -> compile_binop compiler operands Op.LessEqual pos
   | Node.Mul operands -> compile_binop compiler operands Op.Mul pos
+  | Node.Not expr ->
+      compile_expr compiler expr;
+      add_op compiler Op.Not pos
   | Node.NotEqual operands -> compile_binop compiler operands Op.NotEqual pos
   | Node.String contents ->
       List.iter (compile_expr compiler) contents;

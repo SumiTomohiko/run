@@ -1,0 +1,4 @@
+SRC:
+puts(!false)
+OUT:
+true

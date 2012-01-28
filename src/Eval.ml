@@ -374,6 +374,8 @@ let eval_op env frame op =
         else
           string_intf s (Num.pred_num n) (accum ^ s) in
       eval_binop stack intf floatf error string_intf
+  | Op.Not ->
+      Stack.push (Core.Bool (not (Core.bool_of_value (Stack.pop stack)))) stack
   | Op.NotEqual -> eval_equality stack ((<>) 0)
   | Op.Pop -> ignore (Stack.pop stack)
   | Op.PushCommand flags ->

@@ -50,6 +50,7 @@ rule script_token lexer = parse
   | "try" { Parser.TRY }
   | "while" { Parser.WHILE }
   | ' '+ { script_token lexer lexbuf }
+  | '!' { Parser.NOT }
   | '"' { Parser.DOUBLE_QUOTE }
   | '#' [^'\n']* { script_token lexer lexbuf }
   | '(' { Parser.LPAR }
