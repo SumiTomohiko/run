@@ -1,5 +1,5 @@
 {
-type mode = Comment | Param | Pipeline | Script | String
+type mode = Comment | Param | Pipeline | QuotedParam | Script | String
 type lexer = {
   mutable buffer: string;
   mode_stack: mode Stack.t;
@@ -95,6 +95,7 @@ and pipeline_token lexer = parse
     Parser.NEWLINE
   }
   | '|' { Parser.BAR }
+  | '"' { Parser.QUOTED_PARAM_BEGIN }
   | "" { Parser.PARAM_BEGIN }
 and param_token lexer = parse
   | "${" { Parser.DOLLER_LBRACE }
@@ -104,9 +105,12 @@ and param_token lexer = parse
   | '/' { Parser.SEP }
   | '{' { Parser.LBRACE }
   | '}' { Parser.RBRACE }
-  | '"' { Parser.STRING (string_param "" lexbuf) }
   | [^'\n' ' ' ')'] as c { Parser.CHAR c }
   | "" { Parser.PARAM_END }
+and quoted_param_token lexer = parse
+  | '"' { Parser.QUOTED_PARAM_END }
+  | (' ' as c) { Parser.CHAR c }
+  | "" { param_token lexer lexbuf }
 and string_param s = parse
   | '"' { s }
   | _ as c { string_param (s ^ (String.make 1 c)) lexbuf }
@@ -170,6 +174,7 @@ let next_token_of_lexbuf lexer lexbuf =
     | Script -> script_token
     | Param -> param_token
     | Pipeline -> pipeline_token
+    | QuotedParam -> quoted_param_token
     | String -> string_token ""
     | Comment -> comment 0 in
     f lexer lexbuf in
@@ -182,13 +187,15 @@ let next_token_of_lexbuf lexer lexbuf =
   | Parser.DOLLER_LPAR
   | Parser.EVERY -> Stack.push Pipeline mode_stack
   | Parser.PARAM_BEGIN -> Stack.push Param mode_stack
-  | Parser.PARAM_END -> drop_top mode_stack
+  | Parser.QUOTED_PARAM_BEGIN -> Stack.push QuotedParam mode_stack
   | Parser.DOUBLE_QUOTE ->
       (match Stack.top mode_stack with
       | String -> drop_top mode_stack
       | _ -> Stack.push String mode_stack)
   | Parser.AS
   | Parser.NEWLINE
+  | Parser.PARAM_END
+  | Parser.QUOTED_PARAM_END
   | Parser.RBRACE
   | Parser.RPAR -> drop_top mode_stack
   | _ -> ());

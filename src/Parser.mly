@@ -19,12 +19,6 @@ let make_append_redirect path =
   make_file_redirect path (Unix.O_APPEND :: write_flags)
 
 let stderr_redirect = Some Node.Dup
-
-let rec nodes_of_string result s index =
-  if (String.length s) = index then
-    result
-  else
-    nodes_of_string (result @ [Node.Char (String.get s index)]) s (index + 1)
 %}
 %token AS BAR BREAK COLON COMMA DEF DIV DIV_DIV DOLLER_LBRACE DOLLER_LPAR
 %token DOLLER_QUESTION DOT DOUBLE_QUOTE EXCEPT EXCEPTION ELIF ELSE END EOF EQUAL
@@ -32,8 +26,9 @@ let rec nodes_of_string result s index =
 %token EVERY FALSE FINALLY GREATER GREATER_GREATER GREATER_EQUAL IF ITERATE
 %token LBRACE LBRACKET LEFT_RIGHT_ARROW LESS LESS_EQUAL LPAR MINUS NEWLINE NEXT
 %token NOT_EQUAL OUT_RIGHT_ARROW OUT_RIGHT_ARROW_ERR OUT_RIGHT_RIGHT_ARROW
-%token PARAM_BEGIN PARAM_END PLUS RAISE RBRACE RBRACKET RETURN RIGHT_ARROW
-%token RIGHT_RIGHT_ARROW RPAR SEP STAR STAR_STAR TRUE TRY WHILE
+%token PARAM_BEGIN PARAM_END PLUS QUOTED_PARAM_BEGIN QUOTED_PARAM_END RAISE
+%token RBRACE RBRACKET RETURN RIGHT_ARROW RIGHT_RIGHT_ARROW RPAR SEP STAR
+%token STAR_STAR TRUE TRY WHILE
 %token <char> CHAR
 %token <Num.num> INT
 %token <float> FLOAT
@@ -138,8 +133,8 @@ single_command
   ;
 
 redirect_dest
-  : PARAM_BEGIN param_body PARAM_END {
-    let s, l = Param.chain_static_chars "" $2 in
+  : param {
+    let s, l = Param.chain_static_chars "" $1 in
     assert ((List.length l) = 0);
     s
   }
@@ -213,7 +208,7 @@ params
 
 param
   : PARAM_BEGIN param_body PARAM_END { $2 }
-  | PARAM_BEGIN STRING PARAM_END { nodes_of_string [] $2 0 }
+  | QUOTED_PARAM_BEGIN param_body QUOTED_PARAM_END { $2 }
   ;
 
 param_body
