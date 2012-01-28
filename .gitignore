@@ -1,11 +1,14 @@
 *.a
 *.annot
+*.cma
 *.cmi
+*.cmo
 *.cmx
 *.cmxa
 *.log
 *.o
 *.omc
+*.run
 .ditz-config
 .omakedb
 .omakedb.lock
