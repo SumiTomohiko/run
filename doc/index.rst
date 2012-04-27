@@ -76,6 +76,6 @@ Documentations
 Author
 ======
 
-An author of run is Ranko Kadonote.
+An author of run is `Ranko Kadonote <http://neko-daisuki.ddo.jp/~SumiTomohiko/from-python-import-fun/index.html>`_.
 
 .. vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=rst
