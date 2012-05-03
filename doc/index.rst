@@ -63,6 +63,7 @@ Features
   statements
 * Arithmetic operations
 * UTF-8 (only) acceptable
+* Works on `FreeBSD 8.2<http://www.FreeBSD.org>`_.
 * Written in `Objective Caml <http://caml.inria.fr/ocaml/index.en.html>`_
 * :doc:`copying`
 
