@@ -9,10 +9,14 @@ components:
 releases: 
 - !ditz.rubyforge.org,2008-03-06/release 
   name: 0.0.0
-  status: :unreleased
-  release_time: 
+  status: :released
+  release_time: 2012-05-03 07:10:56.329866 Z
   log_events: 
   - - 2011-11-06 13:55:58.636003 Z
     - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
     - created
     - First release.
+  - - 2012-05-03 07:10:56.329898 Z
+    - Tomohiko Sumi <SumiTomohiko@neko-daisuki.ddo.jp>
+    - released
+    - ""
