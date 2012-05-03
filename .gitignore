@@ -21,6 +21,7 @@ doc/Parser.output
 doc/html
 doc/rst2html
 doc/rst2html.opt
+run-*.tar.xz
 src/Lexer.ml
 src/Matching/Lexer.ml
 src/Matching/Parser.ml

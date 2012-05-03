@@ -1,0 +1,95 @@
+#!/bin/sh
+
+zod() {
+  "$@"
+  if [ $? != 0 ]; then
+    echo "Error: $@"
+    exit 64
+  fi
+}
+
+ver="0.0.0"
+dest="run-${ver}"
+
+zod rm -rf "${dest}"
+zod mkdir "${dest}"
+echo "Makefile
+OMakefile
+OMakeroot
+README
+dist
+doc/BlockLexer.ml
+doc/BlockNode.ml
+doc/InlineLexer.mll
+doc/InlineNode.ml
+doc/Main.ml
+doc/OMakefile
+doc/Parser.mly
+doc/copying.html
+doc/copying.rst
+doc/default.css
+doc/index.html
+doc/index.rst
+doc/install.html
+doc/install.rst
+doc/parsing.html
+doc/parsing.rst
+doc/tutorial.html
+doc/tutorial.rst
+issues
+lib/Ensure.ml
+lib/OMakefile
+src/Builtins.ml
+src/Code.ml
+src/Compiler.ml
+src/Core.ml
+src/Eval.ml
+src/Exception.ml
+src/Lexer.mll
+src/Main.ml
+src/Matching.ml
+src/Node.ml
+src/OMakefile
+src/Op.ml
+src/Param.ml
+src/Parser.mly
+src/Redirect.ml
+src/Stub.ml
+tests/Lexer.mll
+tests/Main.ml
+tests/OMakefile
+tests/Parser.mly
+tests/Test.ml
+tests/list
+tests/matching_expr
+tests/matching_expr2
+tests/matching_expr3
+tests/matching_star
+tests/matching_star10
+tests/matching_star2
+tests/matching_star3
+tests/matching_star4
+tests/matching_star5
+tests/matching_star6
+tests/matching_star7
+tests/matching_star8
+tests/matching_star9
+tests/matching_star_star
+tests/matching_star_star2
+tests/matching_star_star3
+tests/matching_star_star4
+tests/matching_star_star5
+tests/ping.ml
+tests/pong.ml
+tests/run_tests
+tests/test_*
+vim" | while read x
+do
+  dir="${dest}/$(dirname "${x}")"
+  zod mkdir -p "${dir}"
+  zod cp -r ${x} "${dir}"
+done
+zod tar cJf "${dest}.tar.xz" "${dest}"
+zod rm -rf "${dest}"
+
+# vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2
