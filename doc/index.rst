@@ -67,6 +67,12 @@ Features
 * Written in `Objective Caml <http://caml.inria.fr/ocaml/index.en.html>`_
 * :doc:`copying`
 
+Download
+========
+
+You can download run from
+`Download page <http://neko-daisuki.ddo.jp/~SumiTomohiko/run/download.html>`_.
+
 Documentations
 ==============
 
