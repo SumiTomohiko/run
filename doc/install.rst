@@ -19,4 +19,6 @@ Do the next command at the top of source directory::
 
   $ omake
 
+You will get ``src/run``.
+
 .. vim: tabstop=2 shiftwidth=2 expandtab softtabstop=2 filetype=rst
